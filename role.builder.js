@@ -13,7 +13,7 @@ var roleBuilder = {
       }
     });
     if (target === null) {
-      creep.memory.role = 'replenisher';
+      creep.memory.role = 'repairer';
       return OK;
     }
 

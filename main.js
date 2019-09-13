@@ -2,6 +2,7 @@ var logger = require('logger');
 var worker = require('worker');
 var roleBuilder = require('role.builder');
 var roleHarvester = require('role.harvester');
+var roleRepairer = require('role.repairer');
 var roleReplenisher = require('role.replenisher');
 var roleUpgrader = require('role.upgrader');
 
@@ -29,6 +30,9 @@ module.exports.loop = function () {
         break;
       case 'harvester':
         roleHarvester.run(creep);
+        break;
+      case 'repairer':
+        roleRepairer.run(creep);
         break;
       case 'replenisher':
         roleReplenisher.run(creep);
