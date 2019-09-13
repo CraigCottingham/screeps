@@ -16,7 +16,7 @@ module.exports.loop = function () {
 
   for (var name in Game.rooms) {
     var room = Game.rooms[name];
-    if ((worker.activeCount() < 40) && (room.energyAvailable == room.energyCapacityAvailable)) {
+    if (room.energyAvailable == room.energyCapacityAvailable) {
       worker.spawn(Game.spawns['Spawn1']);
     }
   }
