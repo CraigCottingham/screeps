@@ -1,7 +1,5 @@
 var roleRepairer = {
   run: function(creep) {
-    creep.say('repair');
-
     if (creep.carry.energy == 0) {
       creep.memory.role = 'harvester';
       return OK;
@@ -19,6 +17,7 @@ var roleRepairer = {
 
     switch (creep.repair(target)) {
       case ERR_NOT_IN_RANGE:
+        creep.say('repair');
         creep.moveTo(target, {visualizePathStyle: {stroke: '#ff7f00'}});
         break;
     }
