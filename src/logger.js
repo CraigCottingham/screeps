@@ -2,11 +2,21 @@ const worker = require('worker');
 
 var logger = {
   logCPU: function() {
+    flag = Memory.enableLogging.cpu;
+    if ((flag === undefined) || (flag == 'false')) {
+      return;
+    }
+
     var cpu = Game.cpu;
-    console.log(`CPU  limit: ${cpu.limit}  tickLimit: ${cpu.tickLimit}  bucket: ${cpu.bucket}`);
+    console.log(`CPU: used=${cpu.getUsed()} limit=${cpu.limit} tickLimit=${cpu.tickLimit}  bucket=${cpu.bucket}`);
   },
 
   logCreeps: function() {
+    flag = Memory.enableLogging.creeps;
+    if ((flag === undefined) || (flag == 'false')) {
+      return;
+    }
+
     console.log(`Creeps: active=${worker.activeCount()} spawning=${worker.spawningCount()} dead=${worker.deadCount()}`);
   },
 
@@ -34,10 +44,6 @@ var logger = {
     }
 
     console.log(str);
-  },
-
-  logUsedCPU: function() {
-    console.log(`CPU used: ${Game.cpu.getUsed()}`)
   }
 }
 
