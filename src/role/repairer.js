@@ -21,7 +21,7 @@ var roleRepairer = {
 
     switch (creep.repair(target)) {
       case ERR_NOT_IN_RANGE:
-        creep.moveTo(target, {visualizePathStyle: {stroke: '#ff7f00'}});
+        worker.moveTo(creep, target);
         break;
     }
 

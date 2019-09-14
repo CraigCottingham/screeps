@@ -21,7 +21,7 @@ var roleBuilder = {
 
     switch (creep.build(target)) {
       case ERR_NOT_IN_RANGE:
-        creep.moveTo(target, {visualizePathStyle: {stroke: '#cfcfcf'}});
+        worker.moveTo(creep, target);
         break;
     }
 

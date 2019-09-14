@@ -18,7 +18,6 @@ module.exports = function(grunt) {
   // grunt.log.subhead(`Task Start: ${currentdate.toLocaleString()}`);
   // grunt.log.writeln(`Branch: ${branch}`);
 
-  // Load needed tasks
   grunt.loadNpmTasks('grunt-screeps');
   grunt.loadNpmTasks('grunt-contrib-clean');
   grunt.loadNpmTasks('grunt-contrib-copy');
@@ -27,12 +26,9 @@ module.exports = function(grunt) {
   //     grunt.loadNpmTasks("grunt-sync");
 
   grunt.initConfig({
-    /**
-     * Watch src for changes and update
-     */
     // watch: {
     //     scripts: {
-    //         files: ['code/**/*.js'],
+    //         files: ['src/**/*.js'],
     //         //  tasks: ['jsbeautifier:verify', 'private'],
     //         tasks: ['private'],
     //         options: {
@@ -42,10 +38,6 @@ module.exports = function(grunt) {
     //     }
     // },
 
-    /**
-     * Push all files in the dist folder to screeps.
-     * What is in the code folder and gets sent will depend on the tasks used.
-     */
     screeps: {
       options: {
         email: email,       // 'craig@cottingham.net',
@@ -110,9 +102,6 @@ module.exports = function(grunt) {
       }
     },
 
-    /**
-     * Copy all files
-     */
     copy: {
       screeps: {
         files: [{
@@ -128,9 +117,6 @@ module.exports = function(grunt) {
       }
     },
 
-    /**
-     * Push only the relevant file changes
-     */
     // sync: {
     //     private: {
     //         files: [{
@@ -146,9 +132,6 @@ module.exports = function(grunt) {
     //     }
     // },
 
-    /**
-     * Add version constiable using current timestamp.
-     */
     // file_append: {
     //     versioning: {
     //         files: [{
@@ -158,17 +141,11 @@ module.exports = function(grunt) {
     //     }
     // },
 
-    /**
-     * Remove all files from the dist folder.
-     */
     clean: {
       'dist': ['dist/*.js']
     }
   });
 
-  /**
-   * Build tasks out of the above.
-   */
   grunt.registerTask('mmo', ['clean', 'copy:screeps', 'screeps:mmo']);
 
   // grunt.registerTask('default', ['private']);
