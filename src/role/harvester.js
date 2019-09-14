@@ -1,11 +1,11 @@
-var worker = require('worker');
+var worker = require("worker");
 
 var roleHarvester = {
   run: function (creep) {
-    worker.say(creep, 'harvest');
+    worker.say(creep, "harvest");
 
     if (creep.carry.energy >= creep.carryCapacity) {
-      creep.memory.role = 'builder';
+      creep.memory.role = "builder";
       return OK;
     }
 

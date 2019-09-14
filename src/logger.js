@@ -28,7 +28,7 @@ var logger = {
   },
 
   logRoom: function(room) {
-    var str = 'room ' + room.name + ': energy = ' + room.energyAvailable;
+    var str = `room ${room.name}: energy=${room.energyAvailable}`;
 
     if (room.controller.safeMode === undefined) {
       if (room.controller.safeModeCooldown === undefined) {
@@ -36,11 +36,11 @@ var logger = {
         room.controller.activateSafeMode();
       }
       else {
-        str = str + '; safe mode cooldown remaining = ' + room.controller.safeModeCooldown;
+        str = str + `; safe mode cooldown remaining=${room.controller.safeModeCooldown}`;
       }
     }
     else {
-      str = str + '; safe mode remaining = ' + room.controller.safeMode;
+      str = str + `; safe mode remaining=${room.controller.safeMode}`;
     }
 
     console.log(str);
