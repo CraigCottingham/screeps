@@ -1,11 +1,11 @@
-var worker = require('worker');
+var worker = require("worker");
 
 var roleRepairer = {
   run: function(creep) {
-    worker.say(creep, 'repair');
+    worker.say(creep, "repair");
 
     if (creep.carry.energy == 0) {
-      creep.memory.role = 'harvester';
+      creep.memory.role = "harvester";
       return OK;
     }
 
@@ -15,7 +15,7 @@ var roleRepairer = {
       }
     });
     if (target === null) {
-      creep.memory.role = 'replenisher';
+      creep.memory.role = "replenisher";
       return OK;
     }
 

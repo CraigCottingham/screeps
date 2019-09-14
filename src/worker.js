@@ -1,7 +1,7 @@
 var worker = {
   moveTo: function(creep, target) {
     moveOptions = {};
-    if (Memory.enablePathStyle == 'true') {
+    if (Memory.enablePathStyle == "true") {
       moveOptions.visualizePathStyle = this.pathStyle(creep.memory.role);
     }
     if ((Game.cpu.tickLimit - Game.cpu.getUsed()) < 5) {
@@ -20,28 +20,28 @@ var worker = {
 
   pathStyle: function(role) {
     var style = {
-      fill: 'transparent',
-      stroke: '#FFFFFF',
-      lineStyle: 'dashed',
+      fill: "transparent",
+      stroke: "#FFFFFF",
+      lineStyle: "dashed",
       strokeWidth: .15,
       opacity: .1
     }
 
     switch (role) {
-      case 'builder':
-        style.stroke = '#CFCFCF';
+      case "builder":
+        style.stroke = "#CFCFCF";
         break;
-      case 'harvester':
-        style.stroke = '#00FF00';
+      case "harvester":
+        style.stroke = "#00FF00";
         break;
-      case 'repairer':
-        style.stroke = '#FF7F00';
+      case "repairer":
+        style.stroke = "#FF7F00";
         break;
-      case 'replenisher':
-        style.stroke = '#FFFFFF';
+      case "replenisher":
+        style.stroke = "#FFFFFF";
         break;
-      case 'upgrader':
-        style.stroke = '#0000FF';
+      case "upgrader":
+        style.stroke = "#0000FF";
         break;
     }
 
@@ -49,7 +49,7 @@ var worker = {
   },
 
   say: function(creep, msg) {
-    if (Memory.enableSay == 'false') {
+    if (Memory.enableSay == "false") {
       return;
     }
 
@@ -59,9 +59,9 @@ var worker = {
   },
 
   spawn: function(spawn) {
-    var result = spawn.spawnCreep([WORK, CARRY, MOVE], ('Worker' + Game.time), {memory: {role: 'harvester'}});
+    var result = spawn.spawnCreep([WORK, CARRY, MOVE], ("Worker" + Game.time), {memory: {role: "harvester"}});
     if (result == OK) {
-      spawn.room.visual.text('🛠️ Worker', spawn.pos.x + 1, spawn.pos.y, {align: 'left', opacity: 0.8});
+      spawn.room.visual.text("🛠️ Worker", spawn.pos.x + 1, spawn.pos.y, {align: "left", opacity: 0.8});
     }
     return result;
   },
