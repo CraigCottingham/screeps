@@ -21,7 +21,7 @@ var roleReplenisher = {
 
     switch (creep.transfer(target, RESOURCE_ENERGY)) {
       case ERR_NOT_IN_RANGE:
-        creep.moveTo(target, {visualizePathStyle: {stroke: '#ffffff'}});
+        worker.moveTo(creep, target);
         break;
     }
 

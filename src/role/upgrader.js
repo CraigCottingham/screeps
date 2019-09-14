@@ -20,7 +20,7 @@ var roleUpgrader = {
         creep.memory.role = 'harvester';
         break;
       case ERR_NOT_IN_RANGE:
-        creep.moveTo(creep.room.controller, {visualizePathStyle: {stroke: '#0000ff'}});
+        worker.moveTo(creep, target);
         break;
     }
 

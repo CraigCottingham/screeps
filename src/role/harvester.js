@@ -9,10 +9,10 @@ var roleHarvester = {
       return OK;
     }
 
-    var source = creep.pos.findClosestByPath(FIND_SOURCES);
-    switch (creep.harvest(source)) {
+    var target = creep.pos.findClosestByPath(FIND_SOURCES);
+    switch (creep.harvest(target)) {
       case ERR_NOT_IN_RANGE:
-        creep.moveTo(source, {visualizePathStyle: {stroke: '#00ff00'}});
+        worker.moveTo(creep, target);
         break;
     }
 
