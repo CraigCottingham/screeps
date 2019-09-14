@@ -14,6 +14,16 @@ var worker = {
     }, 0);
   },
 
+  say: function(creep, msg) {
+    if (Memory.enableSay == 'false') {
+      return;
+    }
+
+    // check if enableSay is an object and if so, look for role in the object
+
+    creep.say(msg);
+  },
+
   spawn: function(spawn) {
     var result = spawn.spawnCreep([WORK, CARRY, MOVE], ('Worker' + Game.time), {memory: {role: 'harvester'}});
     if (result == OK) {
