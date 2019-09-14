@@ -15,7 +15,7 @@ var worker = {
   },
 
   spawn: function(spawn) {
-    var result = spawn.spawnCreep([WORK, CARRY, MOVE, MOVE], ('Worker' + Game.time), {memory: {role: 'harvester'}});
+    var result = spawn.spawnCreep([WORK, CARRY, MOVE], ('Worker' + Game.time), {memory: {role: 'harvester'}});
     if (result == OK) {
       spawn.room.visual.text('🛠️ Worker', spawn.pos.x + 1, spawn.pos.y, {align: 'left', opacity: 0.8});
     }
