@@ -1,5 +1,9 @@
+var worker = require('worker');
+
 var roleBuilder = {
   run: function(creep) {
+    worker.say(creep, 'build');
+
     if (creep.carry.energy == 0) {
       creep.memory.role = 'harvester';
       return OK;
@@ -17,7 +21,6 @@ var roleBuilder = {
 
     switch (creep.build(target)) {
       case ERR_NOT_IN_RANGE:
-        creep.say('build');
         creep.moveTo(target, {visualizePathStyle: {stroke: '#cfcfcf'}});
         break;
     }

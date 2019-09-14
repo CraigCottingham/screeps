@@ -1,5 +1,9 @@
+var worker = require('worker');
+
 var roleReplenisher = {
   run: function (creep) {
+    worker.say(creep, "replenish");
+
     if (creep.carry.energy == 0) {
       creep.memory.role = 'harvester';
       return OK;
@@ -17,7 +21,6 @@ var roleReplenisher = {
 
     switch (creep.transfer(target, RESOURCE_ENERGY)) {
       case ERR_NOT_IN_RANGE:
-        creep.say("replenish");
         creep.moveTo(target, {visualizePathStyle: {stroke: '#ffffff'}});
         break;
     }

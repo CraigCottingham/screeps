@@ -1,5 +1,9 @@
+var worker = require('worker');
+
 var roleUpgrader = {
   run: function(creep) {
+    worker.say(creep, "upgrade");
+
     if (creep.carry.energy == 0) {
       creep.memory.role = 'harvester';
       return OK;
@@ -16,7 +20,6 @@ var roleUpgrader = {
         creep.memory.role = 'harvester';
         break;
       case ERR_NOT_IN_RANGE:
-        creep.say("upgrade");
         creep.moveTo(creep.room.controller, {visualizePathStyle: {stroke: '#0000ff'}});
         break;
     }
