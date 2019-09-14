@@ -9,16 +9,7 @@ var roleUpgrader = require('role.upgrader');
 module.exports.loop = function () {
   logger.logCreeps();
 
-  for (var name in Memory.creeps) {
-    if (!Game.creeps[name]) {
-      delete Memory.creeps[name];
-    }
-  }
-
-  for (var name in Game.spawns) {
-    worker.spawn(Game.spawns[name]);
-  }
-
+  // order creeps by role, then run them by priority?
   for (var name in Game.creeps) {
     var creep = Game.creeps[name];
     switch (creep.memory.role) {
@@ -39,4 +30,16 @@ module.exports.loop = function () {
         break;
     }
   }
+
+  for (var name in Game.spawns) {
+    worker.spawn(Game.spawns[name]);
+  }
+
+  for (var name in Memory.creeps) {
+    if (!Game.creeps[name]) {
+      delete Memory.creeps[name];
+    }
+  }
+
+  logger.logCPU();
 }
