@@ -15,11 +15,8 @@ module.exports.loop = function () {
     }
   }
 
-  for (var name in Game.rooms) {
-    var room = Game.rooms[name];
-    if (room.energyAvailable == room.energyCapacityAvailable) {
-      worker.spawn(Game.spawns['Spawn1']);
-    }
+  for (var name in Game.spawns) {
+    worker.spawn(Game.spawns[name]);
   }
 
   for (var name in Game.creeps) {
