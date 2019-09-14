@@ -20,8 +20,8 @@ module.exports = function(grunt) {
 
   // Load needed tasks
   grunt.loadNpmTasks('grunt-screeps');
-  //     grunt.loadNpmTasks('grunt-contrib-clean');
-  //     grunt.loadNpmTasks('grunt-contrib-copy');
+  grunt.loadNpmTasks('grunt-contrib-clean');
+  grunt.loadNpmTasks('grunt-contrib-copy');
   //     grunt.loadNpmTasks('grunt-contrib-watch');
   //     grunt.loadNpmTasks('grunt-file-append');
   //     grunt.loadNpmTasks("grunt-sync");
@@ -53,9 +53,6 @@ module.exports = function(grunt) {
         branch: branch,     // 'grunt',
         ptr: ptr            //false
       },
-      // mmo: {
-      //     src: ['dist/*.js'],
-      // },
       // s2: {
       //     options: {
       //         server: {
@@ -108,30 +105,28 @@ module.exports = function(grunt) {
       //     },
       //     src: ['dist/*.js']
       // }
-      dist: {
-        src: ['dist/*.js']
+      mmo: {
+        src: ['dist/*.js'],
       }
     },
 
     /**
      * Copy all files
      */
-    // copy: {
-    //     // Pushes the game code to the dist folder so it can be modified before
-    //     // being send to the screeps server.
-    //     screeps: {
-    //         files: [{
-    //             expand: true,
-    //             cwd: 'code/',
-    //             src: '**/*.js',
-    //             dest: 'dist/',
-    //             filter: 'isFile',
-    //             rename: function(dest, src) {
-    //                 return dest + src.replace(/\//g, '.');
-    //             }
-    //         }],
-    //     }
-    // },
+    copy: {
+      screeps: {
+        files: [{
+          expand: true,
+          cwd: 'src/',
+          src: '**/*.js',
+          dest: 'dist/',
+          filter: 'isFile',
+          rename: function(dest, src) {
+            return dest + src.replace(/\//g, '.');
+          }
+        }],
+      }
+    },
 
     /**
      * Push only the relevant file changes
@@ -166,14 +161,16 @@ module.exports = function(grunt) {
     /**
      * Remove all files from the dist folder.
      */
-    // clean: {
-    //     'dist': ['dist']
-    // }
+    clean: {
+      'dist': ['dist']
+    }
   });
 
   /**
    * Build tasks out of the above.
    */
+  grunt.registerTask('mmo', ['clean', 'copy:screeps', 'screeps:mmo']);
+
   // grunt.registerTask('default', ['private']);
   // grunt.registerTask('private', ['clean', 'copy:screeps', 'file_append:versioning', 'sync:private']);
   // grunt.registerTask('mmo', ['clean', 'copy:screeps', 'file_append:versioning', 'screeps:mmo']);

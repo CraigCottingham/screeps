@@ -2,7 +2,7 @@
 
 ## DEPLOYING
 
-    grunt screeps
+    grunt mmo
 
 ## TODO
 
