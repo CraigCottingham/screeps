@@ -1,3 +1,4 @@
+var replenishable = require("replenishable");
 var worker = require("worker");
 
 var roleReplenisher = {
@@ -11,7 +12,8 @@ var roleReplenisher = {
 
     var target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
       filter: (structure) => {
-        return ((structure.structureType == STRUCTURE_EXTENSION) || (structure.structureType == STRUCTURE_SPAWN)) && (structure.energy < structure.energyCapacity);
+        return replenishable.isReplenishable(structure) &&
+               (replenishable.energy(structure) < replenishable.energyCapacity(structure));
       }
     });
     if (target === null) {
