@@ -58,8 +58,8 @@ var worker = {
     creep.say(msg);
   },
 
-  spawn: function(spawn) {
-    var result = spawn.spawnCreep([WORK, CARRY, MOVE], ("Worker" + Game.time), {memory: {role: "harvester"}});
+  spawn: function(spawn, parts = [WORK, CARRY, MOVE]) {
+    var result = spawn.spawnCreep(parts, ("Worker" + Game.time), {memory: {role: "harvester"}});
     if (result == OK) {
       spawn.room.visual.text("🛠️ Worker", spawn.pos.x + 1, spawn.pos.y, {align: "left", opacity: 0.8});
     }
