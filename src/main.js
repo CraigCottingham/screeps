@@ -31,8 +31,13 @@ module.exports.loop = function () {
     }
   }
 
+  var parts = [WORK, CARRY, MOVE];
+  if (worker.totalCount() > 20) {
+    parts = [WORK, WORK, CARRY, CARRY, MOVE, MOVE];
+  }
+
   for (var name in Game.spawns) {
-    worker.spawn(Game.spawns[name]);
+    worker.spawn(Game.spawns[name], parts);
   }
 
   for (var name in Memory.creeps) {
