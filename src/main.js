@@ -1,4 +1,5 @@
 var logger = require("logger");
+var tower = require("tower");
 var worker = require("worker");
 var roleBuilder = require("role.builder");
 var roleHarvester = require("role.harvester");
@@ -8,6 +9,13 @@ var roleUpgrader = require("role.upgrader");
 
 module.exports.loop = function () {
   logger.logCreeps();
+
+  for (var name in Game.structures) {
+    var structure = Game.structures[name];
+    if (structure.structureType == STRUCTURE_TOWER) {
+      tower.run(structure);
+    }
+  }
 
   // order creeps by role, then run them by priority?
   for (var name in Game.creeps) {
