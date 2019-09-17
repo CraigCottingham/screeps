@@ -11,6 +11,9 @@ var roleHarvester = {
 
     var target = creep.pos.findClosestByPath(FIND_SOURCES);
     switch (creep.harvest(target)) {
+      case ERR_NOT_ENOUGH_RESOURCES:
+        creep.memory.role = "replenisher";
+        break;
       case ERR_NOT_IN_RANGE:
         worker.moveTo(creep, target);
         break;
