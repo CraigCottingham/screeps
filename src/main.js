@@ -48,6 +48,15 @@ module.exports.loop = function () {
     worker.spawn(Game.spawns[name], parts);
   }
 
+  if (worker.totalCount() < 5) {
+    for (var name in Game.creeps) {
+      var creep = Game.creeps[name];
+      if ((creep.memory.role != "harvester") && (creep.memory.role != "replenisher")) {
+        creep.memory.role = "replenisher";
+      }
+    }
+  }
+
   for (var name in Memory.creeps) {
     if (!Game.creeps[name]) {
       delete Memory.creeps[name];
