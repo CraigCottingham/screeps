@@ -15,7 +15,15 @@ var roleHarvester = {
         creep.memory.role = "replenisher";
         break;
       case ERR_NOT_IN_RANGE:
-        worker.moveTo(creep, target);
+        container = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+          filter: (s) => (s.structureType == STRUCTURE_CONTAINER)
+        });
+        if ((container !== null) && (creep.pos.getRangeTo(container) <= 1)) {
+          creep.withdraw(container, RESOURCE_ENERGY);
+        }
+        else {
+          worker.moveTo(creep, target);
+        }
         break;
     }
 
