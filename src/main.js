@@ -6,6 +6,7 @@ var roleHarvester = require("role.harvester");
 var roleRepairer = require("role.repairer");
 var roleReplenisher = require("role.replenisher");
 var roleScavenger = require("role.scavenger");
+var roleStaticHarvester = require("role.static_harvester");
 var roleUpgrader = require("role.upgrader");
 
 module.exports.loop = function () {
@@ -16,12 +17,20 @@ module.exports.loop = function () {
   if (Memory.carrion === undefined) {
     Memory.carrion = {};
   }
+  if (Memory.staticHarvesters === undefined) {
+    Memory.staticHarvesters = {};
+  }
 
   // clean up memory structures
 
   for (var id in Memory.carrion) {
     if (Game.getObjectById(id) === null) {
       delete Memory.carrion[id];
+    }
+  }
+  for (var id in Memory.staticHarvesters) {
+    if (Game.getObjectById(id) === null) {
+      delete Memory.staticHarvesters[id];
     }
   }
 
@@ -115,20 +124,31 @@ module.exports.loop = function () {
       case "scavenger":
         roleScavenger.run(creep);
         break;
+      case "staticHarvester":
+        roleStaticHarvester.run(creep);
+        break;
       case "upgrader":
         roleUpgrader.run(creep);
         break;
     }
   }
 
-  var parts = [WORK, CARRY, MOVE];
-  if (worker.totalCount() > 20) {
-    parts = [WORK, WORK, CARRY, CARRY, MOVE, MOVE];
+  if (_.values(Memory.staticHarvesters).length < 5) { // number of containers
+    for (var name in Game.spawns) {
+      worker.spawn(Game.spawns[name], [WORK, CARRY, MOVE], "staticHarvester");
+    }
+  }
+  else {
+    var parts = [WORK, CARRY, MOVE];
+    if (worker.totalCount() > 20) {
+      parts = [WORK, WORK, CARRY, CARRY, MOVE, MOVE];
+    }
+
+    for (var name in Game.spawns) {
+      worker.spawn(Game.spawns[name], parts);
+    }
   }
 
-  for (var name in Game.spawns) {
-    worker.spawn(Game.spawns[name], parts);
-  }
 
   if (worker.totalCount() < 5) {
     for (var name in Game.creeps) {
