@@ -39,7 +39,7 @@ var replenishable = {
 
   isReplenishable: function(structure) {
     switch (structure.structureType) {
-      case STRUCTURE_CONTAINER:
+      // case STRUCTURE_CONTAINER:
       case STRUCTURE_EXTENSION:
       case STRUCTURE_LAB:
       case STRUCTURE_LINK:

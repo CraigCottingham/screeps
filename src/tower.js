@@ -3,7 +3,7 @@ var tower = {
     var target = tower.pos.findClosestByRange(FIND_HOSTILE_CREEPS);
     if (target !== null) {
       tower.attack(target);
-      return;
+      return OK;
     }
 
     target = tower.pos.findClosestByRange(FIND_CREEPS, {
@@ -11,16 +11,27 @@ var tower = {
     });
     if (target !== null) {
       tower.heal(target);
-      return;
+      return OK;
     }
 
     target = tower.pos.findClosestByRange(FIND_STRUCTURES, {
-      filter: (s) => (s.hits < s.hitsMax) && (s.structureType != STRUCTURE_WALL)
+      filter: (s) => {
+        switch (s.structureType) {
+          case STRUCTURE_RAMPART:
+            return (s.hits < Memory.defenses.ramparts);
+          case STRUCTURE_WALL:
+            return (s.hits < Memory.defenses.walls);
+          default:
+            return (s.hits < s.hitsMax);
+        }
+      }
     });
     if (target !== null) {
       tower.repair(target);
-      return;
+      return OK;
     }
+
+    return OK;
   }
 }
 

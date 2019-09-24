@@ -48,20 +48,10 @@ var worker = {
     return style;
   },
 
-  say: function(creep, msg) {
-    if (Memory.enableSay == "false") {
-      return;
-    }
-
-    // check if enableSay is an object and if so, look for role in the object
-
-    creep.say(msg);
-  },
-
-  spawn: function(spawn, parts = [WORK, CARRY, MOVE]) {
-    var result = spawn.spawnCreep(parts, ("Worker" + Game.time), {memory: {role: "harvester"}});
+  spawn: function(spawn, parts = [WORK, CARRY, MOVE], role = "harvester") {
+    var result = spawn.spawnCreep(parts, ("Worker" + Game.time), {memory: {role: role}});
     if (result == OK) {
-      spawn.room.visual.text("🛠️ Worker", spawn.pos.x + 1, spawn.pos.y, {align: "left", opacity: 0.8});
+      // spawn.room.visual.text("🛠️ Worker", spawn.pos.x + 1, spawn.pos.y, {align: "left", opacity: 0.8});
     }
     return result;
   },
