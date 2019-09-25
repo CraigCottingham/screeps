@@ -45,7 +45,7 @@ var replenishable = {
       case STRUCTURE_LINK:
       case STRUCTURE_NUKER:
       case STRUCTURE_POWER_SPAWN:
-      case STRUCTURE_SPAWN:
+      // case STRUCTURE_SPAWN:
       case STRUCTURE_STORAGE:
       case STRUCTURE_TERMINAL:
       case STRUCTURE_TOWER:
