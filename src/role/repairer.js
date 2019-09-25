@@ -17,8 +17,8 @@ var roleRepairer = {
         switch (s.structureType) {
           case STRUCTURE_RAMPART:
             return (s.hits < Memory.defenses.ramparts);
-          case STRUCTURE_ROAD:
-            return false;
+          // case STRUCTURE_ROAD:
+          //   return false;
           case STRUCTURE_WALL:
             return (s.hits < Memory.defenses.walls);
           default:
