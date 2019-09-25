@@ -21,6 +21,12 @@ var roleScavenger = {
       return OK;
     }
 
+    this.withdraw_in_scavenger(creep, target);
+
+    return OK;
+  },
+
+  withdraw_in_scavenger: function (creep, target) {
     switch (creep.withdraw(target, RESOURCE_ENERGY)) {
       case ERR_NOT_OWNER:
         creep.memory.assignment = undefined;
@@ -48,8 +54,6 @@ var roleScavenger = {
       default:
         break;
     }
-
-    return OK;
   }
 }
 

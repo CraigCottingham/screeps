@@ -14,50 +14,13 @@ var roleStaticHarvester = {
     container = _.find(containers, (c) => (creep.pos.getRangeTo(c) == 0));
     if (container !== undefined) {
       if (creep.carry.energy < creep.carryCapacity) {
-        var source = creep.pos.findClosestByRange(FIND_SOURCES);
-        switch (creep.harvest(source)) {
-          case ERR_NOT_OWNER:
-            break;
-          case ERR_BUSY:
-            break;
-          case ERR_NOT_FOUND:
-            break;
-          case ERR_NOT_ENOUGH_RESOURCES:
-            break;
-          case ERR_INVALID_TARGET:
-            break;
-          case ERR_NOT_IN_RANGE:
-            break;
-          case ERR_TIRED:
-            break;
-          case ERR_NO_BODYPART:
-            break;
-          default:
-            break;
-        }
+        this.staticHarvest(creep, creep.pos.findClosestByRange(FIND_SOURCES));
       }
       else {
         var store = _.sum(container.store);
         var availableStore = container.storeCapacity - store;
         if (availableStore > 0) {
-          switch (creep.transfer(container, RESOURCE_ENERGY)) { //, availableStore
-            case ERR_NOT_OWNER:
-              break;
-            case ERR_BUSY:
-              break;
-            case ERR_NOT_ENOUGH_RESOURCES:
-              break;
-            case ERR_INVALID_TARGET:
-              break;
-            case ERR_FULL:
-              break;
-            case ERR_NOT_IN_RANGE:
-              break;
-            case ERR_INVALID_ARGS:
-              break;
-            default:
-              break;
-          }
+          this.staticTransfer(creep, container);
         }
 
         else {
@@ -84,6 +47,50 @@ var roleStaticHarvester = {
     }
 
     return OK;
+  },
+
+  staticHarvest: function (creep, source) {
+    switch (creep.harvest(source)) {
+      case ERR_NOT_OWNER:
+        break;
+      case ERR_BUSY:
+        break;
+      case ERR_NOT_FOUND:
+        break;
+      case ERR_NOT_ENOUGH_RESOURCES:
+        break;
+      case ERR_INVALID_TARGET:
+        break;
+      case ERR_NOT_IN_RANGE:
+        break;
+      case ERR_TIRED:
+        break;
+      case ERR_NO_BODYPART:
+        break;
+      default:
+        break;
+    }
+  },
+
+  staticTransfer: function (creep, container) {
+    switch (creep.transfer(container, RESOURCE_ENERGY)) { //, availableStore
+      case ERR_NOT_OWNER:
+        break;
+      case ERR_BUSY:
+        break;
+      case ERR_NOT_ENOUGH_RESOURCES:
+        break;
+      case ERR_INVALID_TARGET:
+        break;
+      case ERR_FULL:
+        break;
+      case ERR_NOT_IN_RANGE:
+        break;
+      case ERR_INVALID_ARGS:
+        break;
+      default:
+        break;
+    }
   }
 }
 

@@ -2,7 +2,7 @@ var worker = require("worker");
 
 var roleRepairer = {
   run: function (creep) {
-    creep.say("repair");
+    // creep.say("repair");
 
     if (creep.carry.energy == 0) {
       creep.memory.role = "harvester";
@@ -31,31 +31,17 @@ var roleRepairer = {
       return OK;
     }
     if ((tower !== null) && ((target === null) || (creep.pos.getRangeTo(tower) <= creep.pos.getRangeTo(target)))) {
-      switch (creep.transfer(tower, RESOURCE_ENERGY)) {
-        case ERR_NOT_OWNER:
-          break;
-        case ERR_BUSY:
-          break;
-        case ERR_NOT_ENOUGH_RESOURCES:
-          creep.memory.role = "upgrader";
-          break;
-        case ERR_INVALID_TARGET:
-          break;
-        case ERR_FULL:
-          creep.memory.role = "upgrader";
-          break;
-        case ERR_NOT_IN_RANGE:
-          worker.moveTo(creep, tower);
-          break;
-        case ERR_INVALID_ARGS:
-          break;
-        default:
-          break;
-      }
+      this.replenish_in_repairer(creep, tower);
 
       return OK;
     }
 
+    this.repair(creep, target);
+
+    return OK;
+  },
+
+  repair: function (creep, target) {
     switch (creep.repair(target)) {
       case ERR_NOT_OWNER:
         break;
@@ -75,8 +61,30 @@ var roleRepairer = {
       default:
         break;
     }
+  },
 
-    return OK;
+  replenish_in_repairer: function (creep, tower) {
+    switch (creep.transfer(tower, RESOURCE_ENERGY)) {
+      case ERR_NOT_OWNER:
+        break;
+      case ERR_BUSY:
+        break;
+      case ERR_NOT_ENOUGH_RESOURCES:
+        creep.memory.role = "upgrader";
+        break;
+      case ERR_INVALID_TARGET:
+        break;
+      case ERR_FULL:
+        creep.memory.role = "upgrader";
+        break;
+      case ERR_NOT_IN_RANGE:
+        worker.moveTo(creep, tower);
+        break;
+      case ERR_INVALID_ARGS:
+        break;
+      default:
+        break;
+    }
   }
 }
 

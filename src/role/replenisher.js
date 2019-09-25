@@ -39,29 +39,33 @@ var roleReplenisher = {
       creep.memory.role = "repairer";
     }
     else {
-      switch (creep.transfer(target, RESOURCE_ENERGY)) {
-        case ERR_NOT_OWNER:
-          break;
-        case ERR_BUSY:
-          break;
-        case ERR_NOT_ENOUGH_RESOURCES:
-          creep.memory.role = "harvester";
-          break;
-        case ERR_INVALID_TARGET:
-          break;
-        case ERR_FULL:
-          break;
-        case ERR_NOT_IN_RANGE:
-          worker.moveTo(creep, target);
-          break;
-        case ERR_INVALID_ARGS:
-          break;
-        default:
-          break;
-      }
+      this.replenish(creep, target);
     }
 
     return OK;
+  },
+
+  replenish: function (creep, target) {
+    switch (creep.transfer(target, RESOURCE_ENERGY)) {
+      case ERR_NOT_OWNER:
+        break;
+      case ERR_BUSY:
+        break;
+      case ERR_NOT_ENOUGH_RESOURCES:
+        creep.memory.role = "harvester";
+        break;
+      case ERR_INVALID_TARGET:
+        break;
+      case ERR_FULL:
+        break;
+      case ERR_NOT_IN_RANGE:
+        worker.moveTo(creep, target);
+        break;
+      case ERR_INVALID_ARGS:
+        break;
+      default:
+        break;
+    }
   }
 }
 

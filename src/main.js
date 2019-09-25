@@ -1,6 +1,4 @@
 var logger = require("logger");
-var tower = require("tower");
-var worker = require("worker");
 var roleBuilder = require("role.builder");
 var roleHarvester = require("role.harvester");
 var roleRepairer = require("role.repairer");
@@ -8,6 +6,8 @@ var roleReplenisher = require("role.replenisher");
 var roleScavenger = require("role.scavenger");
 var roleStaticHarvester = require("role.static_harvester");
 var roleUpgrader = require("role.upgrader");
+var tower = require("tower");
+var worker = require("worker");
 
 module.exports.loop = function () {
   logger.logCreeps();

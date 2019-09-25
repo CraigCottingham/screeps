@@ -10,8 +10,24 @@ var worker = {
 
     var result = creep.moveTo(target, moveOptions);
     switch (result) {
+      case ERR_NOT_OWNER:
+        break;
+      case ERR_NO_PATH:
+        break;
+      case ERR_BUSY:
+        break;
       case ERR_NOT_FOUND:
-        result = creep.moveTo(target);
+        if (moveOptions.noPathFinding) {
+          result = creep.moveTo(target);
+        }
+        break;
+      case ERR_INVALID_TARGET:
+        break;
+      case ERR_TIRED:
+        break;
+      case ERR_NO_BODYPART:
+        break;
+      default:
         break;
     }
 
