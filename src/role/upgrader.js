@@ -33,7 +33,7 @@ var roleUpgrader = {
         creep.memory.role = "harvester";
         break;
       case ERR_NOT_IN_RANGE:
-        worker.moveTo(creep, target);
+        worker.moveTo(creep, controller);
         break;
       case ERR_NO_BODYPART:
         creep.suicide();
