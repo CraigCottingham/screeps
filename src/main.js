@@ -81,6 +81,10 @@ module.exports.loop = function () {
   for (var name in Game.creeps) {
     var creep = Game.creeps[name];
 
+    if (creep.memory.role === undefined) {
+      creep.memory.role = "upgrader";
+    }
+
     switch (creep.memory.role) {
       case "builder":
         roleBuilder.run(creep);
@@ -111,7 +115,7 @@ module.exports.loop = function () {
 
   // TODO: sum up all the things that need doing:
   //   * number of extensions
-  //   * number of towers
+  //   * number of towers x 2
   //   * +1 for controller
   //   * +1 for spawn?
   //   * number of construction sites? (or maybe a fraction thereof)
