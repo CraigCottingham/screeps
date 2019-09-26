@@ -19,19 +19,10 @@ module.exports.loop = function () {
     walls:    (300000000 * 0.003),
     ramparts:  (10000000 * 0.100)
   };
-  if (Memory.carrion === undefined) {
-    Memory.carrion = {};
-  }
 
   //
   // clean up memory structures
   //
-
-  for (var id in Memory.carrion) {
-    if (Game.getObjectById(id) === null) {
-      delete Memory.carrion[id];
-    }
-  }
 
   //
   // run objects
@@ -56,44 +47,31 @@ module.exports.loop = function () {
     });
     _.forEach(towers, (t) => tower.run(t));
 
-    var tombstones = room.find(FIND_TOMBSTONES);
-    for (var tombstone of tombstones) {
-      var amount = _.sum(tombstone.store);
-      if (amount > 0) {
-        if (Memory.carrion[tombstone.id] === undefined) {
-          Memory.carrion[tombstone.id] = {};
-        }
-        var closestCreep = tombstone.pos.findClosestByPath(FIND_MY_CREEPS, {
-          filter: (creep) => {
-            return ((creep.carry.energy < creep.carryCapacity) && (creep.memory.role != "staticHarvester"));
-          }
-        });
-        if (closestCreep !== null) {
-          Memory.carrion[tombstone.id].creepId = closestCreep.id;
-          closestCreep.memory.assignment = tombstone.id;
-          closestCreep.memory.role = "scavenger";
-        }
-      }
-    }
-
     var drops = room.find(FIND_DROPPED_RESOURCES);
     for (var drop of drops) {
       var amount = drop.amount;
       if (amount > 0) {
-        if (Memory.carrion[drop.id] === undefined) {
-          Memory.carrion[drop.id] = {};
+        var creep = drop.pos.findClosestByPath(FIND_MY_CREEPS, {
+          filter: (c) => (_.sum(c.carry) < c.carryCapacity)
+        });
+        if (creep !== null) {
+          creep.memory.assignment = drop.id;
+          creep.memory.role = "scavenger";
         }
-        if (Memory.carrion[drop.id].creepId === undefined) {
-          var closestCreep = drop.pos.findClosestByPath(FIND_MY_CREEPS, {
-            filter: (creep) => {
-              return ((creep.carry.energy < creep.carryCapacity) && (creep.memory.role != "staticHarvester"));
-            }
-          });
-          if (closestCreep !== null) {
-            Memory.carrion[drop.id].creepId = closestCreep.id;
-            closestCreep.memory.assignment = drop.id;
-            closestCreep.memory.role = "scavenger";
-          }
+      }
+    }
+
+    var tombstones = room.find(FIND_TOMBSTONES);
+    for (var tombstone of tombstones) {
+      var amount = _.sum(tombstone.store);
+      // var amount = tombstone.store[RESOURCE_ENERGY];
+      if (amount > 0) {
+        var creep = tombstone.pos.findClosestByPath(FIND_MY_CREEPS, {
+          filter: (c) => (_.sum(c.carry) < c.carryCapacity)
+        });
+        if (creep !== null) {
+          creep.memory.assignment = tombstone.id;
+          creep.memory.role = "scavenger";
         }
       }
     }

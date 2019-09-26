@@ -4,7 +4,7 @@ var roleScavenger = {
   run: function (creep) {
     // creep.say("scavenge");
 
-    if (creep.carry.energy >= creep.carryCapacity) {
+    if (_.sum(creep.carry) >= creep.carryCapacity) {
       creep.memory.role = "replenisher";
       return OK;
     }
@@ -21,13 +21,22 @@ var roleScavenger = {
       return OK;
     }
 
-    this.withdraw_in_scavenger(creep, target);
+    if (target.resourceType !== undefined) {
+      // dropped resource
+      this.withdraw_in_scavenger(creep, target, target.resourceType, creep.pickup);
+    }
+    else {
+      // tombstone
+      for (var resourceType in target.store) {
+        this.withdraw_in_scavenger(creep, target, resourceType, creep.withdraw);
+      }
+    }
 
     return OK;
   },
 
-  withdraw_in_scavenger: function (creep, target) {
-    switch (creep.withdraw(target, RESOURCE_ENERGY)) {
+  withdraw_in_scavenger: function (creep, target, resourceType, fn) {
+    switch (fn(target, resourceType)) {
       case ERR_NOT_OWNER:
         creep.memory.assignment = undefined;
         creep.memory.role = "harvester";
