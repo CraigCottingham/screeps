@@ -22,47 +22,73 @@ var roleScavenger = {
     }
 
     if (target.resourceType !== undefined) {
-      // dropped resource
-      this.withdraw_in_scavenger(creep, target, target.resourceType, creep.pickup);
+      // creep.say("resource");
+      this.pickup(creep, target, target.resourceType);
     }
     else {
-      // tombstone
+      // creep.say("tombstone");
       for (var resourceType in target.store) {
-        this.withdraw_in_scavenger(creep, target, resourceType, creep.withdraw);
+        this.withdraw(creep, target, resourceType);
       }
     }
 
     return OK;
   },
 
-  withdraw_in_scavenger: function (creep, target, resourceType, fn) {
-    switch (fn(target, resourceType)) {
-      case ERR_NOT_OWNER:
-        creep.memory.assignment = undefined;
-        creep.memory.role = "harvester";
-        break;
-      case ERR_BUSY:
-        creep.memory.assignment = undefined;
-        break;
-      case ERR_NOT_ENOUGH_RESOURCES:
-        creep.memory.assignment = undefined;
-        creep.memory.role = "replenisher";
-        break;
-      case ERR_INVALID_TARGET:
-        creep.memory.assignment = undefined;
-        break;
-      case ERR_FULL:
-        creep.memory.assignment = undefined;
-        creep.memory.role = "replenisher";
-        break;
+  pickup: function (creep, target, resourceType) {
+    switch (creep.pickup(target, resourceType)) {
       case ERR_NOT_IN_RANGE:
         worker.moveTo(creep, target);
         break;
+      case ERR_NOT_OWNER:
+      case ERR_BUSY:
+      case ERR_NOT_ENOUGH_RESOURCES:
+      case ERR_INVALID_TARGET:
+      case ERR_FULL:
       case ERR_INVALID_ARGS:
-        break;
       default:
+        creep.memory.assignment = undefined;
         break;
     }
+
+    if (creep.memory.assignment === undefined) {
+      if (_.sum(creep.carry) > 0) {
+        creep.memory.role = "replenisher";
+      }
+      else {
+        creep.memory.role = "harvester";
+      }
+    }
+
+    return OK;
+  },
+
+  withdraw: function (creep, target, resourceType) {
+    switch (creep.withdraw(target, resourceType)) {
+      case ERR_NOT_IN_RANGE:
+        worker.moveTo(creep, target);
+        break;
+      case ERR_NOT_OWNER:
+      case ERR_BUSY:
+      case ERR_NOT_ENOUGH_RESOURCES:
+      case ERR_INVALID_TARGET:
+      case ERR_FULL:
+      case ERR_INVALID_ARGS:
+      default:
+        creep.memory.assignment = undefined;
+        break;
+    }
+
+    if (creep.memory.assignment === undefined) {
+      if (_.sum(creep.carry) > 0) {
+        creep.memory.role = "replenisher";
+      }
+      else {
+        creep.memory.role = "harvester";
+      }
+    }
+
+    return OK;
   }
 }
 
