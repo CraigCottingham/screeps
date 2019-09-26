@@ -4,7 +4,6 @@ var roleHarvester = require("role.harvester");
 var roleRepairer = require("role.repairer");
 var roleReplenisher = require("role.replenisher");
 var roleScavenger = require("role.scavenger");
-var roleStaticHarvester = require("role.static_harvester");
 var roleUpgrader = require("role.upgrader");
 var tower = require("tower");
 var worker = require("worker");
@@ -120,9 +119,6 @@ module.exports.loop = function () {
       case "scavenger":
         roleScavenger.run(creep);
         break;
-      case "staticHarvester":
-        roleStaticHarvester.run(creep);
-        break;
       case "upgrader":
         roleUpgrader.run(creep);
         break;
@@ -134,10 +130,6 @@ module.exports.loop = function () {
   containers = spawn.room.find(FIND_STRUCTURES, {
     filter: (s) => (s.structureType == STRUCTURE_CONTAINER)
   });
-
-  staticHarvesters = spawn.room.find(FIND_MY_CREEPS, {
-    filter: (c) => (c.memory.role == "staticHarvester")
-  })
 
   // TODO: sum up all the things that need doing:
   //   * number of extensions
@@ -151,20 +143,15 @@ module.exports.loop = function () {
   //   * energy and/or energy capacity in the room
   //   * the current number (if very small, for instance -- see endangered flag)
 
-  if (staticHarvesters.length < containers.length) {
-    worker.spawn(spawn, [WORK, WORK, CARRY, MOVE], "staticHarvester");
+  var parts = [WORK, CARRY, MOVE];
+  if (worker.totalCount() > 20) {
+    parts = [WORK, CARRY, WORK, CARRY, MOVE, MOVE];
   }
-  else {
-    var parts = [WORK, CARRY, MOVE];
-    if (worker.totalCount() > 20) {
-      parts = [WORK, CARRY, WORK, CARRY, MOVE, MOVE];
-    }
-    if (worker.totalCount() > 30) {
-      parts = [ATTACK, WORK, CARRY, WORK, CARRY, MOVE, MOVE]
-    }
+  if (worker.totalCount() > 30) {
+    parts = [ATTACK, WORK, CARRY, WORK, CARRY, MOVE, MOVE]
+  }
 
-    worker.spawn(spawn, parts);
-  }
+  worker.spawn(spawn, parts);
 
   if (worker.totalCount() < 10) {
     Memory.endangered = true;
