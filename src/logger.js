@@ -22,7 +22,7 @@ var logger = {
   },
 
   logRoom: function(room) {
-    console.log(`room ${room.name}: energy=${room.energyAvailable}`);
+    console.log(`room ${room.name}: energy=${room.energyAvailable} creeps=${room.find(FIND_MY_CREEPS).length}`);
   }
 }
 
