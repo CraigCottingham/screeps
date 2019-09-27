@@ -23,9 +23,14 @@ var roleHarvester = {
       // not parked
       hostiles = (creep.room.find(FIND_HOSTILE_CREEPS).length > 0);
 
-      if (creep.carry.energy >= creep.carryCapacity) {
+      if (_.sum(creep.carry) >= creep.carryCapacity) {
         if (hostiles) {
           // creep.say("redalert");
+          creep.memory.role = "replenisher";
+          return OK;
+        }
+
+        if (creep.carry.energy < creep.carryCapacity) {
           creep.memory.role = "replenisher";
         }
         else {
@@ -44,7 +49,7 @@ var roleHarvester = {
         filter: (s) => (s.structureType == STRUCTURE_CONTAINER) && (_.sum(s.store) >= s.storeCapacity)
       });
       if (fullContainer !== null) {
-        creep.say("milk");
+        // creep.say("milk");
         this.withdraw(creep, fullContainer);
         return OK;
       }
@@ -160,27 +165,36 @@ var roleHarvester = {
   },
 
   withdraw: function (creep, container) {
-    switch (creep.withdraw(container, RESOURCE_ENERGY)) {
-      case ERR_NOT_OWNER:
-        break;
-      case ERR_BUSY:
-        break;
-      case ERR_NOT_ENOUGH_RESOURCES:
-        creep.memory.role = "replenisher";
-        break;
-      case ERR_INVALID_TARGET:
-        break;
-      case ERR_FULL:
-        creep.memory.role = "builder";
-        break;
-      case ERR_NOT_IN_RANGE:
-        worker.moveTo(creep, container);
-        break;
-      case ERR_INVALID_ARGS:
-        break;
-      default:
-        break;
+    var resourceType = RESOURCE_ENERGY;
+    if (container.store.energy == 0) {
+      resourceType = _.findKey(container.store, (r) => (r > 0));
     }
+
+    if (resourceType !== undefined) {
+      switch (creep.withdraw(container, resourceType)) {
+        case ERR_NOT_OWNER:
+          break;
+        case ERR_BUSY:
+          break;
+        case ERR_NOT_ENOUGH_RESOURCES:
+          creep.memory.role = "replenisher";
+          break;
+        case ERR_INVALID_TARGET:
+          break;
+        case ERR_FULL:
+          creep.memory.role = "builder";
+          break;
+        case ERR_NOT_IN_RANGE:
+          worker.moveTo(creep, container);
+          break;
+        case ERR_INVALID_ARGS:
+          break;
+        default:
+          break;
+      }
+    }
+
+    return OK;
   }
 }
 
