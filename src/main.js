@@ -9,7 +9,8 @@ var tower = require("tower");
 var worker = require("worker");
 
 module.exports.loop = function () {
-  logger.logCreeps();
+  // logger.logCreeps();
+  logger.logAllRooms();
 
   //
   // initialize memory structures
@@ -47,31 +48,45 @@ module.exports.loop = function () {
     });
     _.forEach(towers, (t) => tower.run(t));
 
-    var drops = room.find(FIND_DROPPED_RESOURCES);
-    for (var drop of drops) {
-      var amount = drop.amount;
-      if (amount > 0) {
-        var creep = drop.pos.findClosestByPath(FIND_MY_CREEPS, {
-          filter: (c) => (_.sum(c.carry) < c.carryCapacity)
-        });
+    if (worker.totalCount() >= 15) {
+      if (room.find(FIND_MY_CREEPS, {
+        filter: (c) => (c.memory.role == "upgrader")
+      }).length == 0) {
+        creep = room.controller.pos.findClosestByRange(FIND_MY_CREEPS, {
+          filter: (c) => (c.memory.role != "harvester") && (c.carry.energy > 0)
+        })
         if (creep !== null) {
-          creep.memory.assignment = drop.id;
-          creep.memory.role = "scavenger";
+          creep.memory.role = "upgrader";
         }
       }
-    }
 
-    var tombstones = room.find(FIND_TOMBSTONES);
-    for (var tombstone of tombstones) {
-      var amount = _.sum(tombstone.store);
-      // var amount = tombstone.store[RESOURCE_ENERGY];
-      if (amount > 0) {
-        var creep = tombstone.pos.findClosestByPath(FIND_MY_CREEPS, {
-          filter: (c) => (_.sum(c.carry) < c.carryCapacity)
-        });
-        if (creep !== null) {
-          creep.memory.assignment = tombstone.id;
-          creep.memory.role = "scavenger";
+      var drops = room.find(FIND_DROPPED_RESOURCES);
+      for (var drop of drops) {
+        var amount = drop.amount;
+        if (amount > 0) {
+          var creep = drop.pos.findClosestByPath(FIND_MY_CREEPS, {
+            filter: (c) => (_.sum(c.carry) < c.carryCapacity)
+          });
+          if (creep !== null) {
+            // console.log(`dropped resource ${drop.id} assigned to creep ${creep.id}`);
+            creep.memory.assignment = drop.id;
+            creep.memory.role = "scavenger";
+          }
+        }
+      }
+
+      var tombstones = room.find(FIND_TOMBSTONES);
+      for (var tombstone of tombstones) {
+        var amount = _.sum(tombstone.store);
+        // var amount = tombstone.store[RESOURCE_ENERGY];
+        if (amount > 0) {
+          var creep = tombstone.pos.findClosestByPath(FIND_MY_CREEPS, {
+            filter: (c) => (_.sum(c.carry) < c.carryCapacity)
+          });
+          if (creep !== null) {
+            creep.memory.assignment = tombstone.id;
+            creep.memory.role = "scavenger";
+          }
         }
       }
     }
