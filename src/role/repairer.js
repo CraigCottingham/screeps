@@ -17,8 +17,6 @@ var roleRepairer = {
         switch (s.structureType) {
           case STRUCTURE_RAMPART:
             return (s.hits < Memory.defenses.ramparts);
-          // case STRUCTURE_ROAD:
-          //   return false;
           case STRUCTURE_WALL:
             return (s.hits < Memory.defenses.walls);
           default:
@@ -31,7 +29,7 @@ var roleRepairer = {
       return OK;
     }
     if ((tower !== null) && ((target === null) || (creep.pos.getRangeTo(tower) <= creep.pos.getRangeTo(target)))) {
-      this.replenish_in_repairer(creep, tower);
+      this.replenish_tower(creep, tower);
 
       return OK;
     }
@@ -63,7 +61,7 @@ var roleRepairer = {
     }
   },
 
-  replenish_in_repairer: function (creep, tower) {
+  replenish_tower: function (creep, tower) {
     switch (creep.transfer(tower, RESOURCE_ENERGY)) {
       case ERR_NOT_OWNER:
         break;

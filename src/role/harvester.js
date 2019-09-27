@@ -1,7 +1,3 @@
-// TODO: combine with role/static_harvester.js
-// static harvester doesn't need to be its own role
-// harvester can become "static" as soon as it occupies the same square as a container
-
 var worker = require("worker");
 
 var roleHarvester = {
@@ -12,7 +8,6 @@ var roleHarvester = {
       filter: (s) => (s.structureType == STRUCTURE_CONTAINER) && (creep.pos.getRangeTo(s) == 0)
     });
     if (containers.length > 0) {
-      // parked on a container
       // creep.say("parked");
       var container = containers[0];
       creep.memory.parkedAt = container.id;
@@ -25,29 +20,55 @@ var roleHarvester = {
       }
     }
     else {
-      // away from a container, but maybe near one
-      if (creep.carry.energy >= creep.carryCapacity) {
-        // creep is full, so change role
+      // not parked
+      hostiles = (creep.room.find(FIND_HOSTILE_CREEPS).length > 0);
 
-        // TODO: switch according to whether there are hostile creeps in the room
-        creep.memory.role = "builder";
-        // creep.memory.role = "replenisher";
-      }
-      else {
-        var source = creep.pos.findClosestByPath(FIND_SOURCES);
-        if (source !== null) {
-          // open square at a source
-          worker.moveTo(creep, source);
+      if (creep.carry.energy >= creep.carryCapacity) {
+        if (hostiles) {
+          // creep.say("redalert");
+          creep.memory.role = "replenisher";
         }
         else {
-          // all squares adjacent to sources are occupied
-          var container = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-            filter: (s) => (s.structureType == STRUCTURE_CONTAINER) && (_.sum(s.store) > 0)
-          });
-          if (container !== null) {
-            this.withdraw(creep, container);
-          }
+          creep.memory.role = "builder";
         }
+        return OK;
+      }
+
+      var source = creep.pos.findClosestByPath(FIND_SOURCES);
+      if (source !== null) {
+        worker.moveTo(creep, source);
+        return OK;
+      }
+
+      var fullContainer = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+        filter: (s) => (s.structureType == STRUCTURE_CONTAINER) && (_.sum(s.store) >= s.storeCapacity)
+      });
+      if (fullContainer !== null) {
+        creep.say("milk");
+        this.withdraw(creep, fullContainer);
+        return OK;
+      }
+
+      if (hostiles) {
+        var container = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+          filter: (s) => (s.structureType == STRUCTURE_STORAGE) && (_.sum(s.store) > 0)
+        });
+        if (container !== null) {
+          this.withdraw(creep, container);
+          return OK;
+        }
+      }
+
+      var container = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+        filter: (s) => (s.structureType == STRUCTURE_CONTAINER) && (_.sum(s.store) > 0)
+      });
+      if (container === null) {
+        container = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+          filter: (s) => (s.structureType == STRUCTURE_STORAGE) && (_.sum(s.store) > 0)
+        });
+      }
+      if (container !== null) {
+        this.withdraw(creep, container);
       }
     }
 
