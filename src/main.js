@@ -133,13 +133,15 @@ module.exports.loop = function () {
     parts = [ATTACK, WORK, CARRY, WORK, CARRY, MOVE, MOVE]
   }
 
-  worker.spawn(spawn, parts);
+  if (worker.totalCount() < 20) {
+    worker.spawn(spawn, parts);
+  }
 
   if (worker.totalCount() < 10) {
     Memory.endangered = true;
     for (var name in Game.creeps) {
       var creep = Game.creeps[name];
-      if ((creep.memory.role != "harvester") && (creep.memory.role != "replenisher") && (creep.memory.role != "staticHarvester")) {
+      if ((creep.memory.role != "harvester") && (creep.memory.role != "replenisher")) {
         creep.memory.role = "replenisher";
       }
     }
