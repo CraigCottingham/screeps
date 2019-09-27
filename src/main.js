@@ -1,16 +1,16 @@
 var logger = require("logger");
-var tower = require("tower");
-var worker = require("worker");
 var roleBuilder = require("role.builder");
 var roleHarvester = require("role.harvester");
 var roleRepairer = require("role.repairer");
 var roleReplenisher = require("role.replenisher");
 var roleScavenger = require("role.scavenger");
-var roleStaticHarvester = require("role.static_harvester");
 var roleUpgrader = require("role.upgrader");
+var tower = require("tower");
+var worker = require("worker");
 
 module.exports.loop = function () {
-  logger.logCreeps();
+  // logger.logCreeps();
+  logger.logAllRooms();
 
   //
   // initialize memory structures
@@ -18,21 +18,12 @@ module.exports.loop = function () {
 
   Memory.defenses = {
     walls:    (300000000 * 0.003),
-    ramparts:  (10000000 * 0.100)
+    ramparts:  (10000000 * 0.010)
   };
-  if (Memory.carrion === undefined) {
-    Memory.carrion = {};
-  }
 
   //
   // clean up memory structures
   //
-
-  for (var id in Memory.carrion) {
-    if (Game.getObjectById(id) === null) {
-      delete Memory.carrion[id];
-    }
-  }
 
   //
   // run objects
@@ -57,43 +48,44 @@ module.exports.loop = function () {
     });
     _.forEach(towers, (t) => tower.run(t));
 
-    var tombstones = room.find(FIND_TOMBSTONES);
-    for (var tombstone of tombstones) {
-      var amount = _.sum(tombstone.store);
-      if (amount > 0) {
-        if (Memory.carrion[tombstone.id] === undefined) {
-          Memory.carrion[tombstone.id] = {};
-        }
-        var closestCreep = tombstone.pos.findClosestByPath(FIND_MY_CREEPS, {
-          filter: (creep) => {
-            return ((creep.carry.energy < creep.carryCapacity) && (creep.memory.role != "staticHarvester"));
-          }
-        });
-        if (closestCreep !== null) {
-          Memory.carrion[tombstone.id].creepId = closestCreep.id;
-          closestCreep.memory.assignment = tombstone.id;
-          closestCreep.memory.role = "scavenger";
+    if (worker.totalCount() >= 15) {
+      if (room.find(FIND_MY_CREEPS, {
+        filter: (c) => (c.memory.role == "upgrader")
+      }).length == 0) {
+        creep = room.controller.pos.findClosestByRange(FIND_MY_CREEPS, {
+          filter: (c) => (c.memory.role != "harvester") && (c.carry.energy > 0)
+        })
+        if (creep !== null) {
+          creep.memory.role = "upgrader";
         }
       }
-    }
 
-    var drops = room.find(FIND_DROPPED_RESOURCES);
-    for (var drop of drops) {
-      var amount = drop.amount;
-      if (amount > 0) {
-        if (Memory.carrion[drop.id] === undefined) {
-          Memory.carrion[drop.id] = {};
-        }
-        if (Memory.carrion[drop.id].creepId === undefined) {
-          var closestCreep = drop.pos.findClosestByPath(FIND_MY_CREEPS, {
-            filter: (creep) => {
-              return ((creep.carry.energy < creep.carryCapacity) && (creep.memory.role != "staticHarvester"));
-            }
+      var drops = room.find(FIND_DROPPED_RESOURCES);
+      for (var drop of drops) {
+        var amount = drop.amount;
+        if (amount > 0) {
+          var creep = drop.pos.findClosestByPath(FIND_MY_CREEPS, {
+            filter: (c) => (_.sum(c.carry) < c.carryCapacity)
           });
-          if (closestCreep !== null) {
-            Memory.carrion[drop.id].creepId = closestCreep.id;
-            closestCreep.memory.assignment = drop.id;
-            closestCreep.memory.role = "scavenger";
+          if (creep !== null) {
+            // console.log(`dropped resource ${drop.id} assigned to creep ${creep.id}`);
+            creep.memory.assignment = drop.id;
+            creep.memory.role = "scavenger";
+          }
+        }
+      }
+
+      var tombstones = room.find(FIND_TOMBSTONES);
+      for (var tombstone of tombstones) {
+        var amount = _.sum(tombstone.store);
+        // var amount = tombstone.store[RESOURCE_ENERGY];
+        if (amount > 0) {
+          var creep = tombstone.pos.findClosestByPath(FIND_MY_CREEPS, {
+            filter: (c) => (_.sum(c.carry) < c.carryCapacity)
+          });
+          if (creep !== null) {
+            creep.memory.assignment = tombstone.id;
+            creep.memory.role = "scavenger";
           }
         }
       }
@@ -103,6 +95,10 @@ module.exports.loop = function () {
   // TODO: dynamic dispatch, rather than role transitions hardcoded in roles
   for (var name in Game.creeps) {
     var creep = Game.creeps[name];
+
+    if (creep.memory.role === undefined) {
+      creep.memory.role = "upgrader";
+    }
 
     switch (creep.memory.role) {
       case "builder":
@@ -120,9 +116,6 @@ module.exports.loop = function () {
       case "scavenger":
         roleScavenger.run(creep);
         break;
-      case "staticHarvester":
-        roleStaticHarvester.run(creep);
-        break;
       case "upgrader":
         roleUpgrader.run(creep);
         break;
@@ -135,13 +128,9 @@ module.exports.loop = function () {
     filter: (s) => (s.structureType == STRUCTURE_CONTAINER)
   });
 
-  staticHarvesters = spawn.room.find(FIND_MY_CREEPS, {
-    filter: (c) => (c.memory.role == "staticHarvester")
-  })
-
   // TODO: sum up all the things that need doing:
   //   * number of extensions
-  //   * number of towers
+  //   * number of towers x 2
   //   * +1 for controller
   //   * +1 for spawn?
   //   * number of construction sites? (or maybe a fraction thereof)
@@ -151,18 +140,15 @@ module.exports.loop = function () {
   //   * energy and/or energy capacity in the room
   //   * the current number (if very small, for instance -- see endangered flag)
 
-  if (staticHarvesters.length < containers.length) {
-    worker.spawn(spawn, [WORK, WORK, CARRY, MOVE], "staticHarvester");
+  var parts = [WORK, CARRY, MOVE];
+  if (worker.totalCount() > 20) {
+    parts = [WORK, CARRY, WORK, CARRY, MOVE, MOVE];
   }
-  else {
-    var parts = [WORK, CARRY, MOVE];
-    if (worker.totalCount() > 20) {
-      parts = [WORK, CARRY, WORK, CARRY, MOVE, MOVE];
-    }
-    if (worker.totalCount() > 30) {
-      parts = [ATTACK, WORK, CARRY, WORK, CARRY, MOVE, MOVE]
-    }
+  if (worker.totalCount() > 30) {
+    parts = [ATTACK, WORK, CARRY, WORK, CARRY, MOVE, MOVE]
+  }
 
+  if (worker.totalCount() < 20) {
     worker.spawn(spawn, parts);
   }
 
@@ -170,7 +156,7 @@ module.exports.loop = function () {
     Memory.endangered = true;
     for (var name in Game.creeps) {
       var creep = Game.creeps[name];
-      if ((creep.memory.role != "harvester") && (creep.memory.role != "replenisher") && (creep.memory.role != "staticHarvester")) {
+      if ((creep.memory.role != "harvester") && (creep.memory.role != "replenisher")) {
         creep.memory.role = "replenisher";
       }
     }
