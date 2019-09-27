@@ -111,16 +111,37 @@ module.exports.loop = function () {
     var spawn = _.first(room.find(FIND_MY_SPAWNS))
     if (spawn !== undefined) {
       if (room.find(FIND_MY_CREEPS).length < 20) {
-        var parts = [WORK, CARRY, MOVE, MOVE];
+        var parts = [WORK, MOVE, CARRY, MOVE];
         var availableEnergy = room.energyAvailable;
 
         // if hostiles and availableEnergy > 200
         //   parts = [WORK, CARRY, MOVE]
         if (availableEnergy > 750) {  // 500 + minimum creep build cost
-          parts = [WORK, CARRY, MOVE, MOVE, WORK, CARRY, MOVE, MOVE];
+          parts = [WORK, MOVE, CARRY, MOVE, WORK, MOVE, CARRY, MOVE];
         }
-        if (availableEnergy > 1050) {  // 800 + minimum creep build cost
-          parts = [TOUGH, MOVE, TOUGH, MOVE, TOUGH, MOVE, TOUGH, MOVE, TOUGH, MOVE, WORK, CARRY, MOVE, MOVE, WORK, CARRY, MOVE, MOVE];
+        if (availableEnergy > 880) {  // 630 + minimum creep build cost
+          parts = [ATTACK, MOVE, WORK, MOVE, CARRY, MOVE, WORK, MOVE, CARRY, MOVE];
+        }
+        if (availableEnergy > 950) {  // 700 + minimum creep build cost
+          parts = [RANGED_ATTACK, MOVE, WORK, MOVE, CARRY, MOVE, WORK, MOVE, CARRY, MOVE];
+        }
+        if (availableEnergy > 2570) {  // 2320 + minimum  -- NPC melee, RCL >= 4
+          parts = [
+            TOUGH,  MOVE, TOUGH,         MOVE, TOUGH,         MOVE, TOUGH,         MOVE, TOUGH,  MOVE,
+            TOUGH,  MOVE, TOUGH,         MOVE, TOUGH,         MOVE, TOUGH,         MOVE, TOUGH,  MOVE,
+            TOUGH,  MOVE, TOUGH,         MOVE, TOUGH,         MOVE, TOUGH,         MOVE, TOUGH,  MOVE,
+            TOUGH,  MOVE, RANGED_ATTACK, MOVE, RANGED_ATTACK, MOVE, RANGED_ATTACK, MOVE, ATTACK, MOVE,
+            ATTACK, MOVE, WORK,          MOVE, CARRY,         MOVE, WORK,          MOVE, CARRY,  MOVE
+          ];
+        }
+        if (availableEnergy > 4360) {  // 4110 + minimum  -- NPC ranged, RCL >= 4
+          parts = [
+            TOUGH,         TOUGH,         TOUGH,         TOUGH,         TOUGH,         TOUGH,         MOVE,          MOVE,          MOVE,          MOVE,
+            MOVE,          MOVE,          MOVE,          MOVE,          MOVE,          MOVE,          MOVE,          MOVE,          MOVE,          MOVE,
+            MOVE,          MOVE,          MOVE,          MOVE,          MOVE,          MOVE,          MOVE,          MOVE,          MOVE,          MOVE,
+            RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK,
+            RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, WORK,          MOVE
+          ];
         }
 
         worker.spawn(spawn, parts);
