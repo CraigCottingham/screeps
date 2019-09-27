@@ -13,7 +13,17 @@ var roleHarvester = {
       creep.memory.parkedAt = container.id;
 
       if (creep.carry.energy >= creep.carryCapacity) {
-        this.transferToNearbyContainer(creep);
+        var creepCount = creep.room.find(FIND_MY_CREEPS).length;
+        var containerCount = creep.room.find(FIND_STRUCTURES, {
+          filter: (s) => (s.structureType == STRUCTURE_CONTAINER)
+        }).length;
+        if (creepCount > containerCount) {
+          this.transferToNearbyContainer(creep);
+        }
+        else {
+          creep.memory.role = "replenisher";
+          return OK;
+        }
       }
       else {
         this.harvestFromNearbySource(creep);
