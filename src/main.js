@@ -90,6 +90,50 @@ module.exports.loop = function () {
         }
       }
     }
+
+    // TODO: sum up all the things that need doing:
+    //   * number of extensions
+    //   * number of towers x 2
+    //   * +1 for controller
+    //   * +1 for spawn?
+    //   * number of construction sites? (or maybe a fraction thereof)
+    // that's the number of workers we should have
+    // maybe a few extras, but probably not many if any
+    // the makeup of new workers should be a function of
+    //   * energy and/or energy capacity in the room
+    //   * the current number (if very small, for instance -- see endangered flag)
+
+    var spawn = _.first(room.find(FIND_MY_SPAWNS))
+    if (spawn !== undefined) {
+      if (room.find(FIND_MY_CREEPS).length < 20) {
+        var parts = [WORK, CARRY, MOVE, MOVE];
+        var availableEnergy = room.energyAvailable;
+
+        // if hostiles and availableEnergy > 200
+        //   parts = [WORK, CARRY, MOVE]
+        if (availableEnergy > 750) {  // 500 + minimum creep build cost
+          parts = [WORK, CARRY, MOVE, MOVE, WORK, CARRY, MOVE, MOVE];
+        }
+        if (availableEnergy > 1050) {  // 800 + minimum creep build cost
+          parts = [TOUGH, MOVE, TOUGH, MOVE, TOUGH, MOVE, TOUGH, MOVE, TOUGH, MOVE, WORK, CARRY, MOVE, MOVE, WORK, CARRY, MOVE, MOVE];
+        }
+
+        worker.spawn(spawn, parts);
+      }
+    }
+  }
+
+  if (worker.totalCount() < 10) {
+    Memory.endangered = true;
+    for (var name in Game.creeps) {
+      var creep = Game.creeps[name];
+      if ((creep.memory.role != "harvester") && (creep.memory.role != "replenisher")) {
+        creep.memory.role = "replenisher";
+      }
+    }
+  }
+  else {
+    Memory.endangered = undefined;
   }
 
   // TODO: dynamic dispatch, rather than role transitions hardcoded in roles
@@ -120,49 +164,6 @@ module.exports.loop = function () {
         roleUpgrader.run(creep);
         break;
     }
-  }
-
-  var spawn = Game.spawns["Spawn1"];
-
-  containers = spawn.room.find(FIND_STRUCTURES, {
-    filter: (s) => (s.structureType == STRUCTURE_CONTAINER)
-  });
-
-  // TODO: sum up all the things that need doing:
-  //   * number of extensions
-  //   * number of towers x 2
-  //   * +1 for controller
-  //   * +1 for spawn?
-  //   * number of construction sites? (or maybe a fraction thereof)
-  // that's the number of workers we should have
-  // maybe a few extras, but probably not many if any
-  // the makeup of new workers should be a function of
-  //   * energy and/or energy capacity in the room
-  //   * the current number (if very small, for instance -- see endangered flag)
-
-  var parts = [WORK, CARRY, MOVE];
-  if (worker.totalCount() > 20) {
-    parts = [WORK, CARRY, WORK, CARRY, MOVE, MOVE];
-  }
-  if (worker.totalCount() > 30) {
-    parts = [ATTACK, WORK, CARRY, WORK, CARRY, MOVE, MOVE]
-  }
-
-  if (worker.totalCount() < 20) {
-    worker.spawn(spawn, parts);
-  }
-
-  if (worker.totalCount() < 10) {
-    Memory.endangered = true;
-    for (var name in Game.creeps) {
-      var creep = Game.creeps[name];
-      if ((creep.memory.role != "harvester") && (creep.memory.role != "replenisher")) {
-        creep.memory.role = "replenisher";
-      }
-    }
-  }
-  else {
-    Memory.endangered = undefined;
   }
 
   //
