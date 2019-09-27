@@ -1,9 +1,18 @@
 var tower = {
-  run: function(tower) {
-    var target = tower.pos.findClosestByRange(FIND_HOSTILE_CREEPS);
+  run: function (tower) {
+    var target = tower.pos.findClosestByRange(FIND_HOSTILE_CREEPS, {
+      filter: (c) => _.any(c.body, "type", HEAL)
+    });
     if (target !== null) {
       tower.attack(target);
       return OK;
+    }
+    else {
+      target = tower.pos.findClosestByRange(FIND_HOSTILE_CREEPS);
+      if (target !== null) {
+        tower.attack(target);
+        return OK;
+      }
     }
 
     target = tower.pos.findClosestByRange(FIND_CREEPS, {
