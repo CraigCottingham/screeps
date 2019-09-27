@@ -48,7 +48,12 @@ module.exports.loop = function () {
     });
     _.forEach(towers, (t) => tower.run(t));
 
-    if (worker.totalCount() >= 15) {
+    var creepCount = room.find(FIND_MY_CREEPS).length;
+    var containerCount = room.find(FIND_STRUCTURES, {
+      filter: (s) => (s.structureType == STRUCTURE_CONTAINER)
+    }).length;
+
+    if (creepCount > (containerCount * 2)) {
       if (room.find(FIND_MY_CREEPS, {
         filter: (c) => (c.memory.role == "upgrader")
       }).length == 0) {
