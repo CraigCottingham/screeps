@@ -27,11 +27,11 @@ var tower = {
       filter: (s) => {
         switch (s.structureType) {
           case STRUCTURE_RAMPART:
-            return (s.hits < Memory.defenses.ramparts);
+            return (s.hits < (Memory.defenses.ramparts - 200));
           case STRUCTURE_WALL:
-            return (s.hits < Memory.defenses.walls);
+            return (s.hits < (Memory.defenses.walls - 200));
           default:
-            return (s.hits < s.hitsMax);
+            return (s.hits < (s.hitsMax - 200));
         }
       }
     });
