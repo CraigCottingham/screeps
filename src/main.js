@@ -17,7 +17,7 @@ module.exports.loop = function () {
 
   Memory.defenses = {
     walls:    (300000000 * 0.003),
-    ramparts:  (10000000 * 0.100)
+    ramparts:  (10000000 * 0.010)
   };
 
   //
