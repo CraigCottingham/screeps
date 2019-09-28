@@ -53,6 +53,7 @@ module.exports.loop = function () {
       filter: (s) => (s.structureType == STRUCTURE_CONTAINER)
     }).length;
 
+    if (creepCount > containerCount) {
       var drops = room.find(FIND_DROPPED_RESOURCES);
       for (var drop of drops) {
         var amount = drop.amount;
@@ -95,6 +96,7 @@ module.exports.loop = function () {
           creep.memory.role = "upgrader";
         }
       }
+    }
     // TODO: sum up all the things that need doing:
     //   * number of extensions
     //   * number of towers x 2
