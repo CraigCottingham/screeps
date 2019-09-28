@@ -5,15 +5,19 @@ var roleReplenisher = {
   run: function (creep) {
     // creep.say("replenish");
 
-    // if (creep.carry.energy == 0) {
-    //   creep.memory.role = "harvester";
-    //   return OK;
-    // }
-
     if (_.sum(creep.carry) == 0) {
       creep.memory.role = "harvester";
       return OK;
     }
+
+    // if (creep.memory.assignedToTower !== undefined) {
+    //   creep.say("->tower");
+    //   var tower = Game.getObjectById(creep.memory.assignedToTower);
+    //   if (tower !== null) {
+    //     this.replenish(creep, tower);
+    //     return OK;
+    //   }
+    // }
 
     var hostiles = (creep.room.find(FIND_HOSTILE_CREEPS).length > 0);
     var carryingNonEnergyResources = (_.reduce(creep.carry, (acc, v, k) => {
