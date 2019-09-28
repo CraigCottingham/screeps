@@ -8,6 +8,18 @@ var roleUpgrader = require("role.upgrader");
 var tower = require("tower");
 var worker = require("worker");
 
+// override functions:
+//   extendFunction: function(obj, funcName, replacementFunc, prefix) {
+//     if (!prefix) {
+//       prefix = "_"
+//     }
+//     obj.prototype[prefix+funcName] = obj.prototype[funcName];
+//     obj.prototype[funcName] = replacementFunc;
+//   }
+//
+// also, you can add functions to existing objects (classes?) like
+//   creep.prototype.foo = function (args) { ... }
+
 module.exports.loop = function () {
   // logger.logCreeps();
   logger.logAllRooms();
@@ -48,6 +60,7 @@ module.exports.loop = function () {
     });
     _.forEach(towers, (t) => tower.run(t));
 
+    // var towerCount = towers.length;
     var creepCount = room.find(FIND_MY_CREEPS).length;
     var containerCount = room.find(FIND_STRUCTURES, {
       filter: (s) => (s.structureType == STRUCTURE_CONTAINER)
@@ -97,6 +110,22 @@ module.exports.loop = function () {
         }
       }
     }
+
+    // if (creepCount >= ((containerCount * 2) + towerCount)) {
+    //   _.forEach(towers, (t) => {
+    //     if (room.find(FIND_MY_CREEPS, {
+    //       filter: (c) => (c.memory.assignedToTower == t.id)
+    //     }).length == 0) {
+    //       creep = t.pos.findClosestByRange(FIND_MY_CREEPS, {
+    //         filter: (c) => ((c.memory.parkedAt === undefined) && (c.memory.role != "scavenger") && (c.memory.role != "upgrader"))
+    //       });
+    //       if (creep !== null) {
+    //         creep.memory.assignedToTower = t.id;
+    //       }
+    //     }
+    //   });
+    // }
+
     // TODO: sum up all the things that need doing:
     //   * number of extensions
     //   * number of towers x 2
@@ -114,6 +143,8 @@ module.exports.loop = function () {
       if (room.find(FIND_MY_CREEPS).length < 20) {
         var parts = [WORK, MOVE, CARRY, MOVE];
         var availableEnergy = room.energyAvailable;
+
+        // console.log(`partsRangedRCL5 = ${_.sum(_.map(partsRangedRCL5, (p) => BODYPART_COST[p]))}`);
 
         // if hostiles and availableEnergy > 200
         //   parts = [WORK, CARRY, MOVE]
@@ -154,6 +185,9 @@ module.exports.loop = function () {
     Memory.endangered = true;
     for (var name in Game.creeps) {
       var creep = Game.creeps[name];
+      // if (creep.memory.assignedToTower !== undefined) {
+      //   creep.memory.assignedToTower = undefined;
+      // }
       if ((creep.memory.role != "harvester") && (creep.memory.role != "replenisher")) {
         creep.memory.role = "replenisher";
       }
@@ -166,6 +200,10 @@ module.exports.loop = function () {
   // TODO: dynamic dispatch, rather than role transitions hardcoded in roles
   for (var name in Game.creeps) {
     var creep = Game.creeps[name];
+
+    // if (creep.memory.assignedToTower !== undefined) {
+    //   console.log(`creep ${creep.id} is assigned to tower ${creep.memory.assignedToTower}`);
+    // }
 
     if (creep.memory.role === undefined) {
       creep.memory.role = "upgrader";
