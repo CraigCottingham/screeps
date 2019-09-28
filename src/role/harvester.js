@@ -98,11 +98,11 @@ var roleHarvester = {
       var container = creep.pos.findClosestByPath(FIND_STRUCTURES, {
         filter: (s) => (s.structureType == STRUCTURE_CONTAINER) && (_.sum(s.store) > 0)
       });
-      if (container === null) {
-        container = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-          filter: (s) => (s.structureType == STRUCTURE_STORAGE) && (_.sum(s.store) > 0)
-        });
-      }
+      // if (container === null) {
+      //   container = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+      //     filter: (s) => (s.structureType == STRUCTURE_STORAGE) && (_.sum(s.store) > 0)
+      //   });
+      // }
       if (container !== null) {
         this.withdraw(creep, container);
       }
