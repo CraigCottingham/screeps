@@ -53,18 +53,6 @@ module.exports.loop = function () {
       filter: (s) => (s.structureType == STRUCTURE_CONTAINER)
     }).length;
 
-    if (creepCount > (containerCount * 2)) {
-      if (room.find(FIND_MY_CREEPS, {
-        filter: (c) => (c.memory.role == "upgrader")
-      }).length == 0) {
-        creep = room.controller.pos.findClosestByRange(FIND_MY_CREEPS, {
-          filter: (c) => (c.memory.role != "harvester") && (c.carry.energy > 0)
-        })
-        if (creep !== null) {
-          creep.memory.role = "upgrader";
-        }
-      }
-
       var drops = room.find(FIND_DROPPED_RESOURCES);
       for (var drop of drops) {
         var amount = drop.amount;
@@ -96,6 +84,17 @@ module.exports.loop = function () {
       }
     }
 
+    if (creepCount > (containerCount * 2)) {
+      if (room.find(FIND_MY_CREEPS, {
+        filter: (c) => (c.memory.role == "upgrader")
+      }).length == 0) {
+        creep = room.controller.pos.findClosestByRange(FIND_MY_CREEPS, {
+          filter: (c) => (c.memory.role != "harvester") && (c.carry.energy > 0)
+        })
+        if (creep !== null) {
+          creep.memory.role = "upgrader";
+        }
+      }
     // TODO: sum up all the things that need doing:
     //   * number of extensions
     //   * number of towers x 2
