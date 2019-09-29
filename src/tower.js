@@ -29,7 +29,10 @@ var tower = {
           case STRUCTURE_RAMPART:
             return (s.hits < (Memory.defenseLowWater[tower.room.name][STRUCTURE_RAMPART] - 200));
           case STRUCTURE_WALL:
-            return (s.hits < (Memory.defenseLowWater[tower.room.name][STRUCTURE_WALL] - 200));
+            return (
+              (tower.room.find(FIND_MY_CREEPS, {filter: (c) => (c.memory.assignment == s.id)}).length == 0) &&
+              (s.hits < (Memory.defenseLowWater[tower.room.name][STRUCTURE_WALL] - 200))
+            );
           default:
             return (s.hits < (s.hitsMax - 200));
         }

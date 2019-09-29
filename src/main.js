@@ -1,4 +1,5 @@
 var logger = require("logger");
+var roleBreacher = require("role.breacher");
 var roleBuilder = require("role.builder");
 var roleHarvester = require("role.harvester");
 var roleRepairer = require("role.repairer");
@@ -33,32 +34,35 @@ module.exports.loop = function () {
   }
 
   //
-  // clean up memory structures
-  //
-
-  //
   // run objects
   //
 
-  // run towers
-
-  // look for tombstones/free resources
-  // if found and not already assigned to a worker
-  //   find closest unassigned worker with available capacity
-  //   if closest worker is closer than decay timeout
-  //     assign worker
-  //   else
-  //     find closest unassigned worker with any kind of carrying capacity
-  //     have it drop its carry and assign it
-
   for (var name in Game.rooms) {
     var room = Game.rooms[name];
+
+    // fetch arrays of structures for this room
+
+    var creeps = room.find(FIND_MY_CREEPS);
+    var containers = room.find(FIND_STRUCTURES, {
+      filter: (s) => (s.structureType == STRUCTURE_CONTAINER)
+    });
+    var drops = room.find(FIND_DROPPED_RESOURCES);
+    var flags = room.find(FIND_FLAGS);
+    var spawns = room.find(FIND_MY_SPAWNS);
+    var tombstones = room.find(FIND_TOMBSTONES);
+    var towers = room.find(FIND_STRUCTURES, {
+      filter: (s) => (s.structureType == STRUCTURE_TOWER)
+    });
+
+    // set up low water thresholds for defensive structures
 
     if (Memory.defenseLowWater[name] === undefined) {
       Memory.defenseLowWater[name] = {};
       Memory.defenseLowWater[name][STRUCTURE_RAMPART] = RAMPART_HITS;
       Memory.defenseLowWater[name][STRUCTURE_WALL] = WALL_HITS;
     }
+
+    // increment low water threshold for ramparts
 
     if (Memory.defenseLowWater[name][STRUCTURE_RAMPART] < RAMPART_HITS_MAX[room.controller.level]) {
       var ramparts = room.find(FIND_STRUCTURES, {
@@ -73,6 +77,8 @@ module.exports.loop = function () {
       }
     }
 
+    // increment low water threshold for walls
+
     if (Memory.defenseLowWater[name][STRUCTURE_WALL] < WALL_HITS_MAX) {
       var walls = room.find(FIND_STRUCTURES, {
         filter: (s) => (s.structureType == STRUCTURE_WALL)
@@ -86,19 +92,43 @@ module.exports.loop = function () {
       }
     }
 
-    var towers = room.find(FIND_STRUCTURES, {
-      filter: (s) => (s.structureType == STRUCTURE_TOWER)
-    });
+    // run towers
+
     _.forEach(towers, (t) => tower.run(t));
 
-    // var towerCount = towers.length;
-    var creepCount = room.find(FIND_MY_CREEPS).length;
-    var containerCount = room.find(FIND_STRUCTURES, {
-      filter: (s) => (s.structureType == STRUCTURE_CONTAINER)
-    }).length;
+    if (creeps.length > containers.length) {
+      // run flags
 
-    if (creepCount > containerCount) {
-      var drops = room.find(FIND_DROPPED_RESOURCES);
+      for (var flag of flags) {
+        if (flag.memory.assignedCreep !== undefined) {
+          var creep = Game.getObjectById(flag.memory.assignedCreep);
+          if ((creep === null) || (creep.memory.role != "breacher")) {
+            flag.memory.assignedCreep = undefined;
+          }
+        }
+
+        if (flag.memory.assignedWall === undefined) {
+          // assume that any flag placed on a wall indicates breaching
+          walls = room.lookForAt(LOOK_STRUCTURES, flag);
+          if (walls.length && (walls[0].structureType == STRUCTURE_WALL)) {
+            flag.memory.assignedWall = walls[0].id;
+          }
+        }
+
+        if ((flag.memory.assignedWall !== undefined) && (flag.memory.assignedCreep === undefined)) {
+          var creep = flag.pos.findClosestByRange(FIND_MY_CREEPS, {
+            filter: (c) => ((c.memory.assignment === undefined) && (c.memory.role == "harvester") && (_.sum(c.carry) == 0))
+          });
+          if (creep !== null) {
+            flag.memory.assignedCreep = creep.id;
+            creep.memory.assignment = flag.memory.assignedWall;
+            creep.memory.role = "breacher";
+          }
+        }
+      }
+
+      // run drops
+
       for (var drop of drops) {
         var amount = drop.amount;
         if (amount > 0) {
@@ -106,14 +136,14 @@ module.exports.loop = function () {
             filter: (c) => (_.sum(c.carry) < c.carryCapacity)
           });
           if (creep !== null) {
-            // console.log(`dropped resource ${drop.id} assigned to creep ${creep.id}`);
             creep.memory.assignment = drop.id;
             creep.memory.role = "scavenger";
           }
         }
       }
 
-      var tombstones = room.find(FIND_TOMBSTONES);
+      // run tombstones
+
       for (var tombstone of tombstones) {
         var amount = _.sum(tombstone.store);
         // var amount = tombstone.store[RESOURCE_ENERGY];
@@ -129,7 +159,8 @@ module.exports.loop = function () {
       }
     }
 
-    if (creepCount > (containerCount * 2)) {
+    if (creeps.length > (containers.length * 2)) {
+      // TODO: use creeps array already loaded
       if (room.find(FIND_MY_CREEPS, {
         filter: (c) => (c.memory.role == "upgrader")
       }).length == 0) {
@@ -142,7 +173,7 @@ module.exports.loop = function () {
       }
     }
 
-    // if (creepCount >= ((containerCount * 2) + towerCount)) {
+    // if (creeps.length >= ((containers.length * 2) + towers.length)) {
     //   _.forEach(towers, (t) => {
     //     if (room.find(FIND_MY_CREEPS, {
     //       filter: (c) => (c.memory.assignedToTower == t.id)
@@ -169,9 +200,12 @@ module.exports.loop = function () {
     //   * energy and/or energy capacity in the room
     //   * the current number (if very small, for instance -- see endangered flag)
 
-    var spawn = _.first(room.find(FIND_MY_SPAWNS))
+    // TODO: look for a spawn that isn't busy, instead of using the first?
+    //       Is it even possible to have more than one spawn per room?
+    var spawn = _.first(spawns);
     if (spawn !== undefined) {
-      if (room.find(FIND_MY_CREEPS).length < 20) {
+      // assumes all flags are for breaching
+      if (room.find(FIND_MY_CREEPS).length < (20 + room.find(FIND_FLAGS).length)) {
         var parts = [WORK, MOVE, CARRY, MOVE];
         var availableEnergy = room.energyAvailable;
 
@@ -179,33 +213,33 @@ module.exports.loop = function () {
 
         // if hostiles and availableEnergy > 200
         //   parts = [WORK, CARRY, MOVE]
-        if (availableEnergy > 750) {  // 500 + minimum creep build cost
-          parts = [WORK, MOVE, CARRY, MOVE, WORK, MOVE, CARRY, MOVE];
-        }
-        if (availableEnergy > 880) {  // 630 + minimum creep build cost
-          parts = [ATTACK, MOVE, WORK, MOVE, CARRY, MOVE, WORK, MOVE, CARRY, MOVE];
-        }
-        if (availableEnergy > 950) {  // 700 + minimum creep build cost
-          parts = [RANGED_ATTACK, MOVE, WORK, MOVE, CARRY, MOVE, WORK, MOVE, CARRY, MOVE];
-        }
-        if (availableEnergy > 2570) {  // 2320 + minimum  -- NPC melee, RCL >= 4
-          parts = [
-            TOUGH,  MOVE, TOUGH,         MOVE, TOUGH,         MOVE, TOUGH,         MOVE, TOUGH,  MOVE,
-            TOUGH,  MOVE, TOUGH,         MOVE, TOUGH,         MOVE, TOUGH,         MOVE, TOUGH,  MOVE,
-            TOUGH,  MOVE, TOUGH,         MOVE, TOUGH,         MOVE, TOUGH,         MOVE, TOUGH,  MOVE,
-            TOUGH,  MOVE, RANGED_ATTACK, MOVE, RANGED_ATTACK, MOVE, RANGED_ATTACK, MOVE, ATTACK, MOVE,
-            ATTACK, MOVE, WORK,          MOVE, CARRY,         MOVE, WORK,          MOVE, CARRY,  MOVE
-          ];
-        }
-        if (availableEnergy > 4360) {  // 4110 + minimum  -- NPC ranged, RCL >= 4
-          parts = [
-            TOUGH,         TOUGH,         TOUGH,         TOUGH,         TOUGH,         TOUGH,         MOVE,          MOVE,          MOVE,          MOVE,
-            MOVE,          MOVE,          MOVE,          MOVE,          MOVE,          MOVE,          MOVE,          MOVE,          MOVE,          MOVE,
-            MOVE,          MOVE,          MOVE,          MOVE,          MOVE,          MOVE,          MOVE,          MOVE,          MOVE,          MOVE,
-            RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK,
-            RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, WORK,          MOVE
-          ];
-        }
+        // if (availableEnergy > 750) {  // 500 + minimum creep build cost
+        //   parts = [WORK, MOVE, CARRY, MOVE, WORK, MOVE, CARRY, MOVE];
+        // }
+        // if (availableEnergy > 880) {  // 630 + minimum creep build cost
+        //   parts = [ATTACK, MOVE, WORK, MOVE, CARRY, MOVE, WORK, MOVE, CARRY, MOVE];
+        // }
+        // if (availableEnergy > 950) {  // 700 + minimum creep build cost
+        //   parts = [RANGED_ATTACK, MOVE, WORK, MOVE, CARRY, MOVE, WORK, MOVE, CARRY, MOVE];
+        // }
+        // if (availableEnergy > 2570) {  // 2320 + minimum  -- NPC melee, RCL >= 4
+        //   parts = [
+        //     TOUGH,  MOVE, TOUGH,         MOVE, TOUGH,         MOVE, TOUGH,         MOVE, TOUGH,  MOVE,
+        //     TOUGH,  MOVE, TOUGH,         MOVE, TOUGH,         MOVE, TOUGH,         MOVE, TOUGH,  MOVE,
+        //     TOUGH,  MOVE, TOUGH,         MOVE, TOUGH,         MOVE, TOUGH,         MOVE, TOUGH,  MOVE,
+        //     TOUGH,  MOVE, RANGED_ATTACK, MOVE, RANGED_ATTACK, MOVE, RANGED_ATTACK, MOVE, ATTACK, MOVE,
+        //     ATTACK, MOVE, WORK,          MOVE, CARRY,         MOVE, WORK,          MOVE, CARRY,  MOVE
+        //   ];
+        // }
+        // if (availableEnergy > 4360) {  // 4110 + minimum  -- NPC ranged, RCL >= 4
+        //   parts = [
+        //     TOUGH,         TOUGH,         TOUGH,         TOUGH,         TOUGH,         TOUGH,         MOVE,          MOVE,          MOVE,          MOVE,
+        //     MOVE,          MOVE,          MOVE,          MOVE,          MOVE,          MOVE,          MOVE,          MOVE,          MOVE,          MOVE,
+        //     MOVE,          MOVE,          MOVE,          MOVE,          MOVE,          MOVE,          MOVE,          MOVE,          MOVE,          MOVE,
+        //     RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK,
+        //     RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, WORK,          MOVE
+        //   ];
+        // }
 
         worker.spawn(spawn, parts);
       }
@@ -229,18 +263,19 @@ module.exports.loop = function () {
   }
 
   // TODO: dynamic dispatch, rather than role transitions hardcoded in roles
+  // * raise priority of replenishing extensions over building
+
   for (var name in Game.creeps) {
     var creep = Game.creeps[name];
-
-    // if (creep.memory.assignedToTower !== undefined) {
-    //   console.log(`creep ${creep.id} is assigned to tower ${creep.memory.assignedToTower}`);
-    // }
 
     if (creep.memory.role === undefined) {
       creep.memory.role = "upgrader";
     }
 
     switch (creep.memory.role) {
+      case "breacher":
+        roleBreacher.run(creep);
+        break;
       case "builder":
         roleBuilder.run(creep);
         break;
@@ -263,11 +298,23 @@ module.exports.loop = function () {
   }
 
   //
+  // clean up memory structures
+  //
+
+  //
   // clean up creep memory
   //
 
   for (var name in Memory.creeps) {
     if (!Game.creeps[name]) {
+      var ghost = Memory.creeps[name];
+
+      for (var flag of room.find(FIND_FLAGS)) {
+        if (flag.memory.assignedCreep == ghost.id) {
+          flag.memory.assignedCreep = undefined;
+        }
+      }
+
       delete Memory.creeps[name];
     }
   }
