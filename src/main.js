@@ -28,10 +28,9 @@ module.exports.loop = function () {
   // initialize memory structures
   //
 
-  Memory.defenses = {
-    walls:    1000000,  // 300000000 * 0.003 ; increase by 1000?
-    ramparts:  100000,  //  10000000 * 0.010 ; increase by 1000?
-  };
+  if (Memory.defenseLowWater === undefined) {
+    Memory.defenseLowWater = {};
+  }
 
   //
   // clean up memory structures
@@ -54,6 +53,38 @@ module.exports.loop = function () {
 
   for (var name in Game.rooms) {
     var room = Game.rooms[name];
+
+    if (Memory.defenseLowWater[name] === undefined) {
+      Memory.defenseLowWater[name] = {};
+      Memory.defenseLowWater[name][STRUCTURE_RAMPART] = RAMPART_HITS;
+      Memory.defenseLowWater[name][STRUCTURE_WALL] = WALL_HITS;
+    }
+
+    if (Memory.defenseLowWater[name][STRUCTURE_RAMPART] < RAMPART_HITS_MAX[room.controller.level]) {
+      var ramparts = room.find(FIND_STRUCTURES, {
+        filter: (s) => (s.structureType == STRUCTURE_RAMPART)
+      });
+      var newThreshold = _.min(ramparts, "hits").hits + 1000;
+      if (newThreshold > RAMPART_HITS_MAX[room.controller.level]) {
+        newThreshold = RAMPART_HITS_MAX[room.controller.level];
+      }
+      if (newThreshold > Memory.defenseLowWater[name][STRUCTURE_RAMPART]) {
+        Memory.defenseLowWater[name][STRUCTURE_RAMPART] = newThreshold;
+      }
+    }
+
+    if (Memory.defenseLowWater[name][STRUCTURE_WALL] < WALL_HITS_MAX) {
+      var walls = room.find(FIND_STRUCTURES, {
+        filter: (s) => (s.structureType == STRUCTURE_WALL)
+      });
+      var newThreshold = _.min(walls, "hits").hits + 1000;
+      if (newThreshold > WALL_HITS_MAX) {
+        newThreshold = WALL_HITS_MAX;
+      }
+      if (newThreshold > Memory.defenseLowWater[name][STRUCTURE_WALL]) {
+        Memory.defenseLowWater[name][STRUCTURE_WALL] = newThreshold;
+      }
+    }
 
     var towers = room.find(FIND_STRUCTURES, {
       filter: (s) => (s.structureType == STRUCTURE_TOWER)
