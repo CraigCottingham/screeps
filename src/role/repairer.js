@@ -18,7 +18,10 @@ var roleRepairer = {
           case STRUCTURE_RAMPART:
             return (s.hits < Memory.defenseLowWater[creep.room.name][STRUCTURE_RAMPART]);
           case STRUCTURE_WALL:
-            return (s.hits < Memory.defenseLowWater[creep.room.name][STRUCTURE_WALL]);
+            return (
+              (creep.room.find(FIND_MY_CREEPS, {filter: (c) => (c.memory.assignment == s.id)}).length == 0) &&
+              (s.hits < (Memory.defenseLowWater[creep.room.name][STRUCTURE_WALL]))
+            );
           default:
             return (s.hits < s.hitsMax);
         }
