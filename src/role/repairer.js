@@ -16,9 +16,9 @@ var roleRepairer = {
       filter: (s) => {
         switch (s.structureType) {
           case STRUCTURE_RAMPART:
-            return (s.hits < Memory.defenses.ramparts);
+            return (s.hits < Memory.defenseLowWater[creep.room.name][STRUCTURE_RAMPART]);
           case STRUCTURE_WALL:
-            return (s.hits < Memory.defenses.walls);
+            return (s.hits < Memory.defenseLowWater[creep.room.name][STRUCTURE_WALL]);
           default:
             return (s.hits < s.hitsMax);
         }
