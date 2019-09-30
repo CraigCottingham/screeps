@@ -251,6 +251,18 @@ module.exports.loop = function () {
 
         worker.spawn(spawn, parts);
       }
+
+      if (spawn.spawning === null) {
+        var pos = spawn.pos;
+        var creep = _.min(_.filter(creeps, (c) => (pos.isNearTo(c))), "ticksToLive");
+        // renewCreep() increases the creep's timer by a number of ticks according to the formula
+        //   floor(600/body_size)
+        // so don't renew the creep if we can't restore that many ticks
+        if ((creep !== Infinity) && (creep.ticksToLive < (CREEP_LIFE_TIME - _.floor(600 / creep.body.length)))) {
+          // creep.say("zap!");
+          spawn.renewCreep(creep);
+        }
+      }
     }
 
     if (room.energyAvailable < (extensions.length * EXTENSION_ENERGY_CAPACITY[room.controller.level])) {
