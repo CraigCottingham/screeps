@@ -19,56 +19,68 @@ var roleReplenisher = {
     //   }
     // }
 
-    var redAlert = Memory.redAlert[creep.room.name];
-    var carryingNonEnergyResources = (_.reduce(creep.carry, (acc, v, k) => {
-      if (k == "energy") {
-        return acc;
+    if ((_.sum(creep.carry) - creep.carry.energy) > 0) {
+      creep.say("~energy");
+
+      var target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+        filter: (s) => (s.structureType == STRUCTURE_STORAGE)
+      });
+      if (target !== null) {
+        this.replenish(creep, target);
+        return OK;
       }
-      else {
-        return acc + v;
+    }
+
+    if (Memory.endangered) {
+      var target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+        filter: (s) => ((s.structureType == STRUCTURE_EXTENSION) || (s.structureType == STRUCTURE_SPAWN)) && (s.energy < s.energyCapacity)
+      });
+      if (target !== null) {
+        this.replenish(creep, target);
+        return OK;
       }
-    }, 0) > 0);
+    }
+
+    if (Memory.redAlert[creep.room.name]) {
+      var target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+        filter: (s) => (s.structureType == STRUCTURE_TOWER) && (s.energy < s.energyCapacity)
+      });
+      if (target !== null) {
+        this.replenish(creep, target);
+        return OK;
+      }
+    }
+
+    var room = creep.room;
+    var extensions = room.find(FIND_STRUCTURES, {
+      filter: (s) => (s.structureType == STRUCTURE_EXTENSION)
+    });
+    if (room.energyAvailable < (extensions.length * EXTENSION_ENERGY_CAPACITY[room.controller.level])) {
+      var target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+        filter: (s) => (s.structureType == STRUCTURE_EXTENSION) && (s.energy < s.energyCapacity)
+      });
+      if (target !== null) {
+        this.replenish(creep, target);
+        return OK;
+      }
+    }
 
     var target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-      filter: (s) => {
-        if (carryingNonEnergyResources) {
-          creep.say("~energy");
-          // creep carrying resources other than energy
-          return ((s.structureType == STRUCTURE_STORAGE) && (_.sum(s.store) < s.storeCapacity));
-        }
-
-        if (Memory.endangered) {
-          return ((s.structureType == STRUCTURE_EXTENSION) || (s.structureType == STRUCTURE_SPAWN)) && (replenishable.energy(s) < replenishable.energyCapacity(s));
-        }
-        if (redAlert) {
-          return (s.structureType == STRUCTURE_TOWER) && (replenishable.energy(s) < replenishable.energyCapacity(s));
-        }
-
-        if (replenishable.isReplenishable(s)) {
-          if (replenishable.energy(s) >= replenishable.energyCapacity(s)) {
-            return false;
-          }
-          if (Memory.endangered) {
-            return ((s.structureType == STRUCTURE_EXTENSION) || (s.structureType == STRUCTURE_SPAWN));
-          }
-          else {
-            if ((s.structureType == STRUCTURE_TOWER) && (s.energy > (s.energyCapacity / 2))) {
-              return false;
-            }
-          }
-
-          return true;
-        }
-        else {
-          return false;
-        }
-      }
+      filter: (s) => (s.structureType == STRUCTURE_TOWER) && (s.energy < s.energyCapacity)
     });
-    if (target === null) {
-      creep.memory.role = "repairer";
-    }
-    else {
+    if (target !== null) {
       this.replenish(creep, target);
+      return OK;
+    }
+
+    // if we got this far, go replenish the storage
+
+    target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+      filter: (s) => (s.structureType == STRUCTURE_STORAGE)
+    });
+    if (target !== null) {
+      this.replenish(creep, target);
+      return OK;
     }
 
     return OK;
