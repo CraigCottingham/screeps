@@ -36,13 +36,9 @@ var roleHarvester = {
       redAlert = Memory.redAlert[creep.room.name];
 
       if (_.sum(creep.carry) >= creep.carryCapacity) {
-        if (redAlert) {
-          // creep.say("redalert");
-          creep.memory.role = "replenisher";
-          return OK;
-        }
+        // creep is full of energy and/or other resources
 
-        if (creep.carry.energy < creep.carryCapacity) {
+        if (redAlert || (creep.carry.energy < creep.carryCapacity)) {
           creep.memory.role = "replenisher";
         }
         else {
@@ -53,6 +49,8 @@ var roleHarvester = {
 
       var source = creep.pos.findClosestByPath(FIND_SOURCES);
       if (source !== null) {
+        // path to source is available
+
         worker.moveTo(creep, source);
         return OK;
       }
@@ -61,16 +59,27 @@ var roleHarvester = {
         filter: (s) => (s.structureType == STRUCTURE_CONTAINER) && (_.sum(s.store) >= s.storeCapacity)
       });
       if (fullContainer !== null) {
+        // path to full container is available
+
         // creep.say("milk");
         this.withdraw(creep, fullContainer);
         return OK;
       }
 
       if (redAlert) {
+        if (creep.carry.energy > 0) {
+          // creep is carrying energy, so go put it somewhere useful
+
+          creep.memory.role = "replenisher";
+          return OK;
+        }
+
         var container = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-          filter: (s) => (s.structureType == STRUCTURE_STORAGE) && (_.sum(s.store) > 0)
+          filter: (s) => (s.structureType == STRUCTURE_STORAGE) && (s.store.energy > 0)
         });
         if (container !== null) {
+          // there's energy available in the storage, so go get some
+
           this.withdraw(creep, container);
           return OK;
         }
@@ -79,13 +88,31 @@ var roleHarvester = {
       var container = creep.pos.findClosestByPath(FIND_STRUCTURES, {
         filter: (s) => (s.structureType == STRUCTURE_CONTAINER) && (_.sum(s.store) > 0)
       });
-      // if (container === null) {
-      //   container = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-      //     filter: (s) => (s.structureType == STRUCTURE_STORAGE) && (_.sum(s.store) > 0)
-      //   });
-      // }
       if (container !== null) {
+        // path to a non-empty container is available
+
         this.withdraw(creep, container);
+        return OK;
+      }
+
+      // container = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+      //   filter: (s) => (s.structureType == STRUCTURE_STORAGE) && (_.sum(s.store) > 0)
+      // });
+      // if (container !== null) {
+      //   // path to non-empty storage is available
+      //
+      //   this.withdraw(creep, container);
+      //   return OK;
+      // }
+
+      // idle
+      var spawn = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+        filter: (s) => (s.structureType == STRUCTURE_SPAWN)
+      });
+      if (spawn !== null) {
+        // creep.say("💤");
+        worker.moveTo(creep, spawn);
+        return OK;
       }
     }
 
