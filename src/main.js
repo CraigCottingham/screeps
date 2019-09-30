@@ -46,6 +46,7 @@ module.exports.loop = function () {
     // fetch arrays of structures for this room
 
     var creeps = room.find(FIND_MY_CREEPS);
+    var constructionSites = room.find(FIND_CONSTRUCTION_SITES);
     var containers = room.find(FIND_STRUCTURES, {
       filter: (s) => (s.structureType == STRUCTURE_CONTAINER)
     });
@@ -165,6 +166,17 @@ module.exports.loop = function () {
           }
         }
       }
+
+      // run construction sites
+
+      for (var site of constructionSites) {
+        var creep = site.pos.findClosestByPath(FIND_MY_CREEPS, {
+          filter: (c) => (c.carry.energy > 0)
+        });
+        if (creep !== null) {
+          creep.memory.role = "builder";
+        }
+      }
     }
 
     if (creeps.length > (containers.length * 2)) {
@@ -252,25 +264,17 @@ module.exports.loop = function () {
         worker.spawn(spawn, parts);
       }
 
-      if (spawn.spawning === null) {
-        var pos = spawn.pos;
-        var creep = _.min(_.filter(creeps, (c) => (pos.isNearTo(c))), "ticksToLive");
-        // renewCreep() increases the creep's timer by a number of ticks according to the formula
-        //   floor(600/body_size)
-        // so don't renew the creep if we can't restore that many ticks
-        if ((creep !== Infinity) && (creep.ticksToLive < (CREEP_LIFE_TIME - _.floor(600 / creep.body.length)))) {
-          // creep.say("zap!");
-          spawn.renewCreep(creep);
-        }
-      }
-    }
-
-    if (room.energyAvailable < (extensions.length * EXTENSION_ENERGY_CAPACITY[room.controller.level])) {
-      _.each(creeps, (c) => {
-        if (c.memory.role == "builder") {
-          c.memory.role = "replenisher";
-        }
-      });
+      // if (spawn.spawning === null) {
+      //   var pos = spawn.pos;
+      //   var creep = _.min(_.filter(creeps, (c) => (pos.isNearTo(c))), "ticksToLive");
+      //   // renewCreep() increases the creep's timer by a number of ticks according to the formula
+      //   //   floor(600/body_size)
+      //   // so don't renew the creep if we can't restore that many ticks
+      //   if ((creep !== Infinity) && (creep.ticksToLive < (CREEP_LIFE_TIME - _.floor(600 / creep.body.length)))) {
+      //     // creep.say("zap!");
+      //     spawn.renewCreep(creep);
+      //   }
+      // }
     }
   }
 
@@ -278,9 +282,6 @@ module.exports.loop = function () {
     Memory.endangered = true;
     for (var name in Game.creeps) {
       var creep = Game.creeps[name];
-      // if (creep.memory.assignedToTower !== undefined) {
-      //   creep.memory.assignedToTower = undefined;
-      // }
       if ((creep.memory.role != "harvester") && (creep.memory.role != "replenisher")) {
         creep.memory.role = "replenisher";
       }
@@ -291,8 +292,6 @@ module.exports.loop = function () {
   }
 
   // TODO: dynamic dispatch, rather than role transitions hardcoded in roles
-  // * raise priority of replenishing extensions over building
-
 
   for (var name in Game.creeps) {
     var creep = Game.creeps[name];
