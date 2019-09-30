@@ -11,7 +11,6 @@ var roleHarvester = {
       // creep.say("parked");
       var container = containers[0];
       creep.memory.parkedAt = container.id;
-      // creep.memory.assignedToTower = undefined;
 
       if (creep.carry.energy >= creep.carryCapacity) {
         var creepCount = creep.room.find(FIND_MY_CREEPS).length;
@@ -32,28 +31,14 @@ var roleHarvester = {
     }
     else {
       // not parked
-      // creep.memory.parkedAt = undefined;
-      hostiles = (creep.room.find(FIND_HOSTILE_CREEPS).length > 0);
+      creep.memory.parkedAt = undefined;
+
+      redAlert = Memory.redAlert[creep.room.name];
 
       if (_.sum(creep.carry) >= creep.carryCapacity) {
-        if (hostiles) {
-          // creep.say("redalert");
-          creep.memory.role = "replenisher";
-          return OK;
-        }
-      // var storage = null;
-      // if (creep.memory.assignedToTower !== undefined) {
-      //   if (Game.getObjectById(creep.memory.assignedToTower) !== null) {
-      //     storage = creep.room.find(FIND_STRUCTURES, {
-      //       filter: (s) => (s.structureType == STRUCTURE_STORAGE)
-      //     });
-      //   }
-      // }
+        // creep is full of energy and/or other resources
 
-        if (creep.carry.energy < creep.carryCapacity) {
-      // if (_.sum(creep.carry) >= creep.carryCapacity) {
-      //   // if ((storage !== null) || hostiles || (creep.carry.energy < creep.carryCapacity)) {
-      //   if (hostiles || (creep.carry.energy < creep.carryCapacity)) {
+        if (redAlert || (creep.carry.energy < creep.carryCapacity)) {
           creep.memory.role = "replenisher";
         }
         else {
@@ -62,17 +47,11 @@ var roleHarvester = {
         return OK;
       }
 
-      // if ((storage !== null) && (storage !== undefined)) {
-      //   creep.say("tower->");
-      //   // this.withdraw(creep, storage);
-      //   return OK;
-      // }
-
       var source = creep.pos.findClosestByPath(FIND_SOURCES);
       if (source !== null) {
+        // path to source is available
+
         worker.moveTo(creep, source);
-      // if ((source !== null) && (source !== undefined)) {
-      //   this.withdraw(creep, source);
         return OK;
       }
 
@@ -80,16 +59,27 @@ var roleHarvester = {
         filter: (s) => (s.structureType == STRUCTURE_CONTAINER) && (_.sum(s.store) >= s.storeCapacity)
       });
       if (fullContainer !== null) {
+        // path to full container is available
+
         // creep.say("milk");
         this.withdraw(creep, fullContainer);
         return OK;
       }
 
-      if (hostiles) {
+      if (redAlert) {
+        if (creep.carry.energy > 0) {
+          // creep is carrying energy, so go put it somewhere useful
+
+          creep.memory.role = "replenisher";
+          return OK;
+        }
+
         var container = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-          filter: (s) => (s.structureType == STRUCTURE_STORAGE) && (_.sum(s.store) > 0)
+          filter: (s) => (s.structureType == STRUCTURE_STORAGE) && (s.store.energy > 0)
         });
         if (container !== null) {
+          // there's energy available in the storage, so go get some
+
           this.withdraw(creep, container);
           return OK;
         }
@@ -98,13 +88,31 @@ var roleHarvester = {
       var container = creep.pos.findClosestByPath(FIND_STRUCTURES, {
         filter: (s) => (s.structureType == STRUCTURE_CONTAINER) && (_.sum(s.store) > 0)
       });
-      // if (container === null) {
-      //   container = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-      //     filter: (s) => (s.structureType == STRUCTURE_STORAGE) && (_.sum(s.store) > 0)
-      //   });
-      // }
       if (container !== null) {
+        // path to a non-empty container is available
+
         this.withdraw(creep, container);
+        return OK;
+      }
+
+      // container = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+      //   filter: (s) => (s.structureType == STRUCTURE_STORAGE) && (_.sum(s.store) > 0)
+      // });
+      // if (container !== null) {
+      //   // path to non-empty storage is available
+      //
+      //   this.withdraw(creep, container);
+      //   return OK;
+      // }
+
+      // idle
+      var spawn = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+        filter: (s) => (s.structureType == STRUCTURE_SPAWN)
+      });
+      if (spawn !== null) {
+        // creep.say("💤");
+        worker.moveTo(creep, spawn);
+        return OK;
       }
     }
 
@@ -197,10 +205,6 @@ var roleHarvester = {
 
   withdraw: function (creep, container) {
     var resourceType = RESOURCE_ENERGY;
-    // if (container.store === undefined) {
-    //   console.log("why is container.store undefined?")
-    //   return OK;
-    // }
 
     if (container.store.energy == 0) {
       resourceType = _.findKey(container.store, (r) => (r > 0));
