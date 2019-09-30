@@ -38,12 +38,7 @@ var roleHarvester = {
       if (_.sum(creep.carry) >= creep.carryCapacity) {
         // creep is full of energy and/or other resources
 
-        if (redAlert || (creep.carry.energy < creep.carryCapacity)) {
-          creep.memory.role = "replenisher";
-        }
-        else {
-          creep.memory.role = "builder";
-        }
+        creep.memory.role = "replenisher";
         return OK;
       }
 
@@ -222,7 +217,8 @@ var roleHarvester = {
         case ERR_INVALID_TARGET:
           break;
         case ERR_FULL:
-          creep.memory.role = "builder";
+          // creep.memory.role = "builder";
+          creep.memory.role = "replenisher";
           break;
         case ERR_NOT_IN_RANGE:
           worker.moveTo(creep, container);

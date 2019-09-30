@@ -46,6 +46,7 @@ module.exports.loop = function () {
     // fetch arrays of structures for this room
 
     var creeps = room.find(FIND_MY_CREEPS);
+    var constructionSites = room.find(FIND_CONSTRUCTION_SITES);
     var containers = room.find(FIND_STRUCTURES, {
       filter: (s) => (s.structureType == STRUCTURE_CONTAINER)
     });
@@ -165,6 +166,17 @@ module.exports.loop = function () {
           }
         }
       }
+
+      // run construction sites
+
+      for (var site of constructionSites) {
+        var creep = site.pos.findClosestByPath(FIND_MY_CREEPS, {
+          filter: (c) => (c.carry.energy > 0)
+        });
+        if (creep !== null) {
+          creep.memory.role = "builder";
+        }
+      }
     }
 
     if (creeps.length > (containers.length * 2)) {
@@ -264,23 +276,12 @@ module.exports.loop = function () {
       //   }
       // }
     }
-
-    // if (room.energyAvailable < (extensions.length * EXTENSION_ENERGY_CAPACITY[room.controller.level])) {
-    //   _.each(creeps, (c) => {
-    //     if (c.memory.role == "builder") {
-    //       c.memory.role = "replenisher";
-    //     }
-    //   });
-    // }
   }
 
   if (worker.totalCount() < 10) {
     Memory.endangered = true;
     for (var name in Game.creeps) {
       var creep = Game.creeps[name];
-      // if (creep.memory.assignedToTower !== undefined) {
-      //   creep.memory.assignedToTower = undefined;
-      // }
       if ((creep.memory.role != "harvester") && (creep.memory.role != "replenisher")) {
         creep.memory.role = "replenisher";
       }
@@ -291,8 +292,6 @@ module.exports.loop = function () {
   }
 
   // TODO: dynamic dispatch, rather than role transitions hardcoded in roles
-  // * raise priority of replenishing extensions over building
-
 
   for (var name in Game.creeps) {
     var creep = Game.creeps[name];
