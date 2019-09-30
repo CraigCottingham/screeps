@@ -19,7 +19,7 @@ var roleReplenisher = {
     //   }
     // }
 
-    var hostiles = (creep.room.find(FIND_HOSTILE_CREEPS).length > 0);
+    var redAlert = Memory.redAlert[creep.room.name];
     var carryingNonEnergyResources = (_.reduce(creep.carry, (acc, v, k) => {
       if (k == "energy") {
         return acc;
@@ -40,7 +40,7 @@ var roleReplenisher = {
         if (Memory.endangered) {
           return ((s.structureType == STRUCTURE_EXTENSION) || (s.structureType == STRUCTURE_SPAWN)) && (replenishable.energy(s) < replenishable.energyCapacity(s));
         }
-        if (hostiles) {
+        if (redAlert) {
           return (s.structureType == STRUCTURE_TOWER) && (replenishable.energy(s) < replenishable.energyCapacity(s));
         }
 

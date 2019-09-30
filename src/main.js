@@ -32,6 +32,9 @@ module.exports.loop = function () {
   if (Memory.defenseLowWater === undefined) {
     Memory.defenseLowWater = {};
   }
+  if (Memory.redAlert === undefined) {
+    Memory.redAlert = {};
+  }
 
   //
   // run objects
@@ -62,6 +65,8 @@ module.exports.loop = function () {
     var walls = room.find(FIND_STRUCTURES, {
       filter: (s) => (s.structureType == STRUCTURE_WALL)
     });
+
+    Memory.redAlert[name] = (room.find(FIND_HOSTILE_CREEPS).length > 0);
 
     // set up low water thresholds for defensive structures
 
@@ -214,7 +219,7 @@ module.exports.loop = function () {
 
         // console.log(`partsRangedRCL5 = ${_.sum(_.map(partsRangedRCL5, (p) => BODYPART_COST[p]))}`);
 
-        // if hostiles and availableEnergy > 200
+        // if redAlert and availableEnergy > 200
         //   parts = [WORK, CARRY, MOVE]
         // if (availableEnergy > 750) {  // 500 + minimum creep build cost
         //   parts = [WORK, MOVE, CARRY, MOVE, WORK, MOVE, CARRY, MOVE];
