@@ -231,6 +231,14 @@ module.exports.loop = function () {
 
         // console.log(`partsRangedRCL5 = ${_.sum(_.map(partsRangedRCL5, (p) => BODYPART_COST[p]))}`);
 
+        // TODO: limit # of "extra work workers" to # of containers?
+        //       if we're intending to limit these to containers, maybe eliminate the CARRY?
+        if (availableEnergy > 350) {
+          parts = [WORK, WORK, MOVE, CARRY, MOVE];
+        }
+
+        // TODO: create haulers (CARRY, MOVE)?
+
         // if redAlert and availableEnergy > 200
         //   parts = [WORK, CARRY, MOVE]
         // if (availableEnergy > 750) {  // 500 + minimum creep build cost
