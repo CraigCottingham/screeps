@@ -1,4 +1,3 @@
-var replenishable = require("replenishable");
 var worker = require("worker");
 
 var roleReplenisher = {
@@ -9,15 +8,6 @@ var roleReplenisher = {
       creep.memory.role = "harvester";
       return OK;
     }
-
-    // if (creep.memory.assignedToTower !== undefined) {
-    //   creep.say("->tower");
-    //   var tower = Game.getObjectById(creep.memory.assignedToTower);
-    //   if (tower !== null) {
-    //     this.replenish(creep, tower);
-    //     return OK;
-    //   }
-    // }
 
     if ((_.sum(creep.carry) - creep.carry.energy) > 0) {
       creep.say("~energy");

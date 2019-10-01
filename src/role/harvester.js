@@ -38,15 +38,11 @@ var roleHarvester = {
       if (_.sum(creep.carry) >= creep.carryCapacity) {
         // creep is full of energy and/or other resources
 
-        if (redAlert || (creep.carry.energy < creep.carryCapacity)) {
-          creep.memory.role = "replenisher";
-        }
-        else {
-          creep.memory.role = "builder";
-        }
+        creep.memory.role = "replenisher";
         return OK;
       }
 
+      // TODO: only move to source if creep has a WORK part
       var source = creep.pos.findClosestByPath(FIND_SOURCES);
       if (source !== null) {
         // path to source is available
@@ -106,14 +102,7 @@ var roleHarvester = {
       // }
 
       // idle
-      var spawn = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-        filter: (s) => (s.structureType == STRUCTURE_SPAWN)
-      });
-      if (spawn !== null) {
-        // creep.say("💤");
-        worker.moveTo(creep, spawn);
-        return OK;
-      }
+      creep.memory.role = "repairer";
     }
 
     return OK;
@@ -222,7 +211,8 @@ var roleHarvester = {
         case ERR_INVALID_TARGET:
           break;
         case ERR_FULL:
-          creep.memory.role = "builder";
+          // creep.memory.role = "builder";
+          creep.memory.role = "replenisher";
           break;
         case ERR_NOT_IN_RANGE:
           worker.moveTo(creep, container);

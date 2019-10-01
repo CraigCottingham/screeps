@@ -46,6 +46,7 @@ module.exports.loop = function () {
     // fetch arrays of structures for this room
 
     var creeps = room.find(FIND_MY_CREEPS);
+    var constructionSites = room.find(FIND_CONSTRUCTION_SITES);
     var containers = room.find(FIND_STRUCTURES, {
       filter: (s) => (s.structureType == STRUCTURE_CONTAINER)
     });
@@ -76,28 +77,32 @@ module.exports.loop = function () {
       Memory.defenseLowWater[name][STRUCTURE_WALL] = WALL_HITS;
     }
 
-    // increment low water threshold for ramparts
+    if (Memory.triggerAutoincrementThreshold) {
+      // autoincrement low water threshold for ramparts
 
-    if (Memory.defenseLowWater[name][STRUCTURE_RAMPART] < RAMPART_HITS_MAX[room.controller.level]) {
-      var newThreshold = _.min(ramparts, "hits").hits + 1000;
-      if (newThreshold > RAMPART_HITS_MAX[room.controller.level]) {
-        newThreshold = RAMPART_HITS_MAX[room.controller.level];
+      if (Memory.defenseLowWater[name][STRUCTURE_RAMPART] < RAMPART_HITS_MAX[room.controller.level]) {
+        var newThreshold = _.min(ramparts, "hits").hits + 1000;
+        if (newThreshold > RAMPART_HITS_MAX[room.controller.level]) {
+          newThreshold = RAMPART_HITS_MAX[room.controller.level];
+        }
+        if (newThreshold > Memory.defenseLowWater[name][STRUCTURE_RAMPART]) {
+          Memory.defenseLowWater[name][STRUCTURE_RAMPART] = newThreshold;
+        }
       }
-      if (newThreshold > Memory.defenseLowWater[name][STRUCTURE_RAMPART]) {
-        Memory.defenseLowWater[name][STRUCTURE_RAMPART] = newThreshold;
-      }
-    }
 
-    // increment low water threshold for walls
+      // autoincrement low water threshold for walls
 
-    if (Memory.defenseLowWater[name][STRUCTURE_WALL] < WALL_HITS_MAX) {
-      var newThreshold = _.min(walls, "hits").hits + 1000;
-      if (newThreshold > WALL_HITS_MAX) {
-        newThreshold = WALL_HITS_MAX;
+      if (Memory.defenseLowWater[name][STRUCTURE_WALL] < WALL_HITS_MAX) {
+        var newThreshold = _.min(walls, "hits").hits + 1000;
+        if (newThreshold > WALL_HITS_MAX) {
+          newThreshold = WALL_HITS_MAX;
+        }
+        if (newThreshold > Memory.defenseLowWater[name][STRUCTURE_WALL]) {
+          Memory.defenseLowWater[name][STRUCTURE_WALL] = newThreshold;
+        }
       }
-      if (newThreshold > Memory.defenseLowWater[name][STRUCTURE_WALL]) {
-        Memory.defenseLowWater[name][STRUCTURE_WALL] = newThreshold;
-      }
+
+      Memory.triggerAutoincrementThreshold = undefined;
     }
 
     // run towers
@@ -165,6 +170,17 @@ module.exports.loop = function () {
           }
         }
       }
+
+      // run construction sites
+
+      for (var site of constructionSites) {
+        var creep = site.pos.findClosestByPath(FIND_MY_CREEPS, {
+          filter: (c) => ((c.memory.parkedAt === undefined) && (c.carry.energy > 0))
+        });
+        if (creep !== null) {
+          creep.memory.role = "builder";
+        }
+      }
     }
 
     if (creeps.length > (containers.length * 2)) {
@@ -173,7 +189,7 @@ module.exports.loop = function () {
         filter: (c) => (c.memory.role == "upgrader")
       }).length == 0) {
         creep = room.controller.pos.findClosestByRange(FIND_MY_CREEPS, {
-          filter: (c) => (c.memory.role != "harvester") && (c.carry.energy > 0)
+          filter: (c) => (c.memory.parkedAt === undefined) && (c.carry.energy > 0)
         })
         if (creep !== null) {
           creep.memory.role = "upgrader";
@@ -219,6 +235,14 @@ module.exports.loop = function () {
 
         // console.log(`partsRangedRCL5 = ${_.sum(_.map(partsRangedRCL5, (p) => BODYPART_COST[p]))}`);
 
+        // TODO: limit # of "extra work workers" to # of containers?
+        //       if we're intending to limit these to containers, maybe eliminate the CARRY?
+        if (availableEnergy > 350) {
+          parts = [WORK, WORK, MOVE, CARRY, MOVE];
+        }
+
+        // TODO: create haulers (CARRY, MOVE)?
+
         // if redAlert and availableEnergy > 200
         //   parts = [WORK, CARRY, MOVE]
         // if (availableEnergy > 750) {  // 500 + minimum creep build cost
@@ -252,17 +276,17 @@ module.exports.loop = function () {
         worker.spawn(spawn, parts);
       }
 
-      if (spawn.spawning === null) {
-        var pos = spawn.pos;
-        var creep = _.min(_.filter(creeps, (c) => (pos.isNearTo(c))), "ticksToLive");
-        // renewCreep() increases the creep's timer by a number of ticks according to the formula
-        //   floor(600/body_size)
-        // so don't renew the creep if we can't restore that many ticks
-        if ((creep !== Infinity) && (creep.ticksToLive < (CREEP_LIFE_TIME - _.floor(600 / creep.body.length)))) {
-          // creep.say("zap!");
-          spawn.renewCreep(creep);
-        }
-      }
+      // if (spawn.spawning === null) {
+      //   var pos = spawn.pos;
+      //   var creep = _.min(_.filter(creeps, (c) => (pos.isNearTo(c))), "ticksToLive");
+      //   // renewCreep() increases the creep's timer by a number of ticks according to the formula
+      //   //   floor(600/body_size)
+      //   // so don't renew the creep if we can't restore that many ticks
+      //   if ((creep !== Infinity) && (creep.ticksToLive < (CREEP_LIFE_TIME - _.floor(600 / creep.body.length)))) {
+      //     // creep.say("zap!");
+      //     spawn.renewCreep(creep);
+      //   }
+      // }
     }
 
     if (room.energyAvailable < (extensions.length * EXTENSION_ENERGY_CAPACITY[room.controller.level])) {
@@ -278,9 +302,6 @@ module.exports.loop = function () {
     Memory.endangered = true;
     for (var name in Game.creeps) {
       var creep = Game.creeps[name];
-      // if (creep.memory.assignedToTower !== undefined) {
-      //   creep.memory.assignedToTower = undefined;
-      // }
       if ((creep.memory.role != "harvester") && (creep.memory.role != "replenisher")) {
         creep.memory.role = "replenisher";
       }
@@ -291,8 +312,6 @@ module.exports.loop = function () {
   }
 
   // TODO: dynamic dispatch, rather than role transitions hardcoded in roles
-  // * raise priority of replenishing extensions over building
-
 
   for (var name in Game.creeps) {
     var creep = Game.creeps[name];

@@ -9,35 +9,21 @@ var roleRepairer = {
       return OK;
     }
 
+    var target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+      filter: (s) => (s.structureType != STRUCTURE_RAMPART) && (s.structureType != STRUCTURE_WALL) && (s.hits < s.hitsMax)
+    });
+    if (target !== null) {
+      this.repair(creep, target);
+      return OK;
+    }
+
     var tower = creep.pos.findClosestByPath(FIND_STRUCTURES, {
       filter: (s) => ((s.structureType == STRUCTURE_TOWER) && (s.energy < s.energyCapacity))
     });
-    var target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-      filter: (s) => {
-        switch (s.structureType) {
-          case STRUCTURE_RAMPART:
-            return (s.hits < Memory.defenseLowWater[creep.room.name][STRUCTURE_RAMPART]);
-          case STRUCTURE_WALL:
-            return (
-              (creep.room.find(FIND_MY_CREEPS, {filter: (c) => (c.memory.assignment == s.id)}).length == 0) &&
-              (s.hits < (Memory.defenseLowWater[creep.room.name][STRUCTURE_WALL]))
-            );
-          default:
-            return (s.hits < s.hitsMax);
-        }
-      }
-    });
-    if ((target === null) && (tower === null)) {
-      creep.memory.role = "upgrader";
+    if (tower !== null) {
+      this.replenishTower(creep, tower);
       return OK;
     }
-    if ((tower !== null) && ((target === null) || (creep.pos.getRangeTo(tower) <= creep.pos.getRangeTo(target)))) {
-      this.replenish_tower(creep, tower);
-
-      return OK;
-    }
-
-    this.repair(creep, target);
 
     return OK;
   },
@@ -64,7 +50,7 @@ var roleRepairer = {
     }
   },
 
-  replenish_tower: function (creep, tower) {
+  replenishTower: function (creep, tower) {
     switch (creep.transfer(tower, RESOURCE_ENERGY)) {
       case ERR_NOT_OWNER:
         break;

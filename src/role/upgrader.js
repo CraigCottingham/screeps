@@ -11,7 +11,7 @@ var roleUpgrader = {
 
     var target = creep.room.controller;
     if (target === undefined) {
-      creep.memory.role = "builder";
+      creep.memory.role = "replenisher";
     }
     else {
       this.upgrade(creep, creep.room.controller);
