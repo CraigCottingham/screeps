@@ -146,7 +146,7 @@ module.exports.loop = function () {
         var amount = drop.amount;
         if (amount > 0) {
           var creep = drop.pos.findClosestByPath(FIND_MY_CREEPS, {
-            filter: (c) => (_.sum(c.carry) < c.carryCapacity)
+            filter: (c) => (c.memory.parkedAt === undefined) && (_.sum(c.carry) < c.carryCapacity)
           });
           if (creep !== null) {
             creep.memory.assignment = drop.id;
@@ -162,7 +162,7 @@ module.exports.loop = function () {
         // var amount = tombstone.store[RESOURCE_ENERGY];
         if (amount > 0) {
           var creep = tombstone.pos.findClosestByPath(FIND_MY_CREEPS, {
-            filter: (c) => (_.sum(c.carry) < c.carryCapacity)
+            filter: (c) => (creep.memory.parkedAt === undefined) && (_.sum(c.carry) < c.carryCapacity)
           });
           if (creep !== null) {
             creep.memory.assignment = tombstone.id;
