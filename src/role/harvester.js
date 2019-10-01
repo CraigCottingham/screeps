@@ -42,6 +42,7 @@ var roleHarvester = {
         return OK;
       }
 
+      // TODO: only move to source if creep has a WORK part
       var source = creep.pos.findClosestByPath(FIND_SOURCES);
       if (source !== null) {
         // path to source is available
@@ -101,14 +102,7 @@ var roleHarvester = {
       // }
 
       // idle
-      var spawn = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-        filter: (s) => (s.structureType == STRUCTURE_SPAWN)
-      });
-      if (spawn !== null) {
-        // creep.say("💤");
-        worker.moveTo(creep, spawn);
-        return OK;
-      }
+      creep.memory.role = "repairer";
     }
 
     return OK;

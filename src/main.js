@@ -175,7 +175,7 @@ module.exports.loop = function () {
 
       for (var site of constructionSites) {
         var creep = site.pos.findClosestByPath(FIND_MY_CREEPS, {
-          filter: (c) => (c.carry.energy > 0)
+          filter: (c) => ((c.memory.parkedAt === undefined) && (c.carry.energy > 0))
         });
         if (creep !== null) {
           creep.memory.role = "builder";
@@ -189,7 +189,7 @@ module.exports.loop = function () {
         filter: (c) => (c.memory.role == "upgrader")
       }).length == 0) {
         creep = room.controller.pos.findClosestByRange(FIND_MY_CREEPS, {
-          filter: (c) => (c.memory.role != "harvester") && (c.carry.energy > 0)
+          filter: (c) => (c.memory.parkedAt === undefined) && (c.carry.energy > 0)
         })
         if (creep !== null) {
           creep.memory.role = "upgrader";
