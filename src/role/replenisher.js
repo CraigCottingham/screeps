@@ -1,4 +1,3 @@
-var replenishable = require("replenishable");
 var worker = require("worker");
 
 var roleReplenisher = {
