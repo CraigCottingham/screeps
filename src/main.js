@@ -288,6 +288,14 @@ module.exports.loop = function () {
       //   }
       // }
     }
+
+    if (room.energyAvailable < (extensions.length * EXTENSION_ENERGY_CAPACITY[room.controller.level])) {
+      _.each(creeps, (c) => {
+        if (c.memory.role == "builder") {
+          c.memory.role = "replenisher";
+        }
+      });
+    }
   }
 
   if (worker.totalCount() < 10) {
