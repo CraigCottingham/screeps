@@ -53,6 +53,11 @@ var tower = {
       return OK;
     }
 
+    // if the tower is full up on energy, bump the low water thresholds
+    if (tower.energy >= tower.energyCapacity) {
+      Memory.triggerAutoincrementThreshold = true;
+    }
+
     return OK;
   }
 }

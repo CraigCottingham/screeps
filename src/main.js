@@ -77,28 +77,32 @@ module.exports.loop = function () {
       Memory.defenseLowWater[name][STRUCTURE_WALL] = WALL_HITS;
     }
 
-    // increment low water threshold for ramparts
+    if (Memory.triggerAutoincrementThreshold) {
+      // autoincrement low water threshold for ramparts
 
-    if (Memory.defenseLowWater[name][STRUCTURE_RAMPART] < RAMPART_HITS_MAX[room.controller.level]) {
-      var newThreshold = _.min(ramparts, "hits").hits + 1000;
-      if (newThreshold > RAMPART_HITS_MAX[room.controller.level]) {
-        newThreshold = RAMPART_HITS_MAX[room.controller.level];
+      if (Memory.defenseLowWater[name][STRUCTURE_RAMPART] < RAMPART_HITS_MAX[room.controller.level]) {
+        var newThreshold = _.min(ramparts, "hits").hits + 1000;
+        if (newThreshold > RAMPART_HITS_MAX[room.controller.level]) {
+          newThreshold = RAMPART_HITS_MAX[room.controller.level];
+        }
+        if (newThreshold > Memory.defenseLowWater[name][STRUCTURE_RAMPART]) {
+          Memory.defenseLowWater[name][STRUCTURE_RAMPART] = newThreshold;
+        }
       }
-      if (newThreshold > Memory.defenseLowWater[name][STRUCTURE_RAMPART]) {
-        Memory.defenseLowWater[name][STRUCTURE_RAMPART] = newThreshold;
-      }
-    }
 
-    // increment low water threshold for walls
+      // autoincrement low water threshold for walls
 
-    if (Memory.defenseLowWater[name][STRUCTURE_WALL] < WALL_HITS_MAX) {
-      var newThreshold = _.min(walls, "hits").hits + 1000;
-      if (newThreshold > WALL_HITS_MAX) {
-        newThreshold = WALL_HITS_MAX;
+      if (Memory.defenseLowWater[name][STRUCTURE_WALL] < WALL_HITS_MAX) {
+        var newThreshold = _.min(walls, "hits").hits + 1000;
+        if (newThreshold > WALL_HITS_MAX) {
+          newThreshold = WALL_HITS_MAX;
+        }
+        if (newThreshold > Memory.defenseLowWater[name][STRUCTURE_WALL]) {
+          Memory.defenseLowWater[name][STRUCTURE_WALL] = newThreshold;
+        }
       }
-      if (newThreshold > Memory.defenseLowWater[name][STRUCTURE_WALL]) {
-        Memory.defenseLowWater[name][STRUCTURE_WALL] = newThreshold;
-      }
+
+      Memory.triggerAutoincrementThreshold = undefined;
     }
 
     // run towers
