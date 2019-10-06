@@ -55,8 +55,18 @@ var roleReplenisher = {
       }
     }
 
-    var target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+    var target;
+
+    target = creep.pos.findClosestByRange(FIND_STRUCTURES, {
       filter: (s) => (s.structureType == STRUCTURE_TOWER) && (s.energy < s.energyCapacity)
+    });
+    if ((target !== null) && creep.pos.isNearTo(target)) {
+      this.replenish(creep, target);
+      return OK;
+    }
+
+    target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+      filter: (s) => (s.structureType == STRUCTURE_TOWER) && (s.energy <= (s.energyCapacity - CARRY_CAPACITY))
     });
     if (target !== null) {
       this.replenish(creep, target);

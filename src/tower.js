@@ -28,10 +28,21 @@ var tower = {
       return OK;
     }
 
-    // repair new structures up to a minimum safe level (so they don't decay away)
-    // (and yes I'm aware that walls don't decay)
+    // repair new ramparts up to a minimum safe level (so they don't decay away)
     target = pos.findClosestByRange(FIND_STRUCTURES, {
-      filter: (s) => ((s.structureType == STRUCTURE_RAMPART) || (s.structureType == STRUCTURE_WALL)) && (s.hits <= (RAMPART_DECAY_AMOUNT * 5))
+      filter: (s) => (s.structureType == STRUCTURE_RAMPART) && (s.hits <= (RAMPART_DECAY_AMOUNT * 5))
+    });
+    if (target !== null) {
+      tower.repair(target);
+      return OK;
+    }
+
+    // repair new walls up to a minimum safe level
+    // (yes, I'm aware walls don't decay, but it's as good an initial level as any)
+    target = pos.findClosestByRange(FIND_STRUCTURES, {
+      filter: (s) => (s.structureType == STRUCTURE_WALL) &&
+                     (s.hits <= (RAMPART_DECAY_AMOUNT * 5)) &&
+                     (tower.room.find(FIND_MY_CREEPS, {filter: (c) => (c.memory.assignment == s.id)}).length == 0)
     });
     if (target !== null) {
       tower.repair(target);
@@ -60,7 +71,9 @@ var tower = {
     target = pos.findClosestByRange(FIND_STRUCTURES, {
       // TODO: filter out walls being breached?
       //       (tower.room.find(FIND_MY_CREEPS, {filter: (c) => (c.memory.assignment == s.id)}).length == 0)
-      filter: (s) => (s.structureType == STRUCTURE_WALL) && (s.hits < (Memory.defenseLowWater[tower.room.name][STRUCTURE_WALL] - (TOWER_POWER_REPAIR * TOWER_FALLOFF)))
+      filter: (s) => (s.structureType == STRUCTURE_WALL) &&
+                     (s.hits < (Memory.defenseLowWater[tower.room.name][STRUCTURE_WALL] - (TOWER_POWER_REPAIR * TOWER_FALLOFF))) &&
+                     (tower.room.find(FIND_MY_CREEPS, {filter: (c) => (c.memory.assignment == s.id)}).length == 0)
     });
     if (target !== null) {
       tower.repair(target);
