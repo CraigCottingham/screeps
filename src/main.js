@@ -21,6 +21,27 @@ var worker = require("worker");
 // also, you can add functions to existing objects (classes?) like
 //   creep.prototype.foo = function (args) { ... }
 
+// fun fact:
+//   a = Game.cpu.getUsed(); for (let creepName in Game.creeps) Game.creeps[creepName].memory.abc; console.log(Game.cpu.getUsed() - a);
+// uses about 0.1 CPU, while
+//   a = Game.cpu.getUsed(); for (let creepName in Game.creeps) Memory.creeps[Game.creeps[creepName].name].abc; console.log(Game.cpu.getUsed() - a);
+// uses about 0.025 CPU
+// suggested by Tigga in #cpu-clinic:
+
+// Object.defineProperty(Creep.prototype, 'mem', {
+//   get: function() {
+//     return Memory.creeps[this.name] = Memory.creeps[this.name] || {};
+//   },
+//   set: function(value) {
+//     Memory.creeps[this.name] = value
+//   },
+//   configurable: true,
+// });
+//
+// Creep.prototype.initTick = function() {
+//   this.mem = Memory.creeps[this.name];
+// // ^^^ what is this initTick() and how is it called?
+
 module.exports.loop = function () {
   // logger.logCreeps();
   logger.logAllRooms();
@@ -130,7 +151,7 @@ module.exports.loop = function () {
 
         if ((flag.memory.assignedWall !== undefined) && (flag.memory.assignedCreep === undefined)) {
           var creep = flag.pos.findClosestByRange(FIND_MY_CREEPS, {
-            filter: (c) => ((c.memory.assignment === undefined) && (c.memory.role == "harvester") && (_.sum(c.carry) == 0))
+            filter: (c) => (c.memory.parkedAt === undefined) && (c.memory.assignment === undefined) && (c.memory.role == "harvester") && (_.sum(c.carry) == 0)
           });
           if (creep !== null) {
             flag.memory.assignedCreep = creep.id;
@@ -162,7 +183,7 @@ module.exports.loop = function () {
         // var amount = tombstone.store[RESOURCE_ENERGY];
         if (amount > 0) {
           var creep = tombstone.pos.findClosestByPath(FIND_MY_CREEPS, {
-            filter: (c) => (creep.memory.parkedAt === undefined) && (_.sum(c.carry) < c.carryCapacity)
+            filter: (c) => (c.memory.parkedAt === undefined) && (_.sum(c.carry) < c.carryCapacity)
           });
           if (creep !== null) {
             creep.memory.assignment = tombstone.id;
