@@ -367,5 +367,25 @@ module.exports.loop = function () {
     }
   }
 
+  //
+  // clean up flag memory
+  //
+
+  for (var name in Memory.flags) {
+    if (!Game.flags[name]) {
+      var ghost = Memory.flags[name];
+      if (ghost.memory) {
+        if (ghost.memory.assignedCreep !== undefined) {
+          creep = Game.getObjectById(ghost.memory.assignedCreep);
+          if (creep !== null) {
+            creep.memory.assignment = undefined;
+          }
+        }
+      }
+
+      delete Memory.flags[name];
+    }
+  }
+
   logger.logCPU();
 }
