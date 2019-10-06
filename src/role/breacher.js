@@ -2,7 +2,7 @@ var worker = require("worker");
 
 var roleBreacher = {
   run: function (creep) {
-    creep.say("breach");
+    // creep.say("breach");
 
     if (creep.memory.assignment === undefined) {
       creep.memory.role = "harvester";
