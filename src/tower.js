@@ -58,9 +58,10 @@ let tower = {
     }
 
     // repair other structures (besides ramparts and walls)
-    target = pos.findClosestByRange(FIND_STRUCTURES, {
+    let allOthers = room.find(FIND_STRUCTURES, {
       filter: (s) => (s.structureType != STRUCTURE_RAMPART) && (s.structureType != STRUCTURE_WALL) && (s.hits < (s.hitsMax - (TOWER_POWER_REPAIR * TOWER_FALLOFF)))
     });
+    target = _.min(allOthers, (s) => (s.hits));
     if (target !== null) {
       tower.repair(target);
       return OK;
