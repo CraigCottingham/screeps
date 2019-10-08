@@ -2,14 +2,14 @@ const worker = require("worker");
 
 var logger = {
   logCPU: function() {
-    if (Memory.enableLogging.cpu !== undefined) {
+    if (Memory.enableLogging.cpu) {
       var cpu = Game.cpu;
       console.log(`CPU: used=${cpu.getUsed()} limit=${cpu.limit} tickLimit=${cpu.tickLimit}  bucket=${cpu.bucket}`);
     }
   },
 
   logCreeps: function() {
-    if (Memory.enableLogging.creeps !== undefined) {
+    if (Memory.enableLogging.creeps) {
       console.log(`Creeps: active=${worker.activeCount()} spawning=${worker.spawningCount()} dead=${worker.deadCount()}`);
     }
   },
