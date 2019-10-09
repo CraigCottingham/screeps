@@ -1,13 +1,13 @@
-var logger = require("logger");
-var roleBreacher = require("role.breacher");
-var roleBuilder = require("role.builder");
-var roleHarvester = require("role.harvester");
-var roleRepairer = require("role.repairer");
-var roleReplenisher = require("role.replenisher");
-var roleScavenger = require("role.scavenger");
-var roleUpgrader = require("role.upgrader");
-var tower = require("tower");
-var worker = require("worker");
+let logger = require("logger");
+let roleBreacher = require("role.breacher");
+let roleBuilder = require("role.builder");
+let roleHarvester = require("role.harvester");
+let roleRepairer = require("role.repairer");
+let roleReplenisher = require("role.replenisher");
+let roleScavenger = require("role.scavenger");
+let roleUpgrader = require("role.upgrader");
+let tower = require("tower");
+let worker = require("worker");
 
 // override functions:
 //   extendFunction: function(obj, funcName, replacementFunc, prefix) {
@@ -67,30 +67,30 @@ module.exports.loop = function () {
   // run objects
   //
 
-  for (var name in Game.rooms) {
-    var room = Game.rooms[name];
+  for (let name in Game.rooms) {
+    let room = Game.rooms[name];
 
     // fetch arrays of structures for this room
 
-    var creeps = room.find(FIND_MY_CREEPS);
-    var constructionSites = room.find(FIND_CONSTRUCTION_SITES);
-    var containers = room.find(FIND_STRUCTURES, {
+    let creeps = room.find(FIND_MY_CREEPS);
+    let constructionSites = room.find(FIND_CONSTRUCTION_SITES);
+    let containers = room.find(FIND_STRUCTURES, {
       filter: (s) => (s.structureType == STRUCTURE_CONTAINER)
     });
-    var drops = room.find(FIND_DROPPED_RESOURCES);
-    var extensions = room.find(FIND_STRUCTURES, {
+    let drops = room.find(FIND_DROPPED_RESOURCES);
+    let extensions = room.find(FIND_STRUCTURES, {
       filter: (s) => (s.structureType == STRUCTURE_EXTENSION)
     });
-    var flags = room.find(FIND_FLAGS);
-    var ramparts = room.find(FIND_STRUCTURES, {
+    let flags = room.find(FIND_FLAGS);
+    let ramparts = room.find(FIND_STRUCTURES, {
       filter: (s) => (s.structureType == STRUCTURE_RAMPART)
     });
-    var spawns = room.find(FIND_MY_SPAWNS);
-    var tombstones = room.find(FIND_TOMBSTONES);
-    var towers = room.find(FIND_STRUCTURES, {
+    let spawns = room.find(FIND_MY_SPAWNS);
+    let tombstones = room.find(FIND_TOMBSTONES);
+    let towers = room.find(FIND_STRUCTURES, {
       filter: (s) => (s.structureType == STRUCTURE_TOWER)
     });
-    var walls = room.find(FIND_STRUCTURES, {
+    let walls = room.find(FIND_STRUCTURES, {
       filter: (s) => (s.structureType == STRUCTURE_WALL)
     });
 
@@ -107,7 +107,7 @@ module.exports.loop = function () {
     if (Memory.triggerAutoincrementThreshold[name]) {
       // autoincrement low water threshold for ramparts
       if (Memory.defenseLowWater[name][STRUCTURE_RAMPART] < RAMPART_HITS_MAX[room.controller.level]) {
-        var newThreshold = _.min(ramparts, "hits").hits + 1000;
+        let newThreshold = _.min(ramparts, "hits").hits + 1000;
         if (newThreshold > RAMPART_HITS_MAX[room.controller.level]) {
           newThreshold = RAMPART_HITS_MAX[room.controller.level];
         }
@@ -118,7 +118,7 @@ module.exports.loop = function () {
 
       // autoincrement low water threshold for walls
       if (Memory.defenseLowWater[name][STRUCTURE_WALL] < WALL_HITS_MAX) {
-        var newThreshold = _.min(walls, "hits").hits + 1000;
+        let newThreshold = _.min(walls, "hits").hits + 1000;
         if (newThreshold > WALL_HITS_MAX) {
           newThreshold = WALL_HITS_MAX;
         }
@@ -139,10 +139,10 @@ module.exports.loop = function () {
 
       // run drops
 
-      for (var drop of drops) {
-        var amount = drop.amount;
+      for (let drop of drops) {
+        let amount = drop.amount;
         if (amount > 0) {
-          var creep = drop.pos.findClosestByPath(FIND_MY_CREEPS, {
+          let creep = drop.pos.findClosestByPath(FIND_MY_CREEPS, {
             filter: (c) => (c.memory.parkedAt === undefined) && (_.sum(c.carry) < c.carryCapacity)
           });
           if (creep !== null) {
@@ -154,11 +154,11 @@ module.exports.loop = function () {
 
       // run tombstones
 
-      for (var tombstone of tombstones) {
-        var amount = _.sum(tombstone.store);
-        // var amount = tombstone.store[RESOURCE_ENERGY];
+      for (let tombstone of tombstones) {
+        let amount = _.sum(tombstone.store);
+        // let amount = tombstone.store[RESOURCE_ENERGY];
         if (amount > 0) {
-          var creep = tombstone.pos.findClosestByPath(FIND_MY_CREEPS, {
+          let creep = tombstone.pos.findClosestByPath(FIND_MY_CREEPS, {
             filter: (c) => (c.memory.parkedAt === undefined) && (_.sum(c.carry) < c.carryCapacity)
           });
           if (creep !== null) {
@@ -172,8 +172,8 @@ module.exports.loop = function () {
 
       // don't run this if there are too many things needing repair?
       if (!Memory.redAlert[name]) {
-        for (var site of constructionSites) {
-          var creep = site.pos.findClosestByRange(FIND_MY_CREEPS, {
+        for (let site of constructionSites) {
+          let creep = site.pos.findClosestByRange(FIND_MY_CREEPS, {
             filter: (c) => (c.memory.parkedAt === undefined) && (c.memory.role != "scavenger") && (c.carry.energy > 0) && (_.sum(c.carry) == c.carry.energy)
           });
           if (creep !== null) {
@@ -245,12 +245,12 @@ module.exports.loop = function () {
 
     // TODO: look for a spawn that isn't busy, instead of using the first?
     //       Is it even possible to have more than one spawn per room?
-    var spawn = _.first(spawns);
+    let spawn = _.first(spawns);
     if (spawn !== undefined) {
       // assumes all flags are for breaching
       if (creeps.length < ((_.max([containers.length, 1]) * 4) + flags.length + roomsAllowed - roomsControlled)) {
-        var parts = [WORK, MOVE, CARRY, MOVE];
-        var availableEnergy = room.energyAvailable;
+        let parts = [WORK, MOVE, CARRY, MOVE];
+        let availableEnergy = room.energyAvailable;
 
         // console.log(`partsRangedRCL5 = ${_.sum(_.map(partsRangedRCL5, (p) => BODYPART_COST[p]))}`);
 
@@ -300,8 +300,8 @@ module.exports.loop = function () {
       }
 
       // if (spawn.spawning === null) {
-      //   var pos = spawn.pos;
-      //   var creep = _.min(_.filter(creeps, (c) => (pos.isNearTo(c))), "ticksToLive");
+      //   let pos = spawn.pos;
+      //   let creep = _.min(_.filter(creeps, (c) => (pos.isNearTo(c))), "ticksToLive");
       //   // renewCreep() increases the creep's timer by a number of ticks according to the formula
       //   //   floor(600/body_size)
       //   // so don't renew the creep if we can't restore that many ticks
@@ -324,8 +324,8 @@ module.exports.loop = function () {
 
   if (worker.totalCount() < 10) {
     Memory.endangered = true;
-    for (var name in Game.creeps) {
-      var creep = Game.creeps[name];
+    for (let name in Game.creeps) {
+      let creep = Game.creeps[name];
       if ((creep.memory.role != "harvester") && (creep.memory.role != "replenisher")) {
         creep.memory.role = "replenisher";
       }
@@ -337,8 +337,8 @@ module.exports.loop = function () {
 
   // TODO: dynamic dispatch, rather than role transitions hardcoded in roles
 
-  for (var name in Game.creeps) {
-    var creep = Game.creeps[name];
+  for (let name in Game.creeps) {
+    let creep = Game.creeps[name];
 
     if (creep.memory.birthRoom === undefined) {
       creep.memory.birthRoom = creep.room.name;
@@ -402,7 +402,7 @@ module.exports.loop = function () {
   // clean up creep memory
   //
 
-  for (var name in Memory.creeps) {
+  for (let name in Memory.creeps) {
     if (!Game.creeps[name]) {
       delete Memory.creeps[name];
     }
@@ -412,7 +412,7 @@ module.exports.loop = function () {
   // clean up flag memory
   //
 
-  for (var name in Memory.flags) {
+  for (let name in Memory.flags) {
     if (!Game.flags[name]) {
       delete Memory.flags[name];
     }

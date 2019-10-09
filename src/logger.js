@@ -1,9 +1,9 @@
 const worker = require("worker");
 
-var logger = {
+let logger = {
   logCPU: function() {
     if (Memory.enableLogging.cpu) {
-      var cpu = Game.cpu;
+      let cpu = Game.cpu;
       console.log(`CPU: used=${cpu.getUsed()} limit=${cpu.limit} tickLimit=${cpu.tickLimit}  bucket=${cpu.bucket}`);
     }
   },
@@ -15,8 +15,8 @@ var logger = {
   },
 
   logAllRooms: function() {
-    for (var name in Game.rooms) {
-      var room = Game.rooms[name];
+    for (let name in Game.rooms) {
+      let room = Game.rooms[name];
       this.logRoom(room);
     }
   },

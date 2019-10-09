@@ -1,6 +1,6 @@
-var worker = require("worker");
+let worker = require("worker");
 
-var roleBuilder = {
+let roleBuilder = {
   run: function (creep) {
     // creep.say("build");
 
@@ -9,7 +9,7 @@ var roleBuilder = {
       return OK;
     }
 
-    var site = creep.pos.findClosestByPath(FIND_CONSTRUCTION_SITES, {
+    let site = creep.pos.findClosestByPath(FIND_CONSTRUCTION_SITES, {
       filter: (site) => (site.progress < site.progressTotal)
     });
     if (site === null) {

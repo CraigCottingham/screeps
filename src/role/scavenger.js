@@ -1,6 +1,6 @@
-var worker = require("worker");
+let worker = require("worker");
 
-var roleScavenger = {
+let roleScavenger = {
   run: function (creep) {
     // creep.say("scavenge");
 
@@ -14,7 +14,7 @@ var roleScavenger = {
       return OK;
     }
 
-    var target = Game.getObjectById(creep.memory.assignment);
+    let target = Game.getObjectById(creep.memory.assignment);
     if (target === null) {
       creep.memory.assignment = undefined;
       creep.memory.role = "harvester";
@@ -27,7 +27,7 @@ var roleScavenger = {
     }
     else {
       // creep.say("tombstone");
-      for (var resourceType in target.store) {
+      for (let resourceType in target.store) {
         this.withdraw(creep, target, resourceType);
       }
     }
