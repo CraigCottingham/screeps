@@ -75,7 +75,7 @@ let tower = {
     }
 
     // nothing was done, which means ramparts and walls are all up to the low water threshold
-    Memory.triggerAutoincrementThreshold = true;
+    Memory.triggerAutoincrementThreshold[room.name] = true;
 
     return OK;
   }

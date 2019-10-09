@@ -42,20 +42,26 @@ var worker = require("worker");
 //   this.mem = Memory.creeps[this.name];
 // // ^^^ what is this initTick() and how is it called?
 
+//
+// initialize memory structures
+//
+
+if (Memory.defenseLowWater === undefined) {
+  Memory.defenseLowWater = {};
+}
+if (Memory.redAlert === undefined) {
+  Memory.redAlert = {};
+}
+if (Memory.triggerAutoincrementThreshold === undefined) {
+  Memory.triggerAutoincrementThreshold = {};
+}
+
 module.exports.loop = function () {
+  let roomsControlled = _.filter(_.values(Game.structures), (s) => (s.structureType == STRUCTURE_CONTROLLER)).length;
+  let roomsAllowed = Game.gcl.level;
+
   // logger.logCreeps();
-  logger.logAllRooms();
-
-  //
-  // initialize memory structures
-  //
-
-  if (Memory.defenseLowWater === undefined) {
-    Memory.defenseLowWater = {};
-  }
-  if (Memory.redAlert === undefined) {
-    Memory.redAlert = {};
-  }
+  // logger.logAllRooms();
 
   //
   // run objects
@@ -98,9 +104,8 @@ module.exports.loop = function () {
       Memory.defenseLowWater[name][STRUCTURE_WALL] = WALL_HITS;
     }
 
-    if (Memory.triggerAutoincrementThreshold) {
+    if (Memory.triggerAutoincrementThreshold[name]) {
       // autoincrement low water threshold for ramparts
-
       if (Memory.defenseLowWater[name][STRUCTURE_RAMPART] < RAMPART_HITS_MAX[room.controller.level]) {
         var newThreshold = _.min(ramparts, "hits").hits + 1000;
         if (newThreshold > RAMPART_HITS_MAX[room.controller.level]) {
@@ -112,7 +117,6 @@ module.exports.loop = function () {
       }
 
       // autoincrement low water threshold for walls
-
       if (Memory.defenseLowWater[name][STRUCTURE_WALL] < WALL_HITS_MAX) {
         var newThreshold = _.min(walls, "hits").hits + 1000;
         if (newThreshold > WALL_HITS_MAX) {
@@ -123,7 +127,7 @@ module.exports.loop = function () {
         }
       }
 
-      Memory.triggerAutoincrementThreshold = undefined;
+      Memory.triggerAutoincrementThreshold[name] = undefined;
     }
 
     // run towers
