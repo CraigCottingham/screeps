@@ -1,6 +1,6 @@
-var worker = require("worker");
+let worker = require("worker");
 
-var roleReplenisher = {
+let roleReplenisher = {
   run: function (creep) {
     // creep.say("replenish");
 
@@ -9,21 +9,28 @@ var roleReplenisher = {
       return OK;
     }
 
+    let pos = creep.pos;
+    let room = creep.room;
+    let extensions = room.find(FIND_STRUCTURES, {filter: (s) => (s.structureType == STRUCTURE_EXTENSION)});
+    let spawns = room.find(FIND_STRUCTURES, {filter: (s) => (s.structureType == STRUCTURE_SPAWN)});
+    let storages = room.find(FIND_STRUCTURES, {filter: (s) => (s.structureType == STRUCTURE_STORAGE)});
+    let towers = room.find(FIND_STRUCTURES, {filter: (s) => (s.structureType == STRUCTURE_TOWER)});
+
+    // carrying something other than energy
     if ((_.sum(creep.carry) - creep.carry.energy) > 0) {
       creep.say("~energy");
 
-      var target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-        filter: (s) => (s.structureType == STRUCTURE_STORAGE)
-      });
+      let target = pos.findClosestByPath(storages);
       if (target !== null) {
         this.replenish(creep, target);
         return OK;
       }
     }
 
+    // too small a number of creeps
     if (Memory.endangered) {
-      var target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-        filter: (s) => ((s.structureType == STRUCTURE_EXTENSION) || (s.structureType == STRUCTURE_SPAWN)) && (s.energy < s.energyCapacity)
+      let target = pos.findClosestByPath(_.union(extensions, spawns), {
+        filter: (s) => (s.energy < s.energyCapacity)
       });
       if (target !== null) {
         this.replenish(creep, target);
@@ -31,9 +38,10 @@ var roleReplenisher = {
       }
     }
 
+    // hostiles present
     if (Memory.redAlert[creep.room.name]) {
-      var target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-        filter: (s) => (s.structureType == STRUCTURE_TOWER) && (s.energy < s.energyCapacity)
+      let target = pos.findClosestByPath(towers, {
+        filter: (s) => (s.energy < s.energyCapacity)
       });
       if (target !== null) {
         this.replenish(creep, target);
@@ -41,13 +49,10 @@ var roleReplenisher = {
       }
     }
 
-    var room = creep.room;
-    var extensions = room.find(FIND_STRUCTURES, {
-      filter: (s) => (s.structureType == STRUCTURE_EXTENSION)
-    });
-    if (room.energyAvailable < (extensions.length * EXTENSION_ENERGY_CAPACITY[room.controller.level])) {
-      var target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-        filter: (s) => (s.structureType == STRUCTURE_EXTENSION) && (s.energy < s.energyCapacity)
+    // one or more not-completely-full extensions
+    if (_.reduce(extensions, (acc, s) => (acc + s.energy), 0) < (extensions.length * EXTENSION_ENERGY_CAPACITY[room.controller.level])) {
+      let target = pos.findClosestByPath(extensions, {
+        filter: (s) => (s.energy < s.energyCapacity)
       });
       if (target !== null) {
         this.replenish(creep, target);
@@ -55,18 +60,31 @@ var roleReplenisher = {
       }
     }
 
-    var target;
+    // if spawn isn't autoregenerating, let's go fill it up
+    if (room.energyAvailable >= SPAWN_ENERGY_CAPACITY) {
+      let target = pos.findClosestByPath(spawns, {
+        filter: (s) => (s.energy < s.energyCapacity)
+      });
+      if (target !== null) {
+        this.replenish(creep, target);
+        return OK;
+      }
+    }
 
-    target = creep.pos.findClosestByRange(FIND_STRUCTURES, {
-      filter: (s) => (s.structureType == STRUCTURE_TOWER) && (s.energy < s.energyCapacity)
+    let target;
+
+    // if creep is next to a tower, go ahead and replenish it
+    target = pos.findClosestByRange(towers, {
+      filter: (s) => (s.energy < s.energyCapacity)
     });
     if ((target !== null) && creep.pos.isNearTo(target)) {
       this.replenish(creep, target);
       return OK;
     }
 
-    target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-      filter: (s) => (s.structureType == STRUCTURE_TOWER) && (s.energy <= (s.energyCapacity - CARRY_CAPACITY))
+    // otherwise, find the closest tower that has enough room for what the creep is carrying
+    target = pos.findClosestByPath(towers, {
+      filter: (s) => (s.energy <= (s.energyCapacity - creep.carry.energy))
     });
     if (target !== null) {
       this.replenish(creep, target);
@@ -75,19 +93,20 @@ var roleReplenisher = {
 
     // if we got this far, go replenish the storage
 
-    target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-      filter: (s) => (s.structureType == STRUCTURE_STORAGE)
-    });
+    target = pos.findClosestByPath(storages);
     if (target !== null) {
       this.replenish(creep, target);
       return OK;
     }
 
+    // if we got this far, nothing to replenish?
+    // creep.memory.role = "builder";
+    creep.memory.role = "repairer";
     return OK;
   },
 
   replenish: function (creep, target) {
-    var resourceType = RESOURCE_ENERGY;
+    let resourceType = RESOURCE_ENERGY;
     if (creep.carry.energy == 0) {
       resourceType = _.findKey(creep.carry, (r) => (r > 0));
     }

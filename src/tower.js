@@ -1,7 +1,11 @@
-var tower = {
+let tower = {
   run: function (tower) {
-    var target;
-    var pos = tower.pos;
+    let target;
+    let room = tower.room;
+    let pos = tower.pos;
+    let ramparts = room.find(FIND_STRUCTURES, {filter: (s) => (s.structureType == STRUCTURE_RAMPART)});
+    let towers = room.find(FIND_STRUCTURES, {filter: (s) => (s.structureType == STRUCTURE_TOWER)});
+    let walls = room.find(FIND_STRUCTURES, {filter: (s) => (s.structureType == STRUCTURE_WALL)});
 
     // attack hostile creeps with HEAL
     target = pos.findClosestByRange(FIND_HOSTILE_CREEPS, {
@@ -29,8 +33,8 @@ var tower = {
     }
 
     // repair new ramparts up to a minimum safe level (so they don't decay away)
-    target = pos.findClosestByRange(FIND_STRUCTURES, {
-      filter: (s) => (s.structureType == STRUCTURE_RAMPART) && (s.hits <= (RAMPART_DECAY_AMOUNT * 5))
+    target = pos.findClosestByRange(ramparts, {
+      filter: (s) => (s.hits <= (RAMPART_DECAY_AMOUNT * 5))
     });
     if (target !== null) {
       tower.repair(target);
@@ -39,51 +43,40 @@ var tower = {
 
     // repair new walls up to a minimum safe level
     // (yes, I'm aware walls don't decay, but it's as good an initial level as any)
-    target = pos.findClosestByRange(FIND_STRUCTURES, {
-      filter: (s) => (s.structureType == STRUCTURE_WALL) &&
-                     (s.hits <= (RAMPART_DECAY_AMOUNT * 5)) &&
-                     (tower.room.find(FIND_MY_CREEPS, {filter: (c) => (c.memory.assignment == s.id)}).length == 0)
+    target = pos.findClosestByRange(walls, {
+      filter: (s) => (s.hits <= (RAMPART_DECAY_AMOUNT * 5))
     });
     if (target !== null) {
       tower.repair(target);
       return OK;
     }
 
-    // repair ramparts that are below the low water threshold
-    target = pos.findClosestByRange(FIND_STRUCTURES, {
-      filter: (s) => (s.structureType == STRUCTURE_RAMPART) && (s.hits < (Memory.defenseLowWater[tower.room.name][STRUCTURE_RAMPART] - (TOWER_POWER_REPAIR * TOWER_FALLOFF)))
-    });
-    if (target !== null) {
+    // repair lowest rampart
+    target = _.min(ramparts, (s) => (s.hits));
+    if ((target !== Infinity) && (target.hits < (Memory.defenseLowWater[tower.room.name][STRUCTURE_RAMPART] - (towers.length * TOWER_POWER_REPAIR * TOWER_FALLOFF)))) {
       tower.repair(target);
       return OK;
     }
 
     // repair other structures (besides ramparts and walls)
-    target = pos.findClosestByRange(FIND_STRUCTURES, {
-      filter: (s) => (s.structureType != STRUCTURE_RAMPART) && (s.structureType != STRUCTURE_WALL) && (s.hits < (s.hitsMax - (TOWER_POWER_REPAIR * TOWER_FALLOFF)))
+    let allOthers = room.find(FIND_STRUCTURES, {
+      filter: (s) => (s.structureType != STRUCTURE_RAMPART) && (s.structureType != STRUCTURE_WALL) && (s.hits < (s.hitsMax - (towers.length * TOWER_POWER_REPAIR * TOWER_FALLOFF)))
     });
-    if (target !== null) {
+    target = _.min(allOthers, (s) => (s.hits));
+    if (target !== Infinity) {
       tower.repair(target);
       return OK;
     }
 
-    // repair walls that are below the low water threshold
-    target = pos.findClosestByRange(FIND_STRUCTURES, {
-      // TODO: filter out walls being breached?
-      //       (tower.room.find(FIND_MY_CREEPS, {filter: (c) => (c.memory.assignment == s.id)}).length == 0)
-      filter: (s) => (s.structureType == STRUCTURE_WALL) &&
-                     (s.hits < (Memory.defenseLowWater[tower.room.name][STRUCTURE_WALL] - (TOWER_POWER_REPAIR * TOWER_FALLOFF))) &&
-                     (tower.room.find(FIND_MY_CREEPS, {filter: (c) => (c.memory.assignment == s.id)}).length == 0)
-    });
-    if (target !== null) {
+    // repair lowest wall
+    target = _.min(walls, (s) => (s.hits));
+    if ((target !== Infinity) && (target.hits < (Memory.defenseLowWater[tower.room.name][STRUCTURE_WALL] - (towers.length * TOWER_POWER_REPAIR * TOWER_FALLOFF)))) {
       tower.repair(target);
       return OK;
     }
 
-    // if the tower is full up on energy, bump the low water thresholds
-    if (tower.energy >= tower.energyCapacity) {
-      Memory.triggerAutoincrementThreshold = true;
-    }
+    // nothing was done, which means ramparts and walls are all up to the low water threshold
+    Memory.triggerAutoincrementThreshold[room.name] = true;
 
     return OK;
   }
