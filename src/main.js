@@ -137,34 +137,6 @@ module.exports.loop = function () {
     if (creeps.length > containers.length) {
       // run flags
 
-      for (var flag of flags) {
-        if (flag.memory.assignedCreep !== undefined) {
-          var creep = Game.getObjectById(flag.memory.assignedCreep);
-          if ((creep === null) || (creep.memory.role != "breacher")) {
-            flag.memory.assignedCreep = undefined;
-          }
-        }
-
-        if (flag.memory.assignedWall === undefined) {
-          // assume that any flag placed on a wall indicates breaching
-          walls = room.lookForAt(LOOK_STRUCTURES, flag);
-          if (walls.length && (walls[0].structureType == STRUCTURE_WALL)) {
-            flag.memory.assignedWall = walls[0].id;
-          }
-        }
-
-        if ((flag.memory.assignedWall !== undefined) && (flag.memory.assignedCreep === undefined)) {
-          var creep = flag.pos.findClosestByRange(FIND_MY_CREEPS, {
-            filter: (c) => (c.memory.parkedAt === undefined) && (c.memory.assignment === undefined) && (c.memory.role == "harvester") && (_.sum(c.carry) == 0)
-          });
-          if (creep !== null) {
-            flag.memory.assignedCreep = creep.id;
-            creep.memory.assignment = flag.memory.assignedWall;
-            creep.memory.role = "breacher";
-          }
-        }
-      }
-
       // run drops
 
       for (var drop of drops) {
@@ -432,14 +404,6 @@ module.exports.loop = function () {
 
   for (var name in Memory.creeps) {
     if (!Game.creeps[name]) {
-      var ghost = Memory.creeps[name];
-
-      for (var flag of room.find(FIND_FLAGS)) {
-        if (flag.memory.assignedCreep == ghost.id) {
-          flag.memory.assignedCreep = undefined;
-        }
-      }
-
       delete Memory.creeps[name];
     }
   }
@@ -450,19 +414,9 @@ module.exports.loop = function () {
 
   for (var name in Memory.flags) {
     if (!Game.flags[name]) {
-      var ghost = Memory.flags[name];
-      if (ghost.memory) {
-        if (ghost.memory.assignedCreep !== undefined) {
-          creep = Game.getObjectById(ghost.memory.assignedCreep);
-          if (creep !== null) {
-            creep.memory.assignment = undefined;
-          }
-        }
-      }
-
       delete Memory.flags[name];
     }
   }
 
-  logger.logCPU();
+  // logger.logCPU();
 }
