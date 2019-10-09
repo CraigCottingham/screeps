@@ -198,28 +198,50 @@ module.exports.loop = function () {
 
       // run construction sites
 
-      for (var site of constructionSites) {
-        var creep = site.pos.findClosestByPath(FIND_MY_CREEPS, {
-          filter: (c) => ((c.memory.parkedAt === undefined) && (c.carry.energy > 0))
-        });
-        if (creep !== null) {
-          creep.memory.role = "builder";
+      // don't run this if there are too many things needing repair?
+      if (!Memory.redAlert[name]) {
+        for (var site of constructionSites) {
+          var creep = site.pos.findClosestByRange(FIND_MY_CREEPS, {
+            filter: (c) => (c.memory.parkedAt === undefined) && (c.memory.role != "scavenger") && (c.carry.energy > 0) && (_.sum(c.carry) == c.carry.energy)
+          });
+          if (creep !== null) {
+            creep.memory.role = "builder";
+          }
+        }
+      }
+
+      // TODO: use creeps array already loaded
+      if (room.controller.my) {
+        if (_.all(creeps, (c) => (c.memory.role != "upgrader"))) {
+          creep = room.controller.pos.findClosestByRange(FIND_MY_CREEPS, {
+            filter: (c) => (c.memory.parkedAt === undefined) && (c.carry.energy > 0)
+          })
+          if (creep !== null) {
+            creep.memory.role = "upgrader";
+          }
         }
       }
     }
 
     if (creeps.length > (containers.length * 2)) {
-      // TODO: use creeps array already loaded
-      if (room.find(FIND_MY_CREEPS, {
-        filter: (c) => (c.memory.role == "upgrader")
-      }).length == 0) {
-        creep = room.controller.pos.findClosestByRange(FIND_MY_CREEPS, {
-          filter: (c) => (c.memory.parkedAt === undefined) && (c.carry.energy > 0)
-        })
-        if (creep !== null) {
-          creep.memory.role = "upgrader";
-        }
-      }
+      // TODO: revisit this
+      // if (roomsAllowed > roomsControlled) {
+      //   if (_.all(_.values(Game.creeps), (c) => (c.memory.role != "ranger"))) {
+      //     creep = _.find(creeps, (c) => (_.any(c.body, (p) => (p.type == CLAIM))));
+      //     if (creep !== undefined) {
+      //       creep.memory.role = "ranger";
+      //     }
+      //   }
+      // }
+      // else {
+        // only send rangers if any controlled room does not have its own spawn
+        // if (_.all(_.values(Game.creeps), (c) => (c.memory.role != "ranger"))) {
+        //   creep = _.find(creeps, (c) => (c.memory.parkedAt === undefined) && (c.memory.role == "harvester") && (c.carry.energy > 0));
+        //   if (creep !== undefined) {
+        //     creep.memory.role = "ranger";
+        //   }
+        // }
+      // }
     }
 
     // if (creeps.length >= ((containers.length * 2) + towers.length)) {
@@ -254,7 +276,7 @@ module.exports.loop = function () {
     var spawn = _.first(spawns);
     if (spawn !== undefined) {
       // assumes all flags are for breaching
-      if (creeps.length < (20 + flags.length)) {
+      if (creeps.length < ((_.max([containers.length, 1]) * 4) + flags.length + roomsAllowed - roomsControlled)) {
         var parts = [WORK, MOVE, CARRY, MOVE];
         var availableEnergy = room.energyAvailable;
 
@@ -298,6 +320,10 @@ module.exports.loop = function () {
         //   ];
         // }
 
+        // if ((roomsAllowed > roomsControlled) && (_.all(_.values(Game.creeps), (c) => (c.memory.role != "ranger")))) {
+        //   parts = [WORK, CARRY, CLAIM, MOVE, MOVE, MOVE];
+        // }
+
         worker.spawn(spawn, parts);
       }
 
@@ -314,6 +340,7 @@ module.exports.loop = function () {
       // }
     }
 
+    // not if creep is sitting on top of a construction site?
     if (room.energyAvailable < (extensions.length * EXTENSION_ENERGY_CAPACITY[room.controller.level])) {
       _.each(creeps, (c) => {
         if (c.memory.role == "builder") {
@@ -341,8 +368,33 @@ module.exports.loop = function () {
   for (var name in Game.creeps) {
     var creep = Game.creeps[name];
 
+    if (creep.memory.birthRoom === undefined) {
+      creep.memory.birthRoom = creep.room.name;
+    }
+
     if (creep.memory.role === undefined) {
       creep.memory.role = "upgrader";
+    }
+
+    // if we're not on a road, drop a construction site
+    let structures = creep.pos.lookFor(LOOK_STRUCTURES);
+    if (!structures.length || _.all(structures, (s) => (s.structureType != STRUCTURE_ROAD))) {
+      switch (creep.pos.createConstructionSite(STRUCTURE_ROAD)) {
+        case OK:
+          break;
+        case ERR_INVALID_TARGET:
+          // console.log("The structure cannot be placed at the specified location.");
+          break;
+        case ERR_FULL:
+          // console.log("You have too many construction sites.");
+          break;
+        case ERR_INVALID_ARGS:
+          // console.log("The location is incorrect.")
+          break;
+        case ERR_RCL_NOT_ENOUGH:
+          // console.log("Room Controller Level insufficient.");
+          break;
+      }
     }
 
     switch (creep.memory.role) {
