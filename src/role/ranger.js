@@ -1,6 +1,6 @@
-var worker = require("worker");
+let worker = require("worker");
 
-var roleRanger = {
+let roleRanger = {
   run: function (creep) {
     // creep.say("ranger");
 

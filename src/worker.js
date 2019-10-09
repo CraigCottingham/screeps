@@ -1,4 +1,4 @@
-var worker = {
+let worker = {
   moveTo: function(creep, target) {
     moveOptions = {};
     if (Memory.enablePathStyle == "true") {
@@ -8,7 +8,7 @@ var worker = {
       moveOptions.noPathFinding = true;
     }
 
-    var result = creep.moveTo(target, moveOptions);
+    let result = creep.moveTo(target, moveOptions);
     switch (result) {
       case ERR_NOT_OWNER:
         break;
@@ -38,7 +38,7 @@ var worker = {
   },
 
   pathStyle: function(role) {
-    var style = {
+    let style = {
       fill: "transparent",
       stroke: "#FFFFFF",
       lineStyle: "dashed",
@@ -68,7 +68,7 @@ var worker = {
   },
 
   spawn: function(spawn, parts = [WORK, CARRY, MOVE], role = "harvester") {
-    var result = spawn.spawnCreep(parts, ("Worker" + Game.time), {memory: {role: role}});
+    let result = spawn.spawnCreep(parts, ("Worker" + Game.time), {memory: {role: role}});
     if (result == OK) {
       // spawn.room.visual.text("🛠️ Worker", spawn.pos.x + 1, spawn.pos.y, {align: "left", opacity: 0.8});
     }
