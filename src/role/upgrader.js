@@ -1,6 +1,6 @@
-var worker = require("worker");
+let worker = require("worker");
 
-var roleUpgrader = {
+let roleUpgrader = {
   run: function(creep) {
     // creep.say("upgrade");
 
@@ -9,7 +9,7 @@ var roleUpgrader = {
       return OK;
     }
 
-    var target = creep.room.controller;
+    let target = creep.room.controller;
     if (target === undefined) {
       creep.memory.role = "replenisher";
     }

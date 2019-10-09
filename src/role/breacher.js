@@ -1,6 +1,6 @@
-var worker = require("worker");
+let worker = require("worker");
 
-var roleBreacher = {
+let roleBreacher = {
   run: function (creep) {
     // creep.say("breach");
 
@@ -9,7 +9,7 @@ var roleBreacher = {
       return OK;
     }
 
-    var target = Game.getObjectById(creep.memory.assignment);
+    let target = Game.getObjectById(creep.memory.assignment);
     if (target === null) {
       creep.memory.assignment = undefined;
       creep.memory.role = "harvester";
