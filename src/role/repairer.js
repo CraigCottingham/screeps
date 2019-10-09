@@ -67,7 +67,7 @@ let roleRepairer = {
 
       // if we got this far, bump up the low water threshold
       // only bump the low water threshold if there aren't any towers in the room?
-      Memory.triggerAutoincrementThreshold = true;
+      Memory.triggerAutoincrementThreshold[room.name] = true;
       creep.memory.role = "builder";
       return OK;
     }
