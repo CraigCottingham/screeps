@@ -13,6 +13,9 @@ var worker = {
       case ERR_NOT_OWNER:
         break;
       case ERR_NO_PATH:
+        if (moveOptions.noPathFinding) {
+          result = creep.moveTo(target);
+        }
         break;
       case ERR_BUSY:
         break;

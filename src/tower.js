@@ -4,6 +4,7 @@ let tower = {
     let room = tower.room;
     let pos = tower.pos;
     let ramparts = room.find(FIND_STRUCTURES, {filter: (s) => (s.structureType == STRUCTURE_RAMPART)});
+    let towers = room.find(FIND_STRUCTURES, {filter: (s) => (s.structureType == STRUCTURE_TOWER)});
     let walls = room.find(FIND_STRUCTURES, {filter: (s) => (s.structureType == STRUCTURE_WALL)});
 
     // attack hostile creeps with HEAL
@@ -52,24 +53,24 @@ let tower = {
 
     // repair lowest rampart
     target = _.min(ramparts, (s) => (s.hits));
-    if ((target !== null) && (target.hits < (Memory.defenseLowWater[tower.room.name][STRUCTURE_RAMPART] - (TOWER_POWER_REPAIR * TOWER_FALLOFF)))) {
+    if ((target !== Infinity) && (target.hits < (Memory.defenseLowWater[tower.room.name][STRUCTURE_RAMPART] - (towers.length * TOWER_POWER_REPAIR * TOWER_FALLOFF)))) {
       tower.repair(target);
       return OK;
     }
 
     // repair other structures (besides ramparts and walls)
     let allOthers = room.find(FIND_STRUCTURES, {
-      filter: (s) => (s.structureType != STRUCTURE_RAMPART) && (s.structureType != STRUCTURE_WALL) && (s.hits < (s.hitsMax - (TOWER_POWER_REPAIR * TOWER_FALLOFF)))
+      filter: (s) => (s.structureType != STRUCTURE_RAMPART) && (s.structureType != STRUCTURE_WALL) && (s.hits < (s.hitsMax - (towers.length * TOWER_POWER_REPAIR * TOWER_FALLOFF)))
     });
     target = _.min(allOthers, (s) => (s.hits));
-    if (target !== null) {
+    if (target !== Infinity) {
       tower.repair(target);
       return OK;
     }
 
     // repair lowest wall
     target = _.min(walls, (s) => (s.hits));
-    if ((target !== null) && (target.hits < (Memory.defenseLowWater[tower.room.name][STRUCTURE_WALL] - (TOWER_POWER_REPAIR * TOWER_FALLOFF)))) {
+    if ((target !== Infinity) && (target.hits < (Memory.defenseLowWater[tower.room.name][STRUCTURE_WALL] - (towers.length * TOWER_POWER_REPAIR * TOWER_FALLOFF)))) {
       tower.repair(target);
       return OK;
     }

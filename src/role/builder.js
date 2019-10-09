@@ -13,7 +13,10 @@ var roleBuilder = {
       filter: (site) => (site.progress < site.progressTotal)
     });
     if (site === null) {
-      this.switchTo(creep, "replenisher");
+      // changed from replenisher
+      // hopefully, switching to repairer will enduce the creep to build up
+      // a rampart or wall after building it
+      this.switchTo(creep, "repairer");
     }
     else {
       this.build(creep, site);
