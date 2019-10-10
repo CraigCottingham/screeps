@@ -20,7 +20,14 @@ let roleReplenisher = {
     if ((_.sum(creep.carry) - creep.carry.energy) > 0) {
       creep.say("~energy");
 
-      let target = pos.findClosestByPath(storages);
+      let target;
+      if (storages.length) {
+        target = pos.findClosestByPath(storages);
+      }
+      else {
+        let allStorages = _.filter(_.values(Game.structures), (s) => (s.structureType == STRUCTURE_STORAGE));
+        target = pos.findClosestByRange(allStorages);
+      }
       if (target !== null) {
         this.replenish(creep, target);
         return OK;
