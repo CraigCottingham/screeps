@@ -20,16 +20,28 @@ let roleReplenisher = {
     if ((_.sum(creep.carry) - creep.carry.energy) > 0) {
       creep.say("~energy");
 
-      let target;
       if (storages.length) {
-        target = pos.findClosestByPath(storages);
+        delete creep.memory.path;
+
+        let target = pos.findClosestByPath(storages);
+        if (target !== null) {
+          this.replenish(creep, target);
+          return OK;
+        }
       }
-      else {
+
+      if (!creep.memory.path) {
         let allStorages = _.filter(_.values(Game.structures), (s) => (s.structureType == STRUCTURE_STORAGE));
-        target = pos.findClosestByRange(allStorages);
+        let goals = _.map(allStorages, function(storage) {
+          return { pos: storage.pos, range: 1 };
+        });
+
+        results = PathFinder.search(pos, goals);
+        creep.memory.path = results.path;
       }
-      if (target !== null) {
-        this.replenish(creep, target);
+
+      if (creep.memory.path) {
+        creep.moveByPath(results.path);
         return OK;
       }
     }
