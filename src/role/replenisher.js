@@ -20,9 +20,28 @@ let roleReplenisher = {
     if ((_.sum(creep.carry) - creep.carry.energy) > 0) {
       creep.say("~energy");
 
-      let target = pos.findClosestByPath(storages);
-      if (target !== null) {
-        this.replenish(creep, target);
+      if (storages.length) {
+        delete creep.memory.path;
+
+        let target = pos.findClosestByPath(storages);
+        if (target !== null) {
+          this.replenish(creep, target);
+          return OK;
+        }
+      }
+
+      if (!creep.memory.path) {
+        let allStorages = _.filter(_.values(Game.structures), (s) => (s.structureType == STRUCTURE_STORAGE));
+        let goals = _.map(allStorages, function(storage) {
+          return { pos: storage.pos, range: 1 };
+        });
+
+        results = PathFinder.search(pos, goals);
+        creep.memory.path = results.path;
+      }
+
+      if (creep.memory.path) {
+        creep.moveByPath(results.path);
         return OK;
       }
     }
@@ -49,20 +68,13 @@ let roleReplenisher = {
       }
     }
 
-    // one or more not-completely-full extensions
-    if (_.reduce(extensions, (acc, s) => (acc + s.energy), 0) < (extensions.length * EXTENSION_ENERGY_CAPACITY[room.controller.level])) {
-      let target = pos.findClosestByPath(extensions, {
-        filter: (s) => (s.energy < s.energyCapacity)
-      });
-      if (target !== null) {
-        this.replenish(creep, target);
-        return OK;
-      }
-    }
+    // one or more extensions are not completely full
+    let extensionsNeedReplenishing = (_.reduce(extensions, (acc, s) => (acc + s.energy), 0) < (extensions.length * EXTENSION_ENERGY_CAPACITY[room.controller.level]));
+    // spawn isn't autoregenerating (does this need to be multipled by the number of spawns in the room?)
+    let spawnsNeedReplenishing = (room.energyAvailable >= SPAWN_ENERGY_CAPACITY);
 
-    // if spawn isn't autoregenerating, let's go fill it up
-    if (room.energyAvailable >= SPAWN_ENERGY_CAPACITY) {
-      let target = pos.findClosestByPath(spawns, {
+    if (extensionsNeedReplenishing || spawnsNeedReplenishing) {
+      let target = pos.findClosestByPath(_.union(extensions, spawns), {
         filter: (s) => (s.energy < s.energyCapacity)
       });
       if (target !== null) {
