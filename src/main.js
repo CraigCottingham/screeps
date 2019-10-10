@@ -174,7 +174,11 @@ module.exports.loop = function () {
       if (!Memory.redAlert[name]) {
         for (let site of constructionSites) {
           let creep = site.pos.findClosestByRange(FIND_MY_CREEPS, {
-            filter: (c) => (c.memory.parkedAt === undefined) && (c.memory.role != "scavenger") && (c.carry.energy > 0) && (_.sum(c.carry) == c.carry.energy)
+            filter: (c) => (c.memory.parkedAt === undefined) &&
+                           (c.memory.role != "replenisher") &&
+                           (c.memory.role != "scavenger") &&
+                           (c.carry.energy > 0) &&
+                           (_.sum(c.carry) == c.carry.energy)
           });
           if (creep !== null) {
             creep.memory.role = "builder";
