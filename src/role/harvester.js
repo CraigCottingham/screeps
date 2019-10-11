@@ -47,7 +47,7 @@ let roleHarvester = {
       // not parked
       creep.memory.parkedAt = undefined;
 
-      redAlert = Memory.redAlert[room.name];
+      let redAlert = Memory.redAlert[room.name];
 
       if (_.sum(creep.carry) >= creep.carryCapacity) {
         // creep is full of energy and/or other resources
