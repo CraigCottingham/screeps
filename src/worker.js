@@ -1,3 +1,5 @@
+'use strict';
+
 let worker = {
   moveTo: function(creep, target) {
     moveOptions = {};
