@@ -1,3 +1,5 @@
+'use strict';
+
 let tower = {
   run: function (tower) {
     let target;

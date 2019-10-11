@@ -1,3 +1,5 @@
+'use strict';
+
 let worker = require("worker");
 
 let roleBreacher = {

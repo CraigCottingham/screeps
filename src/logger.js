@@ -1,3 +1,5 @@
+'use strict';
+
 const worker = require("worker");
 
 let logger = {

@@ -1,3 +1,5 @@
+'use strict';
+
 let logger = require("logger");
 let roleBreacher = require("role.breacher");
 let roleBuilder = require("role.builder");
