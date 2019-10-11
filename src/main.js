@@ -189,7 +189,7 @@ module.exports.loop = function () {
       // TODO: use creeps array already loaded
       if (room.controller.my) {
         if (_.all(creeps, (c) => (c.memory.role != "upgrader"))) {
-          creep = room.controller.pos.findClosestByRange(FIND_MY_CREEPS, {
+          let creep = room.controller.pos.findClosestByRange(FIND_MY_CREEPS, {
             filter: (c) => (c.memory.parkedAt === undefined) && (c.carry.energy > 0)
           })
           if (creep !== null) {
