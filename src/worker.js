@@ -1,6 +1,8 @@
+'use strict';
+
 let worker = {
   moveTo: function(creep, target) {
-    moveOptions = {};
+    let moveOptions = {};
     if (Memory.enablePathStyle == "true") {
       moveOptions.visualizePathStyle = this.pathStyle(creep.memory.role);
     }
