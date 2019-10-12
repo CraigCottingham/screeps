@@ -2,7 +2,7 @@
 
 let worker = {
   moveTo: function(creep, target) {
-    let moveOptions = {};
+    let moveOptions = { maxRooms: 1 };
     if (Memory.enablePathStyle == "true") {
       moveOptions.visualizePathStyle = this.pathStyle(creep.memory.role);
     }
