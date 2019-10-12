@@ -261,7 +261,7 @@ let roleHarvester = {
       this.transfer(creep, container);
     }
     else {
-      nearbyContainer = creep.pos.findClosestByRange(FIND_STRUCTURES, {
+      let nearbyContainer = creep.pos.findClosestByRange(FIND_STRUCTURES, {
         filter: (s) => {
           if ((s.structureType != STRUCTURE_CONTAINER) || (creep.pos.getRangeTo(s) != 1)) {
             return false;

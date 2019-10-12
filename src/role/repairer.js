@@ -21,6 +21,8 @@ let roleRepairer = {
     if (tower === null) {
       // no towers, so go looking for ramparts or walls that need repairing
 
+      let target;
+
       target = pos.findClosestByRange(ramparts, {
         filter: (s) => (s.hits <= (RAMPART_DECAY_AMOUNT * 5))
       });
