@@ -34,16 +34,34 @@ let roleReplenisher = {
 
       if (!creep.memory.path) {
         let allStorages = _.filter(_.values(Game.structures), (s) => (s.structureType == STRUCTURE_STORAGE));
-        let goals = _.map(allStorages, function(storage) {
-          return { pos: storage.pos, range: 1 };
-        });
+        if (allStorages.length) {
+          // let shortestPath = creep.room.findPath(creep.pos, allStorages[0].pos, { range: 1 });
+          let shortestPath = _.min(_.map(allStorages, (s) => creep.room.findPath(creep.pos, s.pos, { range: 1, serialize: true })), (p) => p.length);
+          if (shortestPath == Infinity) {
+            console.log("cannot find path to storage");
+            creep.memory.role = "harvester";
+            return OK;
+          }
 
-        results = PathFinder.search(pos, goals);
-        creep.memory.path = results.path;
+          creep.memory.path = shortestPath;
+        }
       }
 
       if (creep.memory.path) {
-        creep.moveByPath(results.path);
+        switch (creep.moveByPath(creep.memory.path)) {
+          case OK:
+          case ERR_TIRED:
+            break;
+          case ERR_NOT_OWNER:
+          case ERR_BUSY:
+          case ERR_NOT_FOUND:
+          case ERR_INVALID_ARGS:
+            delete creep.memory.path;
+            break;
+          case ERR_NO_BODYPART:
+            creep.suicide();
+            break;
+        }
         return OK;
       }
     }
