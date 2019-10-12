@@ -1,4 +1,7 @@
-'use strict';
+"use strict";
+
+require("config");
+require("visualizer");
 
 let logger = require("logger");
 let roleBreacher = require("role.breacher");
@@ -64,6 +67,23 @@ module.exports.loop = function () {
 
   // logger.logCreeps();
   // logger.logAllRooms();
+
+  if (config.visualizer.enabled) {
+    // try {
+    //   Memory.myRooms.forEach(visualizer.myRoomDatasDraw);
+    // } catch (e) {
+    //   console.log('Visualizer Draw Exeception', e);
+    // }
+
+    try {
+      visualizer.render();
+      // if (config.profiler.enabled) {
+      //   global.profiler.registerObject(visualizer, 'Visualizer');
+      // }
+    } catch (e) {
+      console.log('visualizer render exception', e, e.stack);
+    }
+  }
 
   //
   // run objects
