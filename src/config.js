@@ -14,13 +14,8 @@ global.config = {
   visualizer: {
     enabled: true,
 
-    // showRoomPaths: true,
-    creepPaths: true,
-    // showPathSearches: true,
-    // showStructures: true,
-    // showCreeps: true,
-    // showBlockers: true,
-    // showCostMatrixes: false,
+    creepPaths: false,
+    roomDetails: false,
   },
 
   // debug: {
