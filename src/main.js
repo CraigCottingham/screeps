@@ -3,7 +3,6 @@
 require("config");
 require("visualizer");
 
-let logger = require("logger");
 let roleBreacher = require("role.breacher");
 let roleBuilder = require("role.builder");
 let roleHarvester = require("role.harvester");
@@ -64,9 +63,6 @@ if (Memory.triggerAutoincrementThreshold === undefined) {
 module.exports.loop = function () {
   let roomsControlled = _.filter(_.values(Game.structures), (s) => (s.structureType == STRUCTURE_CONTROLLER)).length;
   let roomsAllowed = Game.gcl.level;
-
-  // logger.logCreeps();
-  // logger.logAllRooms();
 
   if (config.visualizer.enabled) {
     // try {
@@ -444,5 +440,4 @@ module.exports.loop = function () {
     }
   }
 
-  // logger.logCPU();
 }
