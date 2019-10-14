@@ -345,10 +345,6 @@ module.exports.loop = function () {
   for (let name in Game.creeps) {
     let creep = Game.creeps[name];
 
-    if (creep.memory.birthRoom === undefined) {
-      creep.memory.birthRoom = creep.room.name;
-    }
-
     if (creep.memory.role === undefined) {
       creep.memory.role = "upgrader";
     }
