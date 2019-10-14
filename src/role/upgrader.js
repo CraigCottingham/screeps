@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 let worker = require("worker");
 
@@ -44,6 +44,9 @@ let roleUpgrader = {
 
   upgrade: function (creep, controller) {
     switch (creep.upgradeController(controller)) {
+      case OK:
+        worker.moveTo(creep, controller);
+        break;
       case ERR_NOT_OWNER:
         break;
       case ERR_BUSY:

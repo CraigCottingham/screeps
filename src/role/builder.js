@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 let worker = require("worker");
 
@@ -7,18 +7,16 @@ let roleBuilder = {
     // creep.say("build");
 
     if (creep.carry.energy == 0) {
-      this.switchTo(creep, "harvester");
+      creep.memory.role = "harvester";
       return OK;
     }
 
-    let site = creep.pos.findClosestByPath(FIND_CONSTRUCTION_SITES, {
-      filter: (site) => (site.progress < site.progressTotal)
-    });
+    let site = creep.pos.findClosestByPath(FIND_CONSTRUCTION_SITES);
     if (site === null) {
       // changed from replenisher
       // hopefully, switching to repairer will enduce the creep to build up
       // a rampart or wall after building it
-      this.switchTo(creep, "repairer");
+      creep.memory.role = "repairer";
     }
     else {
       this.build(creep, site);
@@ -29,14 +27,17 @@ let roleBuilder = {
 
   build: function (creep, site) {
     switch (creep.build(site)) {
+      case OK:
+        worker.moveTo(creep, site);
+        break;
       case ERR_NOT_OWNER:
-        this.switchTo("replenisher");
+        creep.memory.role = "replenisher";
         break;
       case ERR_BUSY:
-        this.switchTo("replenisher");
+        creep.memory.role = "replenisher";
         break;
       case ERR_NOT_ENOUGH_RESOURCES:
-        this.switchTo(creep, "harvester");
+        creep.memory.role = "harvester";
         break;
       case ERR_INVALID_TARGET:
         // don't change role
@@ -46,20 +47,11 @@ let roleBuilder = {
         worker.moveTo(creep, site);
         break;
       case ERR_NO_BODYPART:
-        this.terminate(creep);
+        creep.suicide();
         break;
       default:
         break;
     }
-  },
-
-  switchTo: function (creep, newRole) {
-    creep.memory.role = newRole;
-  },
-
-  terminate: function (creep) {
-    creep.memory.role = undefined;
-    creep.suicide();
   }
 }
 
