@@ -55,14 +55,23 @@ if (config.visualizer.enabled) {
     renderRoomDetails: function (room) {
       const fontSize = 0.65;
       const rv = room.visual;
+      const cpu = Game.cpu;
+      const creepSpawningCount = _.reduce(_.filter(_.values(Game.spawns), (s) => s.room.name == room.name), (acc, s) => (s.spawning ? acc + 1 : acc), 0);
+      const creepTotalCount = _.filter(_.values(Game.creeps), (c) => c.room.name == room.name).length;
       const energyAvailable = room.energyAvailable;
       const energyCapacityAvailable = room.energyCapacityAvailable;
 
       const lines = [];
+
+      lines.push({label: "CPU:", value: `${cpu.getUsed()} / ${cpu.limit} / ${cpu.tickLimit} / ${cpu.bucket}`});
+      lines.push({label: "Creeps:", value: `${creepTotalCount - creepSpawningCount} / ${creepSpawningCount}`})
+
       if ((room.controller !== undefined) && room.controller.my) {
         lines.push({label: "Controller:", value: `${room.controller.progress} / ${room.controller.progressTotal}`})
       }
+
       lines.push({label: "Energy:", value: `${energyAvailable} / ${energyCapacityAvailable}`});
+
       if ((room.storage !== undefined) && room.storage.my) {
         lines.push({label: "Storage:", value: `${room.storage.store.energy} / ${room.storage.storeCapacity}`})
       }
