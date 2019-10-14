@@ -64,23 +64,6 @@ module.exports.loop = function () {
   let roomsControlled = _.filter(_.values(Game.structures), (s) => (s.structureType == STRUCTURE_CONTROLLER)).length;
   let roomsAllowed = Game.gcl.level;
 
-  if (config.visualizer.enabled) {
-    // try {
-    //   Memory.myRooms.forEach(visualizer.myRoomDatasDraw);
-    // } catch (e) {
-    //   console.log('Visualizer Draw Exeception', e);
-    // }
-
-    try {
-      visualizer.render();
-      // if (config.profiler.enabled) {
-      //   global.profiler.registerObject(visualizer, 'Visualizer');
-      // }
-    } catch (e) {
-      console.log('visualizer render exception', e, e.stack);
-    }
-  }
-
   //
   // run objects
   //
@@ -440,4 +423,24 @@ module.exports.loop = function () {
     }
   }
 
+  //
+  // visualizer is the lowest priority function
+  //
+
+  if (config.visualizer.enabled) {
+    // try {
+    //   Memory.myRooms.forEach(visualizer.myRoomDatasDraw);
+    // } catch (e) {
+    //   console.log('Visualizer Draw Exeception', e);
+    // }
+
+    try {
+      visualizer.render();
+      // if (config.profiler.enabled) {
+      //   global.profiler.registerObject(visualizer, 'Visualizer');
+      // }
+    } catch (e) {
+      console.log('visualizer render exception', e, e.stack);
+    }
+  }
 }
