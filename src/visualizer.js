@@ -61,6 +61,10 @@ if (config.visualizer.enabled) {
       const energyAvailable = room.energyAvailable;
       const energyCapacityAvailable = room.energyCapacityAvailable;
 
+      const ramparts = room.find(FIND_STRUCTURES, {filter: (s) => (s.structureType == STRUCTURE_RAMPART)});
+      const roads = room.find(FIND_STRUCTURES, {filter: (s) => (s.structureType == STRUCTURE_ROAD)});
+      const walls = room.find(FIND_STRUCTURES, {filter: (s) => (s.structureType == STRUCTURE_WALL)});
+
       const lines = [];
 
       lines.push({label: "CPU:", value: `${cpu.getUsed()} / ${cpu.limit} / ${cpu.tickLimit} / ${cpu.bucket}`});
@@ -74,6 +78,22 @@ if (config.visualizer.enabled) {
 
       if ((room.storage !== undefined) && room.storage.my) {
         lines.push({label: "Storage:", value: `${room.storage.store.energy} / ${room.storage.storeCapacity}`})
+      }
+
+      if (ramparts.length) {
+        const weakestRampart = _.min(ramparts, (r) => r.hits);
+        const strongestRampart = _.max(ramparts, (r) => r.hits);
+        lines.push({label: "Ramparts:", value: `${weakestRampart.hits} / ${strongestRampart.hits} / ${RAMPART_HITS_MAX[room.controller.level]}`});
+      }
+      if (walls.length) {
+        const weakestWall = _.min(walls, (w) => w.hits);
+        const strongestWall = _.max(walls, (w) => w.hits);
+        lines.push({label: "Walls:", value: `${weakestWall.hits} / ${strongestWall.hits} / ${WALL_HITS_MAX}`});
+      }
+      if (roads.length) {
+        const weakestRoad = _.min(roads, (r) => r.hits);
+        const strongestRoad = _.max(roads, (r) => r.hits);
+        lines.push({label: "Roads:", value: `${weakestRoad.hits} / ${strongestRoad.hits} / ${ROAD_HITS}`});
       }
 
       let y = 0;
