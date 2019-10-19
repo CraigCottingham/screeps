@@ -71,31 +71,27 @@ module.exports.loop = function () {
   for (let name in Game.rooms) {
     let room = Game.rooms[name];
 
-    // fetch arrays of structures for this room
+    // fetch arrays of structures and other objects for this room
 
-    let creeps = room.find(FIND_MY_CREEPS);
-    let constructionSites = room.find(FIND_CONSTRUCTION_SITES);
-    let containers = room.find(FIND_STRUCTURES, {
-      filter: (s) => (s.structureType == STRUCTURE_CONTAINER)
-    });
-    let drops = room.find(FIND_DROPPED_RESOURCES);
-    let extensions = room.find(FIND_STRUCTURES, {
-      filter: (s) => (s.structureType == STRUCTURE_EXTENSION)
-    });
-    let flags = room.find(FIND_FLAGS);
-    let ramparts = room.find(FIND_STRUCTURES, {
-      filter: (s) => (s.structureType == STRUCTURE_RAMPART)
-    });
-    let spawns = room.find(FIND_MY_SPAWNS);
-    let tombstones = room.find(FIND_TOMBSTONES);
-    let towers = room.find(FIND_STRUCTURES, {
-      filter: (s) => (s.structureType == STRUCTURE_TOWER)
-    });
-    let walls = room.find(FIND_STRUCTURES, {
-      filter: (s) => (s.structureType == STRUCTURE_WALL)
-    });
+    let structures = _.groupBy(room.find(FIND_STRUCTURES), "structureType");
 
-    Memory.redAlert[name] = (room.find(FIND_HOSTILE_CREEPS).length > 0);
+    let objects = {
+      containers: structures[STRUCTURE_CONTAINER] || [],
+      creeps: room.find(FIND_MY_CREEPS),
+      constructionSites: room.find(FIND_CONSTRUCTION_SITES),
+      drops: room.find(FIND_DROPPED_RESOURCES),
+      extensions: structures[STRUCTURE_EXTENSION] || [],
+      flags: room.find(FIND_FLAGS),
+      hostileCreeps: room.find(FIND_HOSTILE_CREEPS),
+      ramparts: structures[STRUCTURE_RAMPART] || [],
+      sources: room.find(FIND_SOURCES),
+      spawns: room.find(FIND_MY_SPAWNS),
+      tombstones: room.find(FIND_TOMBSTONES),
+      towers: structures[STRUCTURE_TOWER] || [],
+      walls: structures[STRUCTURE_WALL] || []
+    };
+
+    Memory.redAlert[name] = (objects.hostileCreeps.length > 0);
 
     // set up low water thresholds for defensive structures
 
@@ -108,7 +104,7 @@ module.exports.loop = function () {
     if (Memory.triggerAutoincrementThreshold[name]) {
       // autoincrement low water threshold for ramparts
       if (Memory.defenseLowWater[name][STRUCTURE_RAMPART] < RAMPART_HITS_MAX[room.controller.level]) {
-        let newThreshold = _.min(ramparts, "hits").hits + 1000;
+        let newThreshold = _.min(objects.ramparts, "hits").hits + 1000;
         if (newThreshold > RAMPART_HITS_MAX[room.controller.level]) {
           newThreshold = RAMPART_HITS_MAX[room.controller.level];
         }
@@ -119,7 +115,7 @@ module.exports.loop = function () {
 
       // autoincrement low water threshold for walls
       if (Memory.defenseLowWater[name][STRUCTURE_WALL] < WALL_HITS_MAX) {
-        let newThreshold = _.min(walls, "hits").hits + 1000;
+        let newThreshold = _.min(objects.walls, "hits").hits + 1000;
         if (newThreshold > WALL_HITS_MAX) {
           newThreshold = WALL_HITS_MAX;
         }
@@ -133,14 +129,14 @@ module.exports.loop = function () {
 
     // run towers
 
-    _.forEach(towers, (t) => tower.run(t));
+    _.forEach(objects.towers, (t) => tower.run(t));
 
-    if (creeps.length > containers.length) {
+    if (objects.creeps.length > objects.containers.length) {
       // run flags
 
       // run drops
 
-      for (let drop of drops) {
+      for (let drop of objects.drops) {
         let amount = drop.amount;
         if (amount > 0) {
           let creep = drop.pos.findClosestByPath(FIND_MY_CREEPS, {
@@ -155,7 +151,7 @@ module.exports.loop = function () {
 
       // run tombstones
 
-      for (let tombstone of tombstones) {
+      for (let tombstone of objects.tombstones) {
         let amount = _.sum(tombstone.store);
         // let amount = tombstone.store[RESOURCE_ENERGY];
         if (amount > 0) {
@@ -173,7 +169,7 @@ module.exports.loop = function () {
 
       // don't run this if there are too many things needing repair?
       if (!Memory.redAlert[name]) {
-        for (let site of constructionSites) {
+        for (let site of objects.constructionSites) {
           let creep = site.pos.findClosestByRange(FIND_MY_CREEPS, {
             filter: (c) => (c.memory.parkedAt === undefined) &&
                            (c.memory.role != "replenisher") &&
@@ -189,7 +185,7 @@ module.exports.loop = function () {
 
       // TODO: use creeps array already loaded
       if (room.controller.my) {
-        if (_.all(creeps, (c) => (c.memory.role != "upgrader"))) {
+        if (_.all(objects.creeps, (c) => (c.memory.role != "upgrader"))) {
           let creep = room.controller.pos.findClosestByRange(FIND_MY_CREEPS, {
             filter: (c) => (c.memory.parkedAt === undefined) && (c.carry.energy > 0)
           })
@@ -200,11 +196,11 @@ module.exports.loop = function () {
       }
     }
 
-    if (creeps.length > (containers.length * 2)) {
+    if (objects.creeps.length > (objects.containers.length * 2)) {
       // TODO: revisit this
       // if (roomsAllowed > roomsControlled) {
       //   if (_.all(_.values(Game.creeps), (c) => (c.memory.role != "ranger"))) {
-      //     creep = _.find(creeps, (c) => (_.any(c.body, (p) => (p.type == CLAIM))));
+      //     creep = _.find(objects.creeps, (c) => (_.any(c.body, (p) => (p.type == CLAIM))));
       //     if (creep !== undefined) {
       //       creep.memory.role = "ranger";
       //     }
@@ -213,7 +209,7 @@ module.exports.loop = function () {
       // else {
         // only send rangers if any controlled room does not have its own spawn
         // if (_.all(_.values(Game.creeps), (c) => (c.memory.role != "ranger"))) {
-        //   creep = _.find(creeps, (c) => (c.memory.parkedAt === undefined) && (c.memory.role == "harvester") && (c.carry.energy > 0));
+        //   creep = _.find(objects.creeps, (c) => (c.memory.parkedAt === undefined) && (c.memory.role == "harvester") && (c.carry.energy > 0));
         //   if (creep !== undefined) {
         //     creep.memory.role = "ranger";
         //   }
@@ -221,8 +217,8 @@ module.exports.loop = function () {
       // }
     }
 
-    // if (creeps.length >= ((containers.length * 2) + towers.length)) {
-    //   _.forEach(towers, (t) => {
+    // if (objects.creeps.length >= ((objects.containers.length * 2) + objects.towers.length)) {
+    //   _.forEach(objects.towers, (t) => {
     //     if (room.find(FIND_MY_CREEPS, {
     //       filter: (c) => (c.memory.assignedToTower == t.id)
     //     }).length == 0) {
@@ -250,10 +246,10 @@ module.exports.loop = function () {
 
     // TODO: look for a spawn that isn't busy, instead of using the first?
     //       Is it even possible to have more than one spawn per room?
-    let spawn = _.first(spawns);
+    let spawn = _.first(objects.spawns);
     if (spawn !== undefined) {
       // assumes all flags are for breaching
-      if (creeps.length < ((_.max([containers.length, 1]) * 4) + flags.length + roomsAllowed - roomsControlled)) {
+      if (objects.creeps.length < ((_.max([objects.containers.length, 1]) * 4) + objects.flags.length + roomsAllowed - roomsControlled)) {
         let parts = [WORK, MOVE, CARRY, MOVE];
         let availableEnergy = room.energyAvailable;
 
@@ -306,7 +302,7 @@ module.exports.loop = function () {
 
       // if (spawn.spawning === null) {
       //   let pos = spawn.pos;
-      //   let creep = _.min(_.filter(creeps, (c) => (pos.isNearTo(c))), "ticksToLive");
+      //   let creep = _.min(_.filter(objects.creeps, (c) => (pos.isNearTo(c))), "ticksToLive");
       //   // renewCreep() increases the creep's timer by a number of ticks according to the formula
       //   //   floor(600/body_size)
       //   // so don't renew the creep if we can't restore that many ticks
@@ -318,18 +314,18 @@ module.exports.loop = function () {
     }
 
     // not if creep is sitting on top of a construction site?
-    if (room.energyAvailable < (extensions.length * EXTENSION_ENERGY_CAPACITY[room.controller.level])) {
-      _.each(creeps, (c) => {
+    if (room.energyAvailable < (objects.extensions.length * EXTENSION_ENERGY_CAPACITY[room.controller.level])) {
+      _.each(objects.creeps, (c) => {
         if (c.memory.role == "builder") {
           c.memory.role = "replenisher";
         }
       });
     }
 
-    if (creeps.length < 10) {
+    if (objects.creeps.length < 10) {
       Memory.endangered = Memory.endangered = {};
       Memory.endangered[room.name] = true;
-      _.each(creeps, (c) => {
+      _.each(objects.creeps, (c) => {
         if ((c.memory.role != "harvester") && (c.memory.role != "replenisher")) {
           c.memory.role = "replenisher";
         }
