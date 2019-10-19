@@ -325,19 +325,19 @@ module.exports.loop = function () {
         }
       });
     }
-  }
 
-  if (worker.totalCount() < 10) {
-    Memory.endangered = true;
-    for (let name in Game.creeps) {
-      let creep = Game.creeps[name];
-      if ((creep.memory.role != "harvester") && (creep.memory.role != "replenisher")) {
-        creep.memory.role = "replenisher";
-      }
+    if (creeps.length < 10) {
+      Memory.endangered = Memory.endangered = {};
+      Memory.endangered[room.name] = true;
+      _.each(creeps, (c) => {
+        if ((c.memory.role != "harvester") && (c.memory.role != "replenisher")) {
+          c.memory.role = "replenisher";
+        }
+      });
     }
-  }
-  else {
-    Memory.endangered = undefined;
+    else {
+      delete Memory.endangered[room.name];
+    }
   }
 
   // TODO: dynamic dispatch, rather than role transitions hardcoded in roles
