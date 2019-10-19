@@ -1,11 +1,9 @@
-'use strict';
+"use strict";
 
 let worker = {
   moveTo: function(creep, target) {
-    let moveOptions = { maxRooms: 1 };
-    if (Memory.enablePathStyle == "true") {
-      moveOptions.visualizePathStyle = this.pathStyle(creep.memory.role);
-    }
+    // let moveOptions = { maxRooms: 1, noPathFinding: true, reusePath: 5 };
+    let moveOptions = { maxRooms: 1, reusePath: 5 };
     if ((Game.cpu.tickLimit - Game.cpu.getUsed()) < 5) {
       moveOptions.noPathFinding = true;
     }
@@ -37,36 +35,6 @@ let worker = {
     }
 
     return result;
-  },
-
-  pathStyle: function(role) {
-    let style = {
-      fill: "transparent",
-      stroke: "#FFFFFF",
-      lineStyle: "dashed",
-      strokeWidth: .15,
-      opacity: .1
-    }
-
-    switch (role) {
-      case "builder":
-        style.stroke = "#CFCFCF";
-        break;
-      case "harvester":
-        style.stroke = "#00FF00";
-        break;
-      case "repairer":
-        style.stroke = "#FF7F00";
-        break;
-      case "replenisher":
-        style.stroke = "#FFFFFF";
-        break;
-      case "upgrader":
-        style.stroke = "#0000FF";
-        break;
-    }
-
-    return style;
   },
 
   spawn: function(spawn, parts = [WORK, CARRY, MOVE], role = "harvester") {
