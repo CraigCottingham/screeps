@@ -16,6 +16,11 @@ let roleHarvester = {
       creep.memory.parkedAt = container.id;
 
       if (creep.carry.energy >= creep.carryCapacity) {
+        if (container.hits < container.hitsMax) {
+          creep.repair(container);
+          return OK;
+        }
+
         let creepCount = room.find(FIND_MY_CREEPS).length;
         let containerCount = room.find(FIND_STRUCTURES, {
           filter: (s) => (s.structureType == STRUCTURE_CONTAINER)
