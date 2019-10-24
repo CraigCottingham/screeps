@@ -67,7 +67,7 @@ let roleReplenisher = {
     }
 
     // too small a number of creeps
-    if (Memory.endangered) {
+    if (Memory.endangered[creep.room.name]) {
       let target = pos.findClosestByPath(_.union(extensions, spawns), {
         filter: (s) => (s.energy < s.energyCapacity)
       });
