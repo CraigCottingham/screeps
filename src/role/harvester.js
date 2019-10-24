@@ -29,18 +29,15 @@ let roleHarvester = {
           this.transferToNearbyContainer(creep);
         }
         else {
-          let towerCount = room.find(FIND_STRUCTURES, {
-            filter: (s) => (s.structureType == STRUCTURE_TOWER)
-          }).length;
-          if (towerCount) {
-            // switch to builder if there are any construction sites, or alternately
-            //   if there's nothing to replenish?
-            // creep.memory.role = "builder";
+          if (room.find(FIND_CONSTRUCTION_SITES).length) {
+            creep.memory.role = "builder";
+            return OK;
+          }
+          if (room.find(FIND_STRUCTURES, {filter: (s) => (s.structureType == STRUCTURE_TOWER)}).length) {
             creep.memory.role = "replenisher";
+            return OK;
           }
-          else {
-            creep.memory.role = "repairer";
-          }
+          creep.memory.role = "repairer";
           return OK;
         }
       }
@@ -55,9 +52,33 @@ let roleHarvester = {
       let redAlert = Memory.redAlert[room.name];
 
       if (_.sum(creep.carry) >= creep.carryCapacity) {
-        // creep is full of energy and/or other resources
+        if (redAlert) {
+          creep.memory.role = "replenisher";
+          return OK;
+        }
 
-        creep.memory.role = "replenisher";
+        let extensions = room.find(FIND_STRUCTURES, {filter: (s) => (s.structureType == STRUCTURE_EXTENSION)});
+        let spawns = room.find(FIND_STRUCTURES, {filter: (s) => (s.structureType == STRUCTURE_SPAWN)});
+        let extensionsNeedReplenishing = (_.reduce(extensions, (acc, s) => (acc + s.energy), 0) < (extensions.length * EXTENSION_ENERGY_CAPACITY[room.controller.level]));
+        // let spawnsNeedReplenishing = _.any(spawns, (s) => (s.store[RESOURCE_ENERGY] < s.store.getCapacity[RESOURCE_ENERGY])) && (room.energyAvailable >= SPAWN_ENERGY_CAPACITY);
+        let spawnsNeedReplenishing = _.any(spawns, (s) => (s.energy < s.energyCapacity)) && (room.energyAvailable >= SPAWN_ENERGY_CAPACITY);
+
+        if (extensionsNeedReplenishing || spawnsNeedReplenishing) {
+          creep.memory.role = "replenisher";
+          return OK;
+        }
+
+        if (room.find(FIND_CONSTRUCTION_SITES).length) {
+          creep.memory.role = "builder";
+          return OK;
+        }
+
+        if (room.find(FIND_STRUCTURES, {filter: (s) => (s.structureType == STRUCTURE_TOWER)}).length) {
+          creep.memory.role = "replenisher";
+          return OK;
+        }
+
+        creep.memory.role = "repairer";
         return OK;
       }
 
