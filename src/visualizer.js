@@ -19,8 +19,21 @@ if (config.visualizer.enabled) {
           this.renderCreepPath(creep);
         }
       }
-      if (config.visualizer.roomDetails) {
-        for (const room of _.values(Game.rooms)) {
+
+      for (const room of _.values(Game.rooms)) {
+        if (config.visualizer.highLowRampart) {
+          this.renderHighLow(room, room.find(FIND_STRUCTURES, {filter: (s) => (s.structureType == STRUCTURE_RAMPART)}));
+        }
+
+        if (config.visualizer.highLowRoad) {
+          this.renderHighLow(room, room.find(FIND_STRUCTURES, {filter: (s) => (s.structureType == STRUCTURE_ROAD)}), 5000);
+        }
+
+        if (config.visualizer.highLowWall) {
+          this.renderHighLow(room, room.find(FIND_STRUCTURES, {filter: (s) => (s.structureType == STRUCTURE_WALL)}));
+        }
+
+        if (config.visualizer.roomDetails) {
           this.renderRoomDetails(room);
         }
       }
@@ -31,6 +44,22 @@ if (config.visualizer.enabled) {
         const rv = creep.room.visual;
         const path = Room.deserializePath(creep.memory._move.path);
         this.drawPath(rv, path, 'red');
+      }
+    },
+
+    renderHighLow: function (room, structures, clampMax = undefined) {
+      if (structures.length) {
+        const rv = room.visual;
+        const low = _.min(structures, (s) => s.hits).hits;
+        const high = (clampMax === undefined) ? _.max(structures, (s) => s.hits).hits : clampMax;
+        const range = high - low;
+        const half = range * 0.5;
+        for (const s of structures) {
+          const scale = (s.hits - low) * 1.0;   // 0.0 - range
+          const percentR = (scale <= half) ? "100%" : `${100.0 - (((scale - half) * 2.0 / range) * 100.0)}%`;
+          const percentG = (scale > half) ? "100%" : `${(scale * 2.0 / range) * 100.0}%`;
+          rv.circle(s.pos, {radius: 0.25, fill: `rgb(${percentR}, ${percentG}, 0%)`});
+        }
       }
     },
 

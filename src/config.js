@@ -15,6 +15,9 @@ global.config = {
     enabled: true,
 
     creepPaths: false,
+    highLowRampart: false,
+    highLowRoad: false,
+    highLowWall: false,
     roomDetails: false,
   },
 
