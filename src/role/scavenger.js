@@ -7,7 +7,7 @@ let roleScavenger = {
     // creep.say("scavenge");
 
     if (_.sum(creep.carry) >= creep.carryCapacity) {
-      creep.memory.role = "replenisher";
+      creep.memory.role = "builder";
       return OK;
     }
 

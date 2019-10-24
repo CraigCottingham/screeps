@@ -84,6 +84,7 @@ module.exports.loop = function () {
       flags: room.find(FIND_FLAGS),
       hostileCreeps: room.find(FIND_HOSTILE_CREEPS),
       ramparts: structures[STRUCTURE_RAMPART] || [],
+      ruins: room.find(FIND_RUINS),
       sources: room.find(FIND_SOURCES),
       spawns: room.find(FIND_MY_SPAWNS),
       tombstones: room.find(FIND_TOMBSTONES),
@@ -153,13 +154,27 @@ module.exports.loop = function () {
 
       for (let tombstone of objects.tombstones) {
         let amount = _.sum(tombstone.store);
-        // let amount = tombstone.store[RESOURCE_ENERGY];
         if (amount > 0) {
           let creep = tombstone.pos.findClosestByPath(FIND_MY_CREEPS, {
             filter: (c) => (c.memory.parkedAt === undefined) && (_.sum(c.carry) < c.carryCapacity)
           });
           if (creep !== null) {
             creep.memory.assignment = tombstone.id;
+            creep.memory.role = "scavenger";
+          }
+        }
+      }
+
+      // run ruins
+
+      for (let ruin of objects.ruins) {
+        let amount = _.sum(ruin.store);
+        if (amount > 0) {
+          let creep = ruin.pos.findClosestByPath(FIND_MY_CREEPS, {
+            filter: (c) => (c.memory.parkedAt === undefined) && (_.sum(c.carry) < c.carryCapacity)
+          });
+          if (creep !== null) {
+            creep.memory.assignment = ruin.id;
             creep.memory.role = "scavenger";
           }
         }
