@@ -51,23 +51,23 @@ let tower = {
     }
 
     // repair new ramparts up to a minimum safe level (so they don't decay away)
-    target = pos.findClosestByRange(ramparts, {
-      filter: (s) => (s.hits <= (RAMPART_DECAY_AMOUNT * 5))
-    });
-    if (target !== null) {
-      tower.repair(target);
-      return OK;
-    }
+    // target = pos.findClosestByRange(objects.ramparts, {
+    //   filter: (s) => (s.hits <= (RAMPART_DECAY_AMOUNT * 5))
+    // });
+    // if (target !== null) {
+    //   tower.repair(target);
+    //   return OK;
+    // }
 
     // repair new walls up to a minimum safe level
     // (yes, I'm aware walls don't decay, but it's as good an initial level as any)
-    target = pos.findClosestByRange(walls, {
-      filter: (s) => (s.hits <= (RAMPART_DECAY_AMOUNT * 5))
-    });
-    if (target !== null) {
-      tower.repair(target);
-      return OK;
-    }
+    // target = pos.findClosestByRange(objects.walls, {
+    //   filter: (s) => (s.hits <= (RAMPART_DECAY_AMOUNT * 5))
+    // });
+    // if (target !== null) {
+    //   tower.repair(target);
+    //   return OK;
+    // }
 
     // repair lowest rampart
     if ((target !== Infinity) && (target.hits < (Memory.defenseLowWater[tower.room.name][STRUCTURE_RAMPART] - (towers.length * TOWER_POWER_REPAIR * TOWER_FALLOFF)))) {
