@@ -32,19 +32,15 @@ let worker = require("worker");
 // uses about 0.025 CPU
 // suggested by Tigga in #cpu-clinic:
 
-// Object.defineProperty(Creep.prototype, 'mem', {
-//   get: function() {
-//     return Memory.creeps[this.name] = Memory.creeps[this.name] || {};
-//   },
-//   set: function(value) {
-//     Memory.creeps[this.name] = value
-//   },
-//   configurable: true,
-// });
-//
-// Creep.prototype.initTick = function() {
-//   this.mem = Memory.creeps[this.name];
-// // ^^^ what is this initTick() and how is it called?
+Object.defineProperty(Creep.prototype, 'mem', {
+  get: function() {
+    return Memory.creeps[this.name] = Memory.creeps[this.name] || {};
+  },
+  set: function(value) {
+    Memory.creeps[this.name] = value
+  },
+  configurable: true,
+});
 
 //
 // initialize memory structures
@@ -144,8 +140,8 @@ module.exports.loop = function () {
             filter: (c) => (c.memory.parkedAt === undefined) && (_.sum(c.carry) < c.carryCapacity)
           });
           if (creep !== null) {
-            creep.memory.assignment = drop.id;
-            creep.memory.role = "scavenger";
+            creep.mem.assignment = drop.id;
+            creep.mem.role = "scavenger";
           }
         }
       }
@@ -159,8 +155,8 @@ module.exports.loop = function () {
             filter: (c) => (c.memory.parkedAt === undefined) && (_.sum(c.carry) < c.carryCapacity)
           });
           if (creep !== null) {
-            creep.memory.assignment = tombstone.id;
-            creep.memory.role = "scavenger";
+            creep.mem.assignment = tombstone.id;
+            creep.mem.role = "scavenger";
           }
         }
       }
@@ -174,8 +170,8 @@ module.exports.loop = function () {
             filter: (c) => (c.memory.parkedAt === undefined) && (_.sum(c.carry) < c.carryCapacity)
           });
           if (creep !== null) {
-            creep.memory.assignment = ruin.id;
-            creep.memory.role = "scavenger";
+            creep.mem.assignment = ruin.id;
+            creep.mem.role = "scavenger";
           }
         }
       }
@@ -193,7 +189,7 @@ module.exports.loop = function () {
                            (_.sum(c.carry) == c.carry.energy)
           });
           if (creep !== null) {
-            creep.memory.role = "builder";
+            creep.mem.role = "builder";
           }
         }
       }
@@ -205,7 +201,7 @@ module.exports.loop = function () {
             filter: (c) => (c.memory.parkedAt === undefined) && (c.carry.energy > 0)
           })
           if (creep !== null) {
-            creep.memory.role = "upgrader";
+            creep.mem.role = "upgrader";
           }
         }
       }
@@ -217,7 +213,7 @@ module.exports.loop = function () {
       //   if (_.all(_.values(Game.creeps), (c) => (c.memory.role != "ranger"))) {
       //     creep = _.find(objects.creeps, (c) => (_.any(c.body, (p) => (p.type == CLAIM))));
       //     if (creep !== undefined) {
-      //       creep.memory.role = "ranger";
+      //       creep.mem.role = "ranger";
       //     }
       //   }
       // }
@@ -226,7 +222,7 @@ module.exports.loop = function () {
         // if (_.all(_.values(Game.creeps), (c) => (c.memory.role != "ranger"))) {
         //   creep = _.find(objects.creeps, (c) => (c.memory.parkedAt === undefined) && (c.memory.role == "harvester") && (c.carry.energy > 0));
         //   if (creep !== undefined) {
-        //     creep.memory.role = "ranger";
+        //     creep.mem.role = "ranger";
         //   }
         // }
       // }
@@ -241,7 +237,7 @@ module.exports.loop = function () {
     //         filter: (c) => ((c.memory.parkedAt === undefined) && (c.memory.role != "scavenger") && (c.memory.role != "upgrader"))
     //       });
     //       if (creep !== null) {
-    //         creep.memory.assignedToTower = t.id;
+    //         creep.mem.assignedToTower = t.id;
     //       }
     //     }
     //   });
@@ -353,8 +349,8 @@ module.exports.loop = function () {
     // TODO: dynamic dispatch, rather than role transitions hardcoded in roles
 
     for (let creep of objects.creeps) {
-      if (creep.memory.role === undefined) {
-        creep.memory.role = "upgrader";
+      if (creep.mem.role === undefined) {
+        creep.mem.role = "upgrader";
       }
 
       // if we're not on a road, drop a construction site
@@ -378,7 +374,7 @@ module.exports.loop = function () {
       //   }
       // }
 
-      switch (creep.memory.role) {
+      switch (creep.mem.role) {
         case "breacher":
           roleBreacher.run(creep);
           break;

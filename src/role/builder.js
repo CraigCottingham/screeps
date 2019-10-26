@@ -7,18 +7,18 @@ let roleBuilder = {
     // creep.say("build");
 
     if (creep.carry.energy == 0) {
-      creep.memory.role = "harvester";
+      creep.mem.role = "harvester";
       return OK;
     }
 
     let sites = creep.room.find(FIND_CONSTRUCTION_SITES);
     if (!sites.length) {
-      delete creep.memory.path;
-      creep.memory.role = "replenisher";
+      delete creep.mem.path;
+      creep.mem.role = "replenisher";
       return OK;
     }
 
-    if (!creep.memory.path) {
+    if (!creep.mem.path) {
       let site = creep.pos.findClosestByPath(sites);
       if (site !== null) {
         this.build(creep, site);
@@ -27,15 +27,15 @@ let roleBuilder = {
 
       let shortestPath = _.min(_.map(sites, (s) => creep.room.findPath(creep.pos, s.pos, { range: 3, serialize: true })), (p) => p.length);
       if (shortestPath == Infinity) {
-        creep.memory.role = "repairer";
+        creep.mem.role = "repairer";
         return OK;
       }
 
-      creep.memory.path = shortestPath;
+      creep.mem.path = shortestPath;
     }
 
     // this.build(creep, site);
-    switch (creep.moveByPath(creep.memory.path)) {
+    switch (creep.moveByPath(creep.mem.path)) {
       case OK:
       case ERR_TIRED:
         // try creep.build(site)
@@ -45,7 +45,7 @@ let roleBuilder = {
       case ERR_BUSY:
       case ERR_NOT_FOUND:
       case ERR_INVALID_ARGS:
-        delete creep.memory.path;
+        delete creep.mem.path;
         break;
       case ERR_NO_BODYPART:
         creep.suicide();
@@ -64,8 +64,8 @@ let roleBuilder = {
   build: function (creep, site) {
     switch (creep.build(site)) {
       case OK:
-        if (creep.memory.path) {
-          switch (creep.moveByPath(creep.memory.path)) {
+        if (creep.mem.path) {
+          switch (creep.moveByPath(creep.mem.path)) {
             case OK:
             case ERR_TIRED:
               break;
@@ -73,7 +73,7 @@ let roleBuilder = {
             case ERR_BUSY:
             case ERR_NOT_FOUND:
             case ERR_INVALID_ARGS:
-              delete creep.memory.path;
+              delete creep.mem.path;
               break;
             case ERR_NO_BODYPART:
               creep.suicide();
@@ -85,21 +85,21 @@ let roleBuilder = {
         }
         break;
       case ERR_NOT_OWNER:
-        creep.memory.role = "replenisher";
+        creep.mem.role = "replenisher";
         break;
       case ERR_BUSY:
-        creep.memory.role = "replenisher";
+        creep.mem.role = "replenisher";
         break;
       case ERR_NOT_ENOUGH_RESOURCES:
-        creep.memory.role = "harvester";
+        creep.mem.role = "harvester";
         break;
       case ERR_INVALID_TARGET:
         // don't change role
         // next time through, hopefully we'll find a different target
         break;
       case ERR_NOT_IN_RANGE:
-        if (creep.memory.path) {
-          switch (creep.moveByPath(creep.memory.path)) {
+        if (creep.mem.path) {
+          switch (creep.moveByPath(creep.mem.path)) {
             case OK:
             case ERR_TIRED:
               break;
@@ -107,7 +107,7 @@ let roleBuilder = {
             case ERR_BUSY:
             case ERR_NOT_FOUND:
             case ERR_INVALID_ARGS:
-              delete creep.memory.path;
+              delete creep.mem.path;
               break;
             case ERR_NO_BODYPART:
               creep.suicide();

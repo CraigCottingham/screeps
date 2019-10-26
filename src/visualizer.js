@@ -40,9 +40,9 @@ if (config.visualizer.enabled) {
     },
 
     renderCreepPath: function (creep) {
-      if (creep.memory._move) {
+      if (creep.mem._move) {
         const rv = creep.room.visual;
-        const path = Room.deserializePath(creep.memory._move.path);
+        const path = Room.deserializePath(creep.mem._move.path);
         this.drawPath(rv, path, 'red');
       }
     },

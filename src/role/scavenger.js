@@ -7,19 +7,19 @@ let roleScavenger = {
     // creep.say("scavenge");
 
     if (_.sum(creep.carry) >= creep.carryCapacity) {
-      creep.memory.role = "builder";
+      creep.mem.role = "builder";
       return OK;
     }
 
-    if (creep.memory.assignment === undefined) {
-      creep.memory.role = "harvester";
+    if (creep.mem.assignment === undefined) {
+      creep.mem.role = "harvester";
       return OK;
     }
 
-    let target = Game.getObjectById(creep.memory.assignment);
+    let target = Game.getObjectById(creep.mem.assignment);
     if (target === null) {
-      creep.memory.assignment = undefined;
-      creep.memory.role = "harvester";
+      creep.mem.assignment = undefined;
+      creep.mem.role = "harvester";
       return OK;
     }
 
@@ -49,16 +49,16 @@ let roleScavenger = {
       case ERR_FULL:
       case ERR_INVALID_ARGS:
       default:
-        creep.memory.assignment = undefined;
+        creep.mem.assignment = undefined;
         break;
     }
 
-    if (creep.memory.assignment === undefined) {
+    if (creep.mem.assignment === undefined) {
       if (_.sum(creep.carry) > 0) {
-        creep.memory.role = "replenisher";
+        creep.mem.role = "replenisher";
       }
       else {
-        creep.memory.role = "harvester";
+        creep.mem.role = "harvester";
       }
     }
 
@@ -77,16 +77,16 @@ let roleScavenger = {
       case ERR_FULL:
       case ERR_INVALID_ARGS:
       default:
-        creep.memory.assignment = undefined;
+        creep.mem.assignment = undefined;
         break;
     }
 
-    if (creep.memory.assignment === undefined) {
+    if (creep.mem.assignment === undefined) {
       if (_.sum(creep.carry) > 0) {
-        creep.memory.role = "replenisher";
+        creep.mem.role = "replenisher";
       }
       else {
-        creep.memory.role = "harvester";
+        creep.mem.role = "harvester";
       }
     }
 

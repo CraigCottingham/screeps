@@ -5,7 +5,7 @@ let worker = require("worker");
 let roleRepairer = {
   run: function (creep) {
     if (creep.carry.energy == 0) {
-      creep.memory.role = "harvester";
+      creep.mem.role = "harvester";
       return OK;
     }
 
@@ -72,7 +72,7 @@ let roleRepairer = {
       // if we got this far, bump up the low water threshold
       // only bump the low water threshold if there aren't any towers in the room?
       Memory.triggerAutoincrementThreshold[room.name] = true;
-      creep.memory.role = "builder";
+      creep.mem.role = "builder";
       return OK;
     }
     else {
@@ -101,7 +101,7 @@ let roleRepairer = {
       case ERR_BUSY:
         break;
       case ERR_NOT_ENOUGH_RESOURCES:
-        creep.memory.role = "harvester";
+        creep.mem.role = "harvester";
         break;
       case ERR_INVALID_TARGET:
         break;
@@ -123,12 +123,12 @@ let roleRepairer = {
       case ERR_BUSY:
         break;
       case ERR_NOT_ENOUGH_RESOURCES:
-        creep.memory.role = "upgrader";
+        creep.mem.role = "upgrader";
         break;
       case ERR_INVALID_TARGET:
         break;
       case ERR_FULL:
-        creep.memory.role = "upgrader";
+        creep.mem.role = "upgrader";
         break;
       case ERR_NOT_IN_RANGE:
         worker.moveTo(creep, tower);
