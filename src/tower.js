@@ -50,35 +50,16 @@ let tower = {
       return OK;
     }
 
-    // repair new ramparts up to a minimum safe level (so they don't decay away)
-    // target = pos.findClosestByRange(objects.ramparts, {
-    //   filter: (s) => (s.hits <= (RAMPART_DECAY_AMOUNT * 5))
-    // });
-    // if (target !== null) {
-    //   tower.repair(target);
-    //   return OK;
-    // }
-
-    // repair new walls up to a minimum safe level
-    // (yes, I'm aware walls don't decay, but it's as good an initial level as any)
-    // target = pos.findClosestByRange(objects.walls, {
-    //   filter: (s) => (s.hits <= (RAMPART_DECAY_AMOUNT * 5))
-    // });
-    // if (target !== null) {
-    //   tower.repair(target);
-    //   return OK;
-    // }
-
     // repair lowest rampart
-    if ((target !== Infinity) && (target.hits < (Memory.defenseLowWater[tower.room.name][STRUCTURE_RAMPART] - (towers.length * TOWER_POWER_REPAIR * TOWER_FALLOFF)))) {
     target = _.min(objects.ramparts, (s) => (s.hits));
+    if ((target !== Infinity) && (target.hits < (Memory.defenseLowWater[room.name][STRUCTURE_RAMPART] - (objects.towers.length * TOWER_POWER_REPAIR * (1.0 - TOWER_FALLOFF))))) {
       tower.repair(target);
       return OK;
     }
 
     // repair other structures (besides ramparts and walls)
     let allOthers = room.find(FIND_STRUCTURES, {
-      filter: (s) => (s.structureType != STRUCTURE_RAMPART) && (s.structureType != STRUCTURE_WALL) && (s.hits < (s.hitsMax - (towers.length * TOWER_POWER_REPAIR * TOWER_FALLOFF)))
+      filter: (s) => (s.structureType != STRUCTURE_RAMPART) && (s.structureType != STRUCTURE_WALL) && (s.hits < (s.hitsMax - (objects.towers.length * TOWER_POWER_REPAIR * (1.0 - TOWER_FALLOFF))))
     });
     target = _.min(allOthers, (s) => (s.hits));
     if (target !== Infinity) {
@@ -87,8 +68,8 @@ let tower = {
     }
 
     // repair lowest wall
-    target = _.min(walls, (s) => (s.hits));
-    if ((target !== Infinity) && (target.hits < (Memory.defenseLowWater[tower.room.name][STRUCTURE_WALL] - (towers.length * TOWER_POWER_REPAIR * TOWER_FALLOFF)))) {
+    target = _.min(objects.walls, (s) => (s.hits));
+    if ((target !== Infinity) && (target.hits < (Memory.defenseLowWater[room.name][STRUCTURE_WALL] - (objects.towers.length * TOWER_POWER_REPAIR * (1.0 - TOWER_FALLOFF))))) {
       tower.repair(target);
       return OK;
     }
