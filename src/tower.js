@@ -2,9 +2,28 @@
 
 let tower = {
   run: function (tower, objects) {
+    if (tower.energy == 0) {
+      return OK;
+    }
+
     let room = tower.room;
     let pos = tower.pos;
     let target;
+
+    // in sealed-up rooms, there's not much point in attacking hostile creeps
+    // we can't scavenge their resources, and they're not getting in without breaching walls
+    // furthermore, NPC invaders often have HEAL, which means they can repair faster than we can destroy
+    // in this case, does it make more sense to repair the walls, and plan on the hostile creeps
+    //   running out of TTL before they break through?
+
+    // if (Memory.redAlert[room.name]) {
+    //   // AND at least one hostile creep has HEAL?
+    //   target = _.min(walls, (s) => (s.hits));
+    //   if ((target !== Infinity) && (target.hits < (Memory.defenseLowWater[room.name][STRUCTURE_WALL] - (towers.length * TOWER_POWER_REPAIR * TOWER_FALLOFF)))) {
+    //     tower.repair(target);
+    //     return OK;
+    //   }
+    // }
 
     // attack hostile creeps with HEAL
     target = pos.findClosestByRange(objects.hostileCreeps, {
