@@ -130,7 +130,7 @@ module.exports.loop = function () {
 
     // run towers
 
-    _.forEach(objects.towers, (t) => tower.run(t));
+    _.forEach(objects.towers, (t) => tower.run(t, objects));
 
     if (objects.creeps.length > objects.containers.length) {
       // run flags

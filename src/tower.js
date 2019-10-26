@@ -1,16 +1,13 @@
-'use strict';
+"use strict";
 
 let tower = {
-  run: function (tower) {
-    let target;
+  run: function (tower, objects) {
     let room = tower.room;
     let pos = tower.pos;
-    let ramparts = room.find(FIND_STRUCTURES, {filter: (s) => (s.structureType == STRUCTURE_RAMPART)});
-    let towers = room.find(FIND_STRUCTURES, {filter: (s) => (s.structureType == STRUCTURE_TOWER)});
-    let walls = room.find(FIND_STRUCTURES, {filter: (s) => (s.structureType == STRUCTURE_WALL)});
+    let target;
 
     // attack hostile creeps with HEAL
-    target = pos.findClosestByRange(FIND_HOSTILE_CREEPS, {
+    target = pos.findClosestByRange(objects.hostileCreeps, {
       filter: (c) => _.any(c.body, "type", HEAL)
     });
     if (target !== null) {
@@ -19,14 +16,14 @@ let tower = {
     }
 
     // attack hostile creeps without HEAL
-    target = pos.findClosestByRange(FIND_HOSTILE_CREEPS);
+    target = pos.findClosestByRange(objects.hostileCreeps);
     if (target !== null) {
       tower.attack(target);
       return OK;
     }
 
     // heal our own creeps
-    target = pos.findClosestByRange(FIND_CREEPS, {
+    target = pos.findClosestByRange(objects.creeps, {
       filter: (c) => (c.hits < c.hitsMax)
     });
     if (target !== null) {
@@ -54,8 +51,8 @@ let tower = {
     }
 
     // repair lowest rampart
-    target = _.min(ramparts, (s) => (s.hits));
     if ((target !== Infinity) && (target.hits < (Memory.defenseLowWater[tower.room.name][STRUCTURE_RAMPART] - (towers.length * TOWER_POWER_REPAIR * TOWER_FALLOFF)))) {
+    target = _.min(objects.ramparts, (s) => (s.hits));
       tower.repair(target);
       return OK;
     }
