@@ -130,7 +130,7 @@ module.exports.loop = function () {
 
     // run towers
 
-    _.forEach(objects.towers, (t) => tower.run(t));
+    _.forEach(objects.towers, (t) => tower.run(t, objects));
 
     if (objects.creeps.length > objects.containers.length) {
       // run flags
@@ -349,60 +349,58 @@ module.exports.loop = function () {
     else {
       delete Memory.endangered[room.name];
     }
-  }
 
-  // TODO: dynamic dispatch, rather than role transitions hardcoded in roles
+    // TODO: dynamic dispatch, rather than role transitions hardcoded in roles
 
-  for (let name in Game.creeps) {
-    let creep = Game.creeps[name];
+    for (let creep of objects.creeps) {
+      if (creep.memory.role === undefined) {
+        creep.memory.role = "upgrader";
+      }
 
-    if (creep.memory.role === undefined) {
-      creep.memory.role = "upgrader";
-    }
+      // if we're not on a road, drop a construction site
+      // let structures = creep.pos.lookFor(LOOK_STRUCTURES);
+      // if (!structures.length || _.all(structures, (s) => (s.structureType != STRUCTURE_ROAD))) {
+      //   switch (creep.pos.createConstructionSite(STRUCTURE_ROAD)) {
+      //     case OK:
+      //       break;
+      //     case ERR_INVALID_TARGET:
+      //       // console.log("The structure cannot be placed at the specified location.");
+      //       break;
+      //     case ERR_FULL:
+      //       // console.log("You have too many construction sites.");
+      //       break;
+      //     case ERR_INVALID_ARGS:
+      //       // console.log("The location is incorrect.")
+      //       break;
+      //     case ERR_RCL_NOT_ENOUGH:
+      //       // console.log("Room Controller Level insufficient.");
+      //       break;
+      //   }
+      // }
 
-    // if we're not on a road, drop a construction site
-    let structures = creep.pos.lookFor(LOOK_STRUCTURES);
-    if (!structures.length || _.all(structures, (s) => (s.structureType != STRUCTURE_ROAD))) {
-      switch (creep.pos.createConstructionSite(STRUCTURE_ROAD)) {
-        case OK:
+      switch (creep.memory.role) {
+        case "breacher":
+          roleBreacher.run(creep);
           break;
-        case ERR_INVALID_TARGET:
-          // console.log("The structure cannot be placed at the specified location.");
+        case "builder":
+          roleBuilder.run(creep);
           break;
-        case ERR_FULL:
-          // console.log("You have too many construction sites.");
+        case "harvester":
+          roleHarvester.run(creep);
           break;
-        case ERR_INVALID_ARGS:
-          // console.log("The location is incorrect.")
+        case "repairer":
+          roleRepairer.run(creep);
           break;
-        case ERR_RCL_NOT_ENOUGH:
-          // console.log("Room Controller Level insufficient.");
+        case "replenisher":
+          roleReplenisher.run(creep);
+          break;
+        case "scavenger":
+          roleScavenger.run(creep);
+          break;
+        case "upgrader":
+          roleUpgrader.run(creep);
           break;
       }
-    }
-
-    switch (creep.memory.role) {
-      case "breacher":
-        roleBreacher.run(creep);
-        break;
-      case "builder":
-        roleBuilder.run(creep);
-        break;
-      case "harvester":
-        roleHarvester.run(creep);
-        break;
-      case "repairer":
-        roleRepairer.run(creep);
-        break;
-      case "replenisher":
-        roleReplenisher.run(creep);
-        break;
-      case "scavenger":
-        roleScavenger.run(creep);
-        break;
-      case "upgrader":
-        roleUpgrader.run(creep);
-        break;
     }
   }
 
