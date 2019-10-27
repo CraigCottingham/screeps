@@ -3,6 +3,9 @@
 require("config");
 require("visualizer");
 
+require("creep.mem");
+require("room.mem");
+
 let roleBreacher = require("role.breacher");
 let roleBuilder = require("role.builder");
 let roleHarvester = require("role.harvester");
@@ -24,23 +27,6 @@ let worker = require("worker");
 //
 // also, you can add functions to existing objects (classes?) like
 //   creep.prototype.foo = function (args) { ... }
-
-// fun fact:
-//   a = Game.cpu.getUsed(); for (let creepName in Game.creeps) Game.creeps[creepName].memory.abc; console.log(Game.cpu.getUsed() - a);
-// uses about 0.1 CPU, while
-//   a = Game.cpu.getUsed(); for (let creepName in Game.creeps) Memory.creeps[Game.creeps[creepName].name].abc; console.log(Game.cpu.getUsed() - a);
-// uses about 0.025 CPU
-// suggested by Tigga in #cpu-clinic:
-
-Object.defineProperty(Creep.prototype, 'mem', {
-  get: function() {
-    return Memory.creeps[this.name] = Memory.creeps[this.name] || {};
-  },
-  set: function(value) {
-    Memory.creeps[this.name] = value
-  },
-  configurable: true,
-});
 
 //
 // initialize memory structures
