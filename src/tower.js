@@ -16,7 +16,7 @@ let tower = {
     // in this case, does it make more sense to repair the walls, and plan on the hostile creeps
     //   running out of TTL before they break through?
 
-    // if (Memory.redAlert[room.name]) {
+    // if (room.mem.redAlert) {
     //   // AND at least one hostile creep has HEAL?
     //   target = _.min(walls, (s) => (s.hits));
     //   if ((target !== Infinity) && (target.hits < (Memory.defenseLowWater[room.name][STRUCTURE_WALL] - (towers.length * TOWER_POWER_REPAIR * TOWER_FALLOFF)))) {

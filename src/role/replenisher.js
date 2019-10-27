@@ -78,7 +78,7 @@ let roleReplenisher = {
     }
 
     // hostiles present
-    if (Memory.redAlert[creep.room.name]) {
+    if (room.mem.redAlert) {
       let target = pos.findClosestByPath(towers, {
         filter: (s) => (s.energy < s.energyCapacity)
       });

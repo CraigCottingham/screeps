@@ -35,9 +35,6 @@ let worker = require("worker");
 if (Memory.defenseLowWater === undefined) {
   Memory.defenseLowWater = {};
 }
-if (Memory.redAlert === undefined) {
-  Memory.redAlert = {};
-}
 if (Memory.triggerAutoincrementThreshold === undefined) {
   Memory.triggerAutoincrementThreshold = {};
 }
@@ -74,7 +71,7 @@ module.exports.loop = function () {
       walls: structures[STRUCTURE_WALL] || []
     };
 
-    Memory.redAlert[name] = (objects.hostileCreeps.length > 0);
+    room.mem.redAlert = (objects.hostileCreeps.length > 0);
 
     // set up low water thresholds for defensive structures
 
@@ -165,7 +162,7 @@ module.exports.loop = function () {
       // run construction sites
 
       // don't run this if there are too many things needing repair?
-      if (!Memory.redAlert[name]) {
+      if (!room.mem.redAlert) {
         for (let site of objects.constructionSites) {
           let creep = site.pos.findClosestByRange(FIND_MY_CREEPS, {
             filter: (c) => (c.memory.parkedAt === undefined) &&
@@ -260,7 +257,7 @@ module.exports.loop = function () {
 
         // TODO: create haulers (CARRY, MOVE)?
 
-        // if redAlert and availableEnergy > 200
+        // if room.mem.redAlert and availableEnergy > 200
         //   parts = [WORK, CARRY, MOVE]
         // if (availableEnergy > 750) {  // 500 + minimum creep build cost
         //   parts = [WORK, MOVE, CARRY, MOVE, WORK, MOVE, CARRY, MOVE];

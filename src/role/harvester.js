@@ -24,10 +24,9 @@ let roleHarvester = {
     creep.mem.parkedAt = undefined;
 
     let room = creep.room;
-    let redAlert = Memory.redAlert[room.name];
 
     if (_.sum(creep.carry) >= creep.carryCapacity) {
-      if (redAlert) {
+      if (room.mem.redAlert) {
         creep.mem.role = "replenisher";
         return OK;
       }
@@ -126,7 +125,7 @@ let roleHarvester = {
       return OK;
     }
 
-    if (redAlert) {
+    if (room.mem.redAlert) {
       if (creep.carry.energy > 0) {
         // creep is carrying energy, so go put it somewhere useful
 
