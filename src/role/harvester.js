@@ -5,190 +5,262 @@ let worker = require("worker");
 let roleHarvester = {
   run: function (creep) {
     // creep.say("harvest");
-    let room = creep.room;
 
-    let containers = room.find(FIND_STRUCTURES, {
+    let containers = creep.room.find(FIND_STRUCTURES, {
       filter: (s) => (s.structureType == STRUCTURE_CONTAINER) && (creep.pos.getRangeTo(s) == 0)
     });
     if (containers.length > 0) {
-      // creep.say("parked");
-      let container = containers[0];
-      creep.memory.parkedAt = container.id;
-
-      if (creep.carry.energy >= creep.carryCapacity) {
-        let creepCount = room.find(FIND_MY_CREEPS).length;
-        let containerCount = room.find(FIND_STRUCTURES, {
-          filter: (s) => (s.structureType == STRUCTURE_CONTAINER)
-        }).length;
-        if (creepCount > containerCount) {
-          this.transferToNearbyContainer(creep);
-        }
-        else {
-          let towerCount = room.find(FIND_STRUCTURES, {
-            filter: (s) => (s.structureType == STRUCTURE_TOWER)
-          }).length;
-          if (towerCount) {
-            // switch to builder if there are any construction sites, or alternately
-            //   if there's nothing to replenish?
-            // creep.memory.role = "builder";
-            creep.memory.role = "replenisher";
-          }
-          else {
-            creep.memory.role = "repairer";
-          }
-          return OK;
-        }
-      }
-      else {
-        this.harvestFromNearbySource(creep);
-      }
+      this.runParked(creep, containers[0]);
     }
     else {
-      // not parked
-      creep.memory.parkedAt = undefined;
+      this.runFree(creep);
+    }
 
-      let redAlert = Memory.redAlert[room.name];
+    return OK;
+  },
 
-      if (_.sum(creep.carry) >= creep.carryCapacity) {
-        // creep is full of energy and/or other resources
+  runFree: function (creep) {
+    // not parked
+    creep.mem.parkedAt = undefined;
 
-        creep.memory.role = "replenisher";
+    let room = creep.room;
+
+    if (_.sum(creep.carry) >= creep.carryCapacity) {
+      if (room.mem.redAlert) {
+        creep.mem.role = "replenisher";
         return OK;
       }
 
-      // only if room doesn't have containers?
-      // if (room.name != creep.memory.birthRoom) {
-        // let source = creep.pos.findClosestByRange(FIND_SOURCES);
-        // if (source !== null) {
-        //   switch (creep.harvest(source)) {
-        //     case OK:
-        //       {
-        //         let sites = creep.pos.lookFor(LOOK_STRUCTURES);
-        //         if (!sites.length || _.all(sites, (s) => (s.structureType != STRUCTURE_CONTAINER))) {
-        //           creep.pos.createConstructionSite(STRUCTURE_CONTAINER);
-        //         }
-        //       }
-        //       break;
-        //     case ERR_NOT_IN_RANGE:
-        //       {
-        //         let sites = creep.pos.lookFor(LOOK_STRUCTURES);
-        //         if (!sites.length || _.all(sites, (s) => (s.structureType != STRUCTURE_ROAD))) {
-        //           creep.pos.createConstructionSite(STRUCTURE_ROAD);
-        //         }
-        //         worker.moveTo(creep, source);
-        //       }
-        //       break;
-        //   }
-        // }
-        // else {
-        //   creep.memory.role = "builder";
-        // }
-        // return OK;
-      // }
+      let extensions = room.find(FIND_STRUCTURES, {filter: (s) => (s.structureType == STRUCTURE_EXTENSION)});
+      let spawns = room.find(FIND_STRUCTURES, {filter: (s) => (s.structureType == STRUCTURE_SPAWN)});
+      let extensionsNeedReplenishing = (_.reduce(extensions, (acc, s) => (acc + s.energy), 0) < (extensions.length * EXTENSION_ENERGY_CAPACITY[room.controller.level]));
+      // let spawnsNeedReplenishing = _.any(spawns, (s) => (s.store[RESOURCE_ENERGY] < s.store.getCapacity[RESOURCE_ENERGY])) && (room.energyAvailable >= SPAWN_ENERGY_CAPACITY);
+      let spawnsNeedReplenishing = _.any(spawns, (s) => (s.energy < s.energyCapacity)) && (room.energyAvailable >= SPAWN_ENERGY_CAPACITY);
 
-      // TODO: only move to source if creep has a WORK part
-      let source = creep.pos.findClosestByPath(FIND_SOURCES);
-      if (source !== null) {
-        if (creep.pos.isNearTo(source)) {
-          // adjacent, but there's no container
-          switch (creep.pos.createConstructionSite(STRUCTURE_CONTAINER)) {
-            case OK:
-              break;
-            case ERR_INVALID_TARGET:
-              // console.log("The structure cannot be placed at the specified location.");
-              break;
-            case ERR_FULL:
-              // console.log("You have too many construction sites.");
-              break;
-            case ERR_INVALID_ARGS:
-              // console.log("The location is incorrect.")
-              break;
-            case ERR_RCL_NOT_ENOUGH:
-              // console.log("Room Controller Level insufficient.");
-              break;
-            default:
-              break;
-          }
-
-          switch (creep.harvest(source)) {
-            case OK:
-              break;
-            case ERR_NOT_OWNER:
-              break;
-            case ERR_BUSY:
-              break;
-            case ERR_NOT_FOUND:
-              break;
-            case ERR_NOT_ENOUGH_RESOURCES:
-              break;
-            case ERR_INVALID_TARGET:
-              break;
-            case ERR_NOT_IN_RANGE:
-                worker.moveTo(creep, source);
-              break;
-            case ERR_TIRED:
-              break;
-            case ERR_NO_BODYPART:
-              break;
-            default:
-              break;
-          }
-
-          return OK;
-        }
-        else {
-          // path to source is available
-
-          worker.moveTo(creep, source);
-          return OK;
-        }
-      }
-
-      let fullContainer = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-        filter: (s) => (s.structureType == STRUCTURE_CONTAINER) && (_.sum(s.store) >= s.storeCapacity)
-      });
-      if (fullContainer !== null) {
-        // path to full container is available
-
-        // creep.say("milk");
-        this.withdraw(creep, fullContainer);
+      if (extensionsNeedReplenishing || spawnsNeedReplenishing) {
+        creep.mem.role = "replenisher";
         return OK;
       }
 
-      if (redAlert) {
-        if (creep.carry.energy > 0) {
-          // creep is carrying energy, so go put it somewhere useful
+      if (room.find(FIND_CONSTRUCTION_SITES).length) {
+        creep.mem.role = "builder";
+        return OK;
+      }
 
-          creep.memory.role = "replenisher";
-          return OK;
+      if (room.find(FIND_STRUCTURES, {filter: (s) => (s.structureType == STRUCTURE_TOWER)}).length) {
+        creep.mem.role = "replenisher";
+        return OK;
+      }
+
+      creep.mem.role = "repairer";
+      return OK;
+    }
+
+    // TODO: only move to source if creep has a WORK part?
+    let source = creep.pos.findClosestByPath(FIND_SOURCES);
+    if (source !== null) {
+      if (creep.pos.isNearTo(source)) {
+        // adjacent, but there's no container
+        switch (creep.pos.createConstructionSite(STRUCTURE_CONTAINER)) {
+          case OK:
+            break;
+          case ERR_INVALID_TARGET:
+            // console.log("The structure cannot be placed at the specified location.");
+            break;
+          case ERR_FULL:
+            // console.log("You have too many construction sites.");
+            break;
+          case ERR_INVALID_ARGS:
+            // console.log("The location is incorrect.")
+            break;
+          case ERR_RCL_NOT_ENOUGH:
+            // console.log("Room Controller Level insufficient.");
+            break;
+          default:
+            break;
         }
 
-        let container = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-          filter: (s) => (s.structureType == STRUCTURE_STORAGE) && (s.store.energy > 0)
-        });
-        if (container !== null) {
-          // there's energy available in the storage, so go get some
-
-          this.withdraw(creep, container);
-          return OK;
+        switch (creep.harvest(source)) {
+          case OK:
+            break;
+          case ERR_NOT_OWNER:
+            break;
+          case ERR_BUSY:
+            break;
+          case ERR_NOT_FOUND:
+            break;
+          case ERR_NOT_ENOUGH_RESOURCES:
+            break;
+          case ERR_INVALID_TARGET:
+            break;
+          case ERR_NOT_IN_RANGE:
+              worker.moveTo(creep, source);
+            break;
+          case ERR_TIRED:
+            break;
+          case ERR_NO_BODYPART:
+            break;
+          default:
+            break;
         }
+
+        return OK;
+      }
+      else {
+        // path to source is available
+
+        worker.moveTo(creep, source);
+        return OK;
+      }
+    }
+
+    let fullContainer = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+      filter: (s) => (s.structureType == STRUCTURE_CONTAINER) && (_.sum(s.store) >= s.storeCapacity)
+    });
+    if (fullContainer !== null) {
+      // path to full container is available
+
+      // creep.say("milk");
+      this.withdraw(creep, fullContainer);
+      return OK;
+    }
+
+    if (room.mem.redAlert) {
+      if (creep.carry.energy > 0) {
+        // creep is carrying energy, so go put it somewhere useful
+
+        creep.mem.role = "replenisher";
+        return OK;
       }
 
       let container = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-        filter: (s) => (s.structureType == STRUCTURE_CONTAINER) && (_.sum(s.store) > 0)
+        filter: (s) => (s.structureType == STRUCTURE_STORAGE) && (s.store.energy > 0)
       });
       if (container !== null) {
-        // path to a non-empty container is available
+        // there's energy available in the storage, so go get some
 
         this.withdraw(creep, container);
         return OK;
       }
-
-      // idle
-      creep.memory.role = "repairer";
     }
 
-    return OK;
+    let container = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+      filter: (s) => (s.structureType == STRUCTURE_CONTAINER) && (_.sum(s.store) > 0)
+    });
+    if (container !== null) {
+      // path to a non-empty container is available
+
+      this.withdraw(creep, container);
+      return OK;
+    }
+
+    // let extractor = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+    //   filter: (s) => (s.structureType == STRUCTURE_EXTRACTOR)
+    // });
+    // if (extractor !== null) {
+    //   let mineral = extractor.pos.findClosestByRange(FIND_MINERALS);
+    //   if (creep.pos.isNearTo(mineral)) {
+    //     // creep.say("mineral!");
+    //     // adjacent, but there's no container
+    //     switch (creep.pos.createConstructionSite(STRUCTURE_CONTAINER)) {
+    //       case OK:
+    //         break;
+    //       case ERR_INVALID_TARGET:
+    //         // console.log("The structure cannot be placed at the specified location.");
+    //         break;
+    //       case ERR_FULL:
+    //         // console.log("You have too many construction sites.");
+    //         break;
+    //       case ERR_INVALID_ARGS:
+    //         // console.log("The location is incorrect.");
+    //         break;
+    //       case ERR_RCL_NOT_ENOUGH:
+    //         // console.log("Room Controller Level insufficient.");
+    //         break;
+    //       default:
+    //         break;
+    //     }
+    //
+    //     switch (creep.harvest(mineral)) {
+    //       case OK:
+    //         break;
+    //       case ERR_NOT_OWNER:
+    //         // console.log("not owner");
+    //         break;
+    //       case ERR_BUSY:
+    //         // console.log("busy");
+    //         break;
+    //       case ERR_NOT_FOUND:
+    //         // console.log("not found");
+    //         break;
+    //       case ERR_NOT_ENOUGH_RESOURCES:
+    //         // console.log("not enough resources");
+    //         break;
+    //       case ERR_INVALID_TARGET:
+    //         // console.log("invalid target");
+    //         break;
+    //       case ERR_NOT_IN_RANGE:
+    //         worker.moveTo(creep, mineral);
+    //         break;
+    //       case ERR_TIRED:
+    //         // console.log("tired");
+    //         break;
+    //       case ERR_NO_BODYPART:
+    //         // console.log("no body part");
+    //         break;
+    //       default:
+    //         break;
+    //     }
+    //
+    //     return OK;
+    //   }
+    //   else {
+    //     // creep.say("extract");
+    //     // path to source is available
+    //
+    //     worker.moveTo(creep, mineral);
+    //     return OK;
+    //   }
+    // }
+
+    // idle
+    creep.mem.role = "repairer";
+  },
+
+  runParked: function (creep, container) {
+    // creep.say("parked");
+    creep.mem.parkedAt = container.id;
+
+    if (creep.carry.energy >= creep.carryCapacity) {
+      if (container.hits < container.hitsMax) {
+        creep.repair(container);
+        return OK;
+      }
+
+      let room = creep.room;
+      let creepCount = room.find(FIND_MY_CREEPS).length;
+      let containerCount = room.find(FIND_STRUCTURES, {
+        filter: (s) => (s.structureType == STRUCTURE_CONTAINER)
+      }).length;
+      if (creepCount > containerCount) {
+        this.transferToNearbyContainer(creep);
+      }
+      else {
+        if (room.find(FIND_CONSTRUCTION_SITES).length) {
+          creep.mem.role = "builder";
+          return OK;
+        }
+        if (room.find(FIND_STRUCTURES, {filter: (s) => (s.structureType == STRUCTURE_TOWER)}).length) {
+          creep.mem.role = "replenisher";
+          return OK;
+        }
+        creep.mem.role = "repairer";
+        return OK;
+      }
+    }
+    else {
+      this.harvestFromNearbySource(creep);
+    }
   },
 
   harvest: function (creep, source) {
@@ -247,13 +319,13 @@ let roleHarvester = {
   },
 
   transferToNearbyContainer: function (creep) {
-    if (creep.memory.parkedAt === undefined) {
+    if (creep.mem.parkedAt === undefined) {
       return OK;
     }
 
-    let container = Game.getObjectById(creep.memory.parkedAt);
+    let container = Game.getObjectById(creep.mem.parkedAt);
     if (container == null) {
-      creep.memory.parkedAt = undefined;
+      creep.mem.parkedAt = undefined;
       return OK;
     }
 
@@ -289,14 +361,14 @@ let roleHarvester = {
         case ERR_BUSY:
           break;
         case ERR_NOT_ENOUGH_RESOURCES:
-          creep.memory.role = "replenisher";
+          creep.mem.role = "replenisher";
           break;
         case ERR_INVALID_TARGET:
           break;
         case ERR_FULL:
-          // creep.memory.role = "builder";
-          // creep.memory.role = "replenisher";
-          creep.memory.role = "repairer";
+          // creep.mem.role = "builder";
+          // creep.mem.role = "replenisher";
+          creep.mem.role = "repairer";
           break;
         case ERR_NOT_IN_RANGE:
           worker.moveTo(creep, container);

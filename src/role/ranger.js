@@ -6,11 +6,11 @@ let roleRanger = {
   run: function (creep) {
     // creep.say("ranger");
 
-    let destination = creep.memory.destination;
+    let destination = creep.mem.destination;
     if (destination === undefined) {
       let pos = this.findRoadAtEdge(creep.room);
       if (pos !== undefined) {
-        destination = creep.memory.destination = {x: pos.x, y: pos.y, roomName: pos.roomName};
+        destination = creep.mem.destination = {x: pos.x, y: pos.y, roomName: pos.roomName};
       }
     }
 
@@ -32,7 +32,7 @@ let roleRanger = {
         });
         if (container !== null) {
           if (creep.pos.isNearTo(container)) {
-            creep.memory.role = "harvester";
+            creep.mem.role = "harvester";
             return OK;
           }
           else {
@@ -44,7 +44,7 @@ let roleRanger = {
         let source = creep.pos.findClosestByRange(FIND_SOURCES);
         if (source !== null) {
           if (creep.pos.isNearTo(source)) {
-            creep.memory.role = "harvester";
+            creep.mem.role = "harvester";
             return OK;
           }
           else {
@@ -53,7 +53,7 @@ let roleRanger = {
           }
         }
 
-        creep.memory.role = "builder";
+        creep.mem.role = "builder";
         return OK;
       }
 
@@ -63,7 +63,7 @@ let roleRanger = {
       if (controller !== null) {
         if (creep.pos.isNearTo(controller)) {
           creep.claimController(controller);
-          creep.memory.role = "harvester";
+          creep.mem.role = "harvester";
           return OK;
         }
 
@@ -84,8 +84,8 @@ let roleRanger = {
         return OK;
       }
       else {
-        creep.memory.role = "harvester";
-        delete creep.memory.destination;
+        creep.mem.role = "harvester";
+        delete creep.mem.destination;
         return OK;
       }
     }

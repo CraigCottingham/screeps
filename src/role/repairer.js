@@ -5,7 +5,7 @@ let worker = require("worker");
 let roleRepairer = {
   run: function (creep) {
     if (creep.carry.energy == 0) {
-      creep.memory.role = "harvester";
+      creep.mem.role = "harvester";
       return OK;
     }
 
@@ -43,7 +43,7 @@ let roleRepairer = {
 
       // repair ramparts that are below the low water threshold
       target = pos.findClosestByRange(ramparts, {
-        filter: (s) => (s.hits < (Memory.defenseLowWater[room.name][STRUCTURE_RAMPART] - (towers.length * TOWER_POWER_REPAIR * TOWER_FALLOFF)))
+        filter: (s) => (s.hits < room.mem.threshold.rampart)
       });
       if (target !== null) {
         this.repair(creep, target);
@@ -51,13 +51,14 @@ let roleRepairer = {
       }
 
       // repair walls that are below the low water threshold
-      target = pos.findClosestByRange(walls, {
-        filter: (s) => (s.hits < (Memory.defenseLowWater[room.name][STRUCTURE_WALL]))
-      });
-      if (target !== null) {
-        this.repair(creep, target);
-        return OK;
-      }
+      // ** don't bother creeps with walls?
+      // target = pos.findClosestByRange(walls, {
+      //   filter: (s) => (s.hits < room.mem.threshold.wall)
+      // });
+      // if (target !== null) {
+      //   this.repair(creep, target);
+      //   return OK;
+      // }
 
       target = pos.findClosestByPath(FIND_STRUCTURES, {
         // filter out ramparts only if there aren't any towers in the room?
@@ -71,8 +72,8 @@ let roleRepairer = {
 
       // if we got this far, bump up the low water threshold
       // only bump the low water threshold if there aren't any towers in the room?
-      Memory.triggerAutoincrementThreshold[room.name] = true;
-      creep.memory.role = "builder";
+      room.mem.threshold.update = true;
+      creep.mem.role = "builder";
       return OK;
     }
     else {
@@ -101,7 +102,7 @@ let roleRepairer = {
       case ERR_BUSY:
         break;
       case ERR_NOT_ENOUGH_RESOURCES:
-        creep.memory.role = "harvester";
+        creep.mem.role = "harvester";
         break;
       case ERR_INVALID_TARGET:
         break;
@@ -123,12 +124,12 @@ let roleRepairer = {
       case ERR_BUSY:
         break;
       case ERR_NOT_ENOUGH_RESOURCES:
-        creep.memory.role = "upgrader";
+        creep.mem.role = "upgrader";
         break;
       case ERR_INVALID_TARGET:
         break;
       case ERR_FULL:
-        creep.memory.role = "upgrader";
+        creep.mem.role = "upgrader";
         break;
       case ERR_NOT_IN_RANGE:
         worker.moveTo(creep, tower);

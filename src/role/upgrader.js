@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 let worker = require("worker");
 
@@ -7,13 +7,13 @@ let roleUpgrader = {
     // creep.say("upgrade");
 
     if (creep.carry.energy == 0) {
-      creep.memory.role = "harvester";
+      creep.mem.role = "harvester";
       return OK;
     }
 
     let target = creep.room.controller;
     if (target === undefined) {
-      creep.memory.role = "replenisher";
+      creep.mem.role = "replenisher";
     }
     else {
       // if we're not on a road, drop a construction site
@@ -32,7 +32,7 @@ let roleUpgrader = {
   sign: function(creep, controller) {
     switch (creep.signController(controller, "CraigCottingham - github.com/CraigCottingham/screeps")) {
       case ERR_INVALID_TARGET:
-        creep.memory.role = "replenisher";
+        creep.mem.role = "replenisher";
         break;
       case ERR_NOT_IN_RANGE:
         worker.moveTo(creep, controller);
@@ -44,15 +44,18 @@ let roleUpgrader = {
 
   upgrade: function (creep, controller) {
     switch (creep.upgradeController(controller)) {
+      case OK:
+        worker.moveTo(creep, controller);
+        break;
       case ERR_NOT_OWNER:
         break;
       case ERR_BUSY:
         break;
       case ERR_NOT_ENOUGH_RESOURCES:
-        creep.memory.role = "harvester";
+        creep.mem.role = "harvester";
         break;
       case ERR_INVALID_TARGET:
-        creep.memory.role = "harvester";
+        creep.mem.role = "harvester";
         break;
       case ERR_NOT_IN_RANGE:
         worker.moveTo(creep, controller);
