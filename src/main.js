@@ -60,6 +60,7 @@ module.exports.loop = function () {
       walls: structures[STRUCTURE_WALL] || []
     };
 
+    room.mem.endangered = (objects.creeps.length < 10);
     room.mem.redAlert = (objects.hostileCreeps.length > 0);
 
     // set up low water thresholds for defensive structures
@@ -96,7 +97,7 @@ module.exports.loop = function () {
         }
       }
 
-      delete room.mem.threshold.update;
+      room.mem.threshold.update = false;
     }
 
     // run towers
@@ -307,17 +308,12 @@ module.exports.loop = function () {
       });
     }
 
-    if (objects.creeps.length < 10) {
-      Memory.endangered = Memory.endangered = {};
-      Memory.endangered[room.name] = true;
+    if (room.mem.endangered) {
       _.each(objects.creeps, (c) => {
         if ((c.memory.role != "harvester") && (c.memory.role != "replenisher")) {
           c.memory.role = "replenisher";
         }
       });
-    }
-    else {
-      delete Memory.endangered[room.name];
     }
 
     // TODO: dynamic dispatch, rather than role transitions hardcoded in roles
