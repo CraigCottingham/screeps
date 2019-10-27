@@ -35,9 +35,6 @@ let worker = require("worker");
 if (Memory.defenseLowWater === undefined) {
   Memory.defenseLowWater = {};
 }
-if (Memory.triggerAutoincrementThreshold === undefined) {
-  Memory.triggerAutoincrementThreshold = {};
-}
 
 module.exports.loop = function () {
   let roomsControlled = _.filter(_.values(Game.structures), (s) => (s.structureType == STRUCTURE_CONTROLLER)).length;
@@ -81,7 +78,11 @@ module.exports.loop = function () {
       Memory.defenseLowWater[name][STRUCTURE_WALL] = WALL_HITS;
     }
 
-    if (Memory.triggerAutoincrementThreshold[name]) {
+    if (room.mem.threshold === undefined) {
+      room.mem.threshold = {};
+    }
+
+    if (room.mem.threshold.update) {
       // autoincrement low water threshold for ramparts
       if (Memory.defenseLowWater[name][STRUCTURE_RAMPART] < RAMPART_HITS_MAX[room.controller.level]) {
         let newThreshold = _.min(objects.ramparts, "hits").hits + 1000;
@@ -104,7 +105,7 @@ module.exports.loop = function () {
         }
       }
 
-      Memory.triggerAutoincrementThreshold[name] = undefined;
+      delete room.mem.threshold.update;
     }
 
     // run towers
