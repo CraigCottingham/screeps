@@ -3,6 +3,9 @@
 require("config");
 require("visualizer");
 
+require("creep.mem");
+require("room.mem");
+
 let roleBreacher = require("role.breacher");
 let roleBuilder = require("role.builder");
 let roleHarvester = require("role.harvester");
@@ -24,41 +27,6 @@ let worker = require("worker");
 //
 // also, you can add functions to existing objects (classes?) like
 //   creep.prototype.foo = function (args) { ... }
-
-// fun fact:
-//   a = Game.cpu.getUsed(); for (let creepName in Game.creeps) Game.creeps[creepName].memory.abc; console.log(Game.cpu.getUsed() - a);
-// uses about 0.1 CPU, while
-//   a = Game.cpu.getUsed(); for (let creepName in Game.creeps) Memory.creeps[Game.creeps[creepName].name].abc; console.log(Game.cpu.getUsed() - a);
-// uses about 0.025 CPU
-// suggested by Tigga in #cpu-clinic:
-
-// Object.defineProperty(Creep.prototype, 'mem', {
-//   get: function() {
-//     return Memory.creeps[this.name] = Memory.creeps[this.name] || {};
-//   },
-//   set: function(value) {
-//     Memory.creeps[this.name] = value
-//   },
-//   configurable: true,
-// });
-//
-// Creep.prototype.initTick = function() {
-//   this.mem = Memory.creeps[this.name];
-// // ^^^ what is this initTick() and how is it called?
-
-//
-// initialize memory structures
-//
-
-if (Memory.defenseLowWater === undefined) {
-  Memory.defenseLowWater = {};
-}
-if (Memory.redAlert === undefined) {
-  Memory.redAlert = {};
-}
-if (Memory.triggerAutoincrementThreshold === undefined) {
-  Memory.triggerAutoincrementThreshold = {};
-}
 
 module.exports.loop = function () {
   let roomsControlled = _.filter(_.values(Game.structures), (s) => (s.structureType == STRUCTURE_CONTROLLER)).length;
@@ -92,40 +60,44 @@ module.exports.loop = function () {
       walls: structures[STRUCTURE_WALL] || []
     };
 
-    Memory.redAlert[name] = (objects.hostileCreeps.length > 0);
+    room.mem.endangered = (objects.creeps.length < 10);
+    room.mem.redAlert = (objects.hostileCreeps.length > 0);
 
     // set up low water thresholds for defensive structures
 
-    if (Memory.defenseLowWater[name] === undefined) {
-      Memory.defenseLowWater[name] = {};
-      Memory.defenseLowWater[name][STRUCTURE_RAMPART] = RAMPART_HITS;
-      Memory.defenseLowWater[name][STRUCTURE_WALL] = WALL_HITS;
+    if (room.mem.threshold === undefined) {
+      room.mem.threshold = {
+        rampart: RAMPART_HITS,
+        wall: WALL_HITS
+      };
     }
 
-    if (Memory.triggerAutoincrementThreshold[name]) {
+    if (room.mem.threshold.update) {
       // autoincrement low water threshold for ramparts
-      if (Memory.defenseLowWater[name][STRUCTURE_RAMPART] < RAMPART_HITS_MAX[room.controller.level]) {
-        let newThreshold = _.min(objects.ramparts, "hits").hits + 1000;
+
+      if (room.mem.threshold.rampart < RAMPART_HITS_MAX[room.controller.level]) {
+        let newThreshold = _.min(objects.ramparts, "hits").hits + TOWER_POWER_REPAIR;
         if (newThreshold > RAMPART_HITS_MAX[room.controller.level]) {
           newThreshold = RAMPART_HITS_MAX[room.controller.level];
         }
-        if (newThreshold > Memory.defenseLowWater[name][STRUCTURE_RAMPART]) {
-          Memory.defenseLowWater[name][STRUCTURE_RAMPART] = newThreshold;
+        if (newThreshold > room.mem.threshold.rampart) {
+          room.mem.threshold.rampart = newThreshold;
         }
       }
 
       // autoincrement low water threshold for walls
-      if (Memory.defenseLowWater[name][STRUCTURE_WALL] < WALL_HITS_MAX) {
-        let newThreshold = _.min(objects.walls, "hits").hits + 1000;
+
+      if (room.mem.threshold.wall < WALL_HITS_MAX) {
+        let newThreshold = _.min(objects.walls, "hits").hits + TOWER_POWER_REPAIR;
         if (newThreshold > WALL_HITS_MAX) {
           newThreshold = WALL_HITS_MAX;
         }
-        if (newThreshold > Memory.defenseLowWater[name][STRUCTURE_WALL]) {
-          Memory.defenseLowWater[name][STRUCTURE_WALL] = newThreshold;
+        if (newThreshold > room.mem.threshold.wall) {
+          room.mem.threshold.wall = newThreshold;
         }
       }
 
-      Memory.triggerAutoincrementThreshold[name] = undefined;
+      room.mem.threshold.update = false;
     }
 
     // run towers
@@ -144,8 +116,8 @@ module.exports.loop = function () {
             filter: (c) => (c.memory.parkedAt === undefined) && (_.sum(c.carry) < c.carryCapacity)
           });
           if (creep !== null) {
-            creep.memory.assignment = drop.id;
-            creep.memory.role = "scavenger";
+            creep.mem.assignment = drop.id;
+            creep.mem.role = "scavenger";
           }
         }
       }
@@ -159,8 +131,8 @@ module.exports.loop = function () {
             filter: (c) => (c.memory.parkedAt === undefined) && (_.sum(c.carry) < c.carryCapacity)
           });
           if (creep !== null) {
-            creep.memory.assignment = tombstone.id;
-            creep.memory.role = "scavenger";
+            creep.mem.assignment = tombstone.id;
+            creep.mem.role = "scavenger";
           }
         }
       }
@@ -174,16 +146,16 @@ module.exports.loop = function () {
             filter: (c) => (c.memory.parkedAt === undefined) && (_.sum(c.carry) < c.carryCapacity)
           });
           if (creep !== null) {
-            creep.memory.assignment = ruin.id;
-            creep.memory.role = "scavenger";
+            creep.mem.assignment = ruin.id;
+            creep.mem.role = "scavenger";
           }
         }
       }
 
-      // run construction sites
-
       // don't run this if there are too many things needing repair?
-      if (!Memory.redAlert[name]) {
+      if (!room.mem.redAlert) {
+        // run construction sites
+
         for (let site of objects.constructionSites) {
           let creep = site.pos.findClosestByRange(FIND_MY_CREEPS, {
             filter: (c) => (c.memory.parkedAt === undefined) &&
@@ -193,19 +165,18 @@ module.exports.loop = function () {
                            (_.sum(c.carry) == c.carry.energy)
           });
           if (creep !== null) {
-            creep.memory.role = "builder";
+            creep.mem.role = "builder";
           }
         }
       }
 
-      // TODO: use creeps array already loaded
       if (room.controller.my) {
         if (_.all(objects.creeps, (c) => (c.memory.role != "upgrader"))) {
           let creep = room.controller.pos.findClosestByRange(FIND_MY_CREEPS, {
             filter: (c) => (c.memory.parkedAt === undefined) && (c.carry.energy > 0)
           })
           if (creep !== null) {
-            creep.memory.role = "upgrader";
+            creep.mem.role = "upgrader";
           }
         }
       }
@@ -217,7 +188,7 @@ module.exports.loop = function () {
       //   if (_.all(_.values(Game.creeps), (c) => (c.memory.role != "ranger"))) {
       //     creep = _.find(objects.creeps, (c) => (_.any(c.body, (p) => (p.type == CLAIM))));
       //     if (creep !== undefined) {
-      //       creep.memory.role = "ranger";
+      //       creep.mem.role = "ranger";
       //     }
       //   }
       // }
@@ -226,7 +197,7 @@ module.exports.loop = function () {
         // if (_.all(_.values(Game.creeps), (c) => (c.memory.role != "ranger"))) {
         //   creep = _.find(objects.creeps, (c) => (c.memory.parkedAt === undefined) && (c.memory.role == "harvester") && (c.carry.energy > 0));
         //   if (creep !== undefined) {
-        //     creep.memory.role = "ranger";
+        //     creep.mem.role = "ranger";
         //   }
         // }
       // }
@@ -241,7 +212,7 @@ module.exports.loop = function () {
     //         filter: (c) => ((c.memory.parkedAt === undefined) && (c.memory.role != "scavenger") && (c.memory.role != "upgrader"))
     //       });
     //       if (creep !== null) {
-    //         creep.memory.assignedToTower = t.id;
+    //         creep.mem.assignedToTower = t.id;
     //       }
     //     }
     //   });
@@ -278,7 +249,7 @@ module.exports.loop = function () {
 
         // TODO: create haulers (CARRY, MOVE)?
 
-        // if redAlert and availableEnergy > 200
+        // if room.mem.redAlert and availableEnergy > 200
         //   parts = [WORK, CARRY, MOVE]
         // if (availableEnergy > 750) {  // 500 + minimum creep build cost
         //   parts = [WORK, MOVE, CARRY, MOVE, WORK, MOVE, CARRY, MOVE];
@@ -337,24 +308,19 @@ module.exports.loop = function () {
       });
     }
 
-    if (objects.creeps.length < 10) {
-      Memory.endangered = Memory.endangered = {};
-      Memory.endangered[room.name] = true;
+    if (room.mem.endangered) {
       _.each(objects.creeps, (c) => {
         if ((c.memory.role != "harvester") && (c.memory.role != "replenisher")) {
           c.memory.role = "replenisher";
         }
       });
     }
-    else {
-      delete Memory.endangered[room.name];
-    }
 
     // TODO: dynamic dispatch, rather than role transitions hardcoded in roles
 
     for (let creep of objects.creeps) {
-      if (creep.memory.role === undefined) {
-        creep.memory.role = "upgrader";
+      if (creep.mem.role === undefined) {
+        creep.mem.role = "upgrader";
       }
 
       // if we're not on a road, drop a construction site
@@ -378,7 +344,7 @@ module.exports.loop = function () {
       //   }
       // }
 
-      switch (creep.memory.role) {
+      switch (creep.mem.role) {
         case "breacher":
           roleBreacher.run(creep);
           break;

@@ -40,9 +40,9 @@ if (config.visualizer.enabled) {
     },
 
     renderCreepPath: function (creep) {
-      if (creep.memory._move) {
+      if (creep.mem._move) {
         const rv = creep.room.visual;
-        const path = Room.deserializePath(creep.memory._move.path);
+        const path = Room.deserializePath(creep.mem._move.path);
         this.drawPath(rv, path, 'red');
       }
     },
@@ -112,12 +112,12 @@ if (config.visualizer.enabled) {
       if (ramparts.length) {
         const weakestRampart = _.min(ramparts, (r) => r.hits);
         const strongestRampart = _.max(ramparts, (r) => r.hits);
-        lines.push({label: "Ramparts:", value: `${weakestRampart.hits} / ${strongestRampart.hits} / ${Memory.defenseLowWater[room.name][STRUCTURE_RAMPART]} / ${RAMPART_HITS_MAX[room.controller.level]}`});
+        lines.push({label: "Ramparts:", value: `${weakestRampart.hits} / ${strongestRampart.hits} / ${room.mem.threshold.rampart} / ${RAMPART_HITS_MAX[room.controller.level]}`});
       }
       if (walls.length) {
         const weakestWall = _.min(walls, (w) => w.hits);
         const strongestWall = _.max(walls, (w) => w.hits);
-        lines.push({label: "Walls:", value: `${weakestWall.hits} / ${strongestWall.hits} / ${Memory.defenseLowWater[room.name][STRUCTURE_WALL]} / ${WALL_HITS_MAX}`});
+        lines.push({label: "Walls:", value: `${weakestWall.hits} / ${strongestWall.hits} / ${room.mem.threshold.wall} / ${WALL_HITS_MAX}`});
       }
       if (roads.length) {
         const weakestRoad = _.min(roads, (r) => r.hits);

@@ -6,15 +6,15 @@ let roleBreacher = {
   run: function (creep) {
     // creep.say("breach");
 
-    if (creep.memory.assignment === undefined) {
-      creep.memory.role = "harvester";
+    if (creep.mem.assignment === undefined) {
+      creep.mem.role = "harvester";
       return OK;
     }
 
-    let target = Game.getObjectById(creep.memory.assignment);
+    let target = Game.getObjectById(creep.mem.assignment);
     if (target === null) {
-      creep.memory.assignment = undefined;
-      creep.memory.role = "harvester";
+      creep.mem.assignment = undefined;
+      creep.mem.role = "harvester";
       return OK;
     }
 
@@ -32,14 +32,14 @@ let roleBreacher = {
         worker.moveTo(creep, target);
         break;
       case ERR_NO_BODYPART:
-        creep.memory.assignment = undefined;
-        creep.memory.role = "harvester";
+        creep.mem.assignment = undefined;
+        creep.mem.role = "harvester";
         break;
       case ERR_NOT_OWNER:
       case ERR_BUSY:
       case ERR_INVALID_TARGET:
       default:
-        creep.memory.assignment = undefined;
+        creep.mem.assignment = undefined;
         break;
     }
 

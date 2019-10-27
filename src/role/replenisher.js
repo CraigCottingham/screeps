@@ -7,7 +7,7 @@ let roleReplenisher = {
     // creep.say("replenish");
 
     if (_.sum(creep.carry) == 0) {
-      creep.memory.role = "harvester";
+      creep.mem.role = "harvester";
       return OK;
     }
 
@@ -23,7 +23,7 @@ let roleReplenisher = {
       creep.say("~energy");
 
       if (storages.length) {
-        delete creep.memory.path;
+        delete creep.mem.path;
 
         let target = pos.findClosestByPath(storages);
         if (target !== null) {
@@ -32,23 +32,23 @@ let roleReplenisher = {
         }
       }
 
-      if (!creep.memory.path) {
+      if (!creep.mem.path) {
         let allStorages = _.filter(_.values(Game.structures), (s) => (s.structureType == STRUCTURE_STORAGE));
         if (allStorages.length) {
           // let shortestPath = creep.room.findPath(creep.pos, allStorages[0].pos, { range: 1 });
           let shortestPath = _.min(_.map(allStorages, (s) => creep.room.findPath(creep.pos, s.pos, { range: 1, serialize: true })), (p) => p.length);
           if (shortestPath == Infinity) {
             console.log("cannot find path to storage");
-            creep.memory.role = "harvester";
+            creep.mem.role = "harvester";
             return OK;
           }
 
-          creep.memory.path = shortestPath;
+          creep.mem.path = shortestPath;
         }
       }
 
-      if (creep.memory.path) {
-        switch (creep.moveByPath(creep.memory.path)) {
+      if (creep.mem.path) {
+        switch (creep.moveByPath(creep.mem.path)) {
           case OK:
           case ERR_TIRED:
             break;
@@ -56,7 +56,7 @@ let roleReplenisher = {
           case ERR_BUSY:
           case ERR_NOT_FOUND:
           case ERR_INVALID_ARGS:
-            delete creep.memory.path;
+            delete creep.mem.path;
             break;
           case ERR_NO_BODYPART:
             creep.suicide();
@@ -67,7 +67,7 @@ let roleReplenisher = {
     }
 
     // too small a number of creeps
-    if (Memory.endangered[creep.room.name]) {
+    if (room.mem.endangered) {
       let target = pos.findClosestByPath(_.union(extensions, spawns), {
         filter: (s) => (s.energy < s.energyCapacity)
       });
@@ -78,7 +78,7 @@ let roleReplenisher = {
     }
 
     // hostiles present
-    if (Memory.redAlert[creep.room.name]) {
+    if (room.mem.redAlert) {
       let target = pos.findClosestByPath(towers, {
         filter: (s) => (s.energy < s.energyCapacity)
       });
@@ -132,8 +132,8 @@ let roleReplenisher = {
     }
 
     // if we got this far, nothing to replenish?
-    // creep.memory.role = "builder";
-    creep.memory.role = "repairer";
+    // creep.mem.role = "builder";
+    creep.mem.role = "repairer";
     return OK;
   },
 
@@ -150,7 +150,7 @@ let roleReplenisher = {
         case ERR_BUSY:
           break;
         case ERR_NOT_ENOUGH_RESOURCES:
-          creep.memory.role = "harvester";
+          creep.mem.role = "harvester";
           break;
         case ERR_INVALID_TARGET:
           break;

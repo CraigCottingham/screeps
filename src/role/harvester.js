@@ -21,14 +21,13 @@ let roleHarvester = {
 
   runFree: function (creep) {
     // not parked
-    creep.memory.parkedAt = undefined;
+    creep.mem.parkedAt = undefined;
 
     let room = creep.room;
-    let redAlert = Memory.redAlert[room.name];
 
     if (_.sum(creep.carry) >= creep.carryCapacity) {
-      if (redAlert) {
-        creep.memory.role = "replenisher";
+      if (room.mem.redAlert) {
+        creep.mem.role = "replenisher";
         return OK;
       }
 
@@ -39,21 +38,21 @@ let roleHarvester = {
       let spawnsNeedReplenishing = _.any(spawns, (s) => (s.energy < s.energyCapacity)) && (room.energyAvailable >= SPAWN_ENERGY_CAPACITY);
 
       if (extensionsNeedReplenishing || spawnsNeedReplenishing) {
-        creep.memory.role = "replenisher";
+        creep.mem.role = "replenisher";
         return OK;
       }
 
       if (room.find(FIND_CONSTRUCTION_SITES).length) {
-        creep.memory.role = "builder";
+        creep.mem.role = "builder";
         return OK;
       }
 
       if (room.find(FIND_STRUCTURES, {filter: (s) => (s.structureType == STRUCTURE_TOWER)}).length) {
-        creep.memory.role = "replenisher";
+        creep.mem.role = "replenisher";
         return OK;
       }
 
-      creep.memory.role = "repairer";
+      creep.mem.role = "repairer";
       return OK;
     }
 
@@ -126,11 +125,11 @@ let roleHarvester = {
       return OK;
     }
 
-    if (redAlert) {
+    if (room.mem.redAlert) {
       if (creep.carry.energy > 0) {
         // creep is carrying energy, so go put it somewhere useful
 
-        creep.memory.role = "replenisher";
+        creep.mem.role = "replenisher";
         return OK;
       }
 
@@ -225,12 +224,12 @@ let roleHarvester = {
     // }
 
     // idle
-    creep.memory.role = "repairer";
+    creep.mem.role = "repairer";
   },
 
   runParked: function (creep, container) {
     // creep.say("parked");
-    creep.memory.parkedAt = container.id;
+    creep.mem.parkedAt = container.id;
 
     if (creep.carry.energy >= creep.carryCapacity) {
       if (container.hits < container.hitsMax) {
@@ -248,14 +247,14 @@ let roleHarvester = {
       }
       else {
         if (room.find(FIND_CONSTRUCTION_SITES).length) {
-          creep.memory.role = "builder";
+          creep.mem.role = "builder";
           return OK;
         }
         if (room.find(FIND_STRUCTURES, {filter: (s) => (s.structureType == STRUCTURE_TOWER)}).length) {
-          creep.memory.role = "replenisher";
+          creep.mem.role = "replenisher";
           return OK;
         }
-        creep.memory.role = "repairer";
+        creep.mem.role = "repairer";
         return OK;
       }
     }
@@ -320,13 +319,13 @@ let roleHarvester = {
   },
 
   transferToNearbyContainer: function (creep) {
-    if (creep.memory.parkedAt === undefined) {
+    if (creep.mem.parkedAt === undefined) {
       return OK;
     }
 
-    let container = Game.getObjectById(creep.memory.parkedAt);
+    let container = Game.getObjectById(creep.mem.parkedAt);
     if (container == null) {
-      creep.memory.parkedAt = undefined;
+      creep.mem.parkedAt = undefined;
       return OK;
     }
 
@@ -362,14 +361,14 @@ let roleHarvester = {
         case ERR_BUSY:
           break;
         case ERR_NOT_ENOUGH_RESOURCES:
-          creep.memory.role = "replenisher";
+          creep.mem.role = "replenisher";
           break;
         case ERR_INVALID_TARGET:
           break;
         case ERR_FULL:
-          // creep.memory.role = "builder";
-          // creep.memory.role = "replenisher";
-          creep.memory.role = "repairer";
+          // creep.mem.role = "builder";
+          // creep.mem.role = "replenisher";
+          creep.mem.role = "repairer";
           break;
         case ERR_NOT_IN_RANGE:
           worker.moveTo(creep, container);
