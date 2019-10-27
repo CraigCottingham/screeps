@@ -16,14 +16,14 @@ let tower = {
     // in this case, does it make more sense to repair the walls, and plan on the hostile creeps
     //   running out of TTL before they break through?
 
-    // if (room.mem.redAlert) {
-    //   // AND at least one hostile creep has HEAL?
-    //   target = _.min(walls, (s) => (s.hits));
-    //   if ((target !== Infinity) && (target.hits < (Memory.defenseLowWater[room.name][STRUCTURE_WALL] - (towers.length * TOWER_POWER_REPAIR * TOWER_FALLOFF)))) {
-    //     tower.repair(target);
-    //     return OK;
-    //   }
-    // }
+    if (room.mem.redAlert) {
+      // AND at least one hostile creep has HEAL?
+      target = _.min(walls, (s) => (s.hits));
+      if ((target !== Infinity) && (target.hits < room.mem.threshold.wall)) {
+        tower.repair(target);
+        return OK;
+      }
+    }
 
     // attack hostile creeps with HEAL
     target = pos.findClosestByRange(objects.hostileCreeps, {
@@ -52,7 +52,7 @@ let tower = {
 
     // repair lowest rampart
     target = _.min(objects.ramparts, (s) => (s.hits));
-    if ((target !== Infinity) && (target.hits < (Memory.defenseLowWater[room.name][STRUCTURE_RAMPART] - (objects.towers.length * TOWER_POWER_REPAIR * (1.0 - TOWER_FALLOFF))))) {
+    if ((target !== Infinity) && (target.hits < room.mem.threshold.rampart)) {
       tower.repair(target);
       return OK;
     }
@@ -69,7 +69,7 @@ let tower = {
 
     // repair lowest wall
     target = _.min(objects.walls, (s) => (s.hits));
-    if ((target !== Infinity) && (target.hits < (Memory.defenseLowWater[room.name][STRUCTURE_WALL] - (objects.towers.length * TOWER_POWER_REPAIR * (1.0 - TOWER_FALLOFF))))) {
+    if ((target !== Infinity) && (target.hits < room.mem.threshold.wall)) {
       tower.repair(target);
       return OK;
     }

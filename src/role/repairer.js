@@ -43,7 +43,7 @@ let roleRepairer = {
 
       // repair ramparts that are below the low water threshold
       target = pos.findClosestByRange(ramparts, {
-        filter: (s) => (s.hits < (Memory.defenseLowWater[room.name][STRUCTURE_RAMPART] - (towers.length * TOWER_POWER_REPAIR * TOWER_FALLOFF)))
+        filter: (s) => (s.hits < room.mem.threshold.rampart)
       });
       if (target !== null) {
         this.repair(creep, target);
@@ -51,13 +51,14 @@ let roleRepairer = {
       }
 
       // repair walls that are below the low water threshold
-      target = pos.findClosestByRange(walls, {
-        filter: (s) => (s.hits < (Memory.defenseLowWater[room.name][STRUCTURE_WALL]))
-      });
-      if (target !== null) {
-        this.repair(creep, target);
-        return OK;
-      }
+      // ** don't bother creeps with walls?
+      // target = pos.findClosestByRange(walls, {
+      //   filter: (s) => (s.hits < room.mem.threshold.wall)
+      // });
+      // if (target !== null) {
+      //   this.repair(creep, target);
+      //   return OK;
+      // }
 
       target = pos.findClosestByPath(FIND_STRUCTURES, {
         // filter out ramparts only if there aren't any towers in the room?

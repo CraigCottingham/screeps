@@ -28,14 +28,6 @@ let worker = require("worker");
 // also, you can add functions to existing objects (classes?) like
 //   creep.prototype.foo = function (args) { ... }
 
-//
-// initialize memory structures
-//
-
-if (Memory.defenseLowWater === undefined) {
-  Memory.defenseLowWater = {};
-}
-
 module.exports.loop = function () {
   let roomsControlled = _.filter(_.values(Game.structures), (s) => (s.structureType == STRUCTURE_CONTROLLER)).length;
   let roomsAllowed = Game.gcl.level;
@@ -72,36 +64,35 @@ module.exports.loop = function () {
 
     // set up low water thresholds for defensive structures
 
-    if (Memory.defenseLowWater[name] === undefined) {
-      Memory.defenseLowWater[name] = {};
-      Memory.defenseLowWater[name][STRUCTURE_RAMPART] = RAMPART_HITS;
-      Memory.defenseLowWater[name][STRUCTURE_WALL] = WALL_HITS;
-    }
-
     if (room.mem.threshold === undefined) {
-      room.mem.threshold = {};
+      room.mem.threshold = {
+        rampart: RAMPART_HITS,
+        wall: WALL_HITS
+      };
     }
 
     if (room.mem.threshold.update) {
       // autoincrement low water threshold for ramparts
-      if (Memory.defenseLowWater[name][STRUCTURE_RAMPART] < RAMPART_HITS_MAX[room.controller.level]) {
-        let newThreshold = _.min(objects.ramparts, "hits").hits + 1000;
+
+      if (room.mem.threshold.rampart < RAMPART_HITS_MAX[room.controller.level]) {
+        let newThreshold = _.min(objects.ramparts, "hits").hits + TOWER_POWER_REPAIR;
         if (newThreshold > RAMPART_HITS_MAX[room.controller.level]) {
           newThreshold = RAMPART_HITS_MAX[room.controller.level];
         }
-        if (newThreshold > Memory.defenseLowWater[name][STRUCTURE_RAMPART]) {
-          Memory.defenseLowWater[name][STRUCTURE_RAMPART] = newThreshold;
+        if (newThreshold > room.mem.threshold.rampart) {
+          room.mem.threshold.rampart = newThreshold;
         }
       }
 
       // autoincrement low water threshold for walls
-      if (Memory.defenseLowWater[name][STRUCTURE_WALL] < WALL_HITS_MAX) {
-        let newThreshold = _.min(objects.walls, "hits").hits + 1000;
+
+      if (room.mem.threshold.wall < WALL_HITS_MAX) {
+        let newThreshold = _.min(objects.walls, "hits").hits + TOWER_POWER_REPAIR;
         if (newThreshold > WALL_HITS_MAX) {
           newThreshold = WALL_HITS_MAX;
         }
-        if (newThreshold > Memory.defenseLowWater[name][STRUCTURE_WALL]) {
-          Memory.defenseLowWater[name][STRUCTURE_WALL] = newThreshold;
+        if (newThreshold > room.mem.threshold.wall) {
+          room.mem.threshold.wall = newThreshold;
         }
       }
 
@@ -160,10 +151,10 @@ module.exports.loop = function () {
         }
       }
 
-      // run construction sites
-
       // don't run this if there are too many things needing repair?
       if (!room.mem.redAlert) {
+        // run construction sites
+
         for (let site of objects.constructionSites) {
           let creep = site.pos.findClosestByRange(FIND_MY_CREEPS, {
             filter: (c) => (c.memory.parkedAt === undefined) &&
@@ -178,7 +169,6 @@ module.exports.loop = function () {
         }
       }
 
-      // TODO: use creeps array already loaded
       if (room.controller.my) {
         if (_.all(objects.creeps, (c) => (c.memory.role != "upgrader"))) {
           let creep = room.controller.pos.findClosestByRange(FIND_MY_CREEPS, {
