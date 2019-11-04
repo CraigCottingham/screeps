@@ -17,13 +17,19 @@ let tower = {
     //   running out of TTL before they break through?
 
     if (room.mem.redAlert) {
-      // AND at least one hostile creep has HEAL?
-      target = _.min(walls, (s) => (s.hits));
-      if ((target !== Infinity) && (target.hits < room.mem.threshold.wall)) {
-        tower.repair(target);
-        return OK;
+      if (_.any(objects.hostileCreeps, (c) => _.any(c.body, "type", HEAL))) {
+        // at least one hostile creep has HEAL, so let's just repair walls instead
+        target = _.min(objects.walls, (s) => (s.hits));
+        if ((target !== Infinity) && (target.hits < room.mem.threshold.wall)) {
+          tower.repair(target);
+          return OK;
+        }
       }
     }
+
+    // maybe check if there's a path from the tower to the hostile we're going to attack
+    // if no path, then no creeps can get to it to scavenge it
+    // so might as well repair walls
 
     // attack hostile creeps with HEAL
     target = pos.findClosestByRange(objects.hostileCreeps, {
@@ -47,6 +53,23 @@ let tower = {
     });
     if (target !== null) {
       tower.heal(target);
+      return OK;
+    }
+
+    // repair things that are in danger of decaying away
+    target = _.min(objects.ramparts, (s) => (s.hits));
+    if ((target !== Infinity) && (target.hits <= RAMPART_DECAY_AMOUNT)) {
+      tower.repair(target);
+      return OK;
+    }
+    target = _.min(objects.containers, (s) => (s.hits));
+    if ((target !== Infinity) && (target.hits <= CONTAINER_DECAY)) {
+      tower.repair(target);
+      return OK;
+    }
+    target = _.min(objects.roads, (s) => (s.hits));
+    if ((target !== Infinity) && (target.hits <= ROAD_DECAY_AMOUNT)) {
+      tower.repair(target);
       return OK;
     }
 
