@@ -14,7 +14,8 @@ let roleBuilder = {
     let sites = creep.room.find(FIND_CONSTRUCTION_SITES);
     if (!sites.length) {
       delete creep.mem.path;
-      creep.mem.role = "replenisher";
+      // creep.mem.role = "replenisher";
+      creep.mem.role = "repairer";
       return OK;
     }
 
