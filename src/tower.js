@@ -17,11 +17,13 @@ let tower = {
     //   running out of TTL before they break through?
 
     if (room.mem.redAlert) {
-      // AND at least one hostile creep has HEAL?
-      target = _.min(walls, (s) => (s.hits));
-      if ((target !== Infinity) && (target.hits < room.mem.threshold.wall)) {
-        tower.repair(target);
-        return OK;
+      if (_.any(objects.hostileCreeps, (c) => _.any(c.body, "type", HEAL))) {
+        // at least one hostile creep has HEAL, so let's just repair walls instead
+        target = _.min(objects.walls, (s) => (s.hits));
+        if ((target !== Infinity) && (target.hits < room.mem.threshold.wall)) {
+          tower.repair(target);
+          return OK;
+        }
       }
     }
 
