@@ -27,6 +27,10 @@ let tower = {
       }
     }
 
+    // maybe check if there's a path from the tower to the hostile we're going to attack
+    // if no path, then no creeps can get to it to scavenge it
+    // so might as well repair walls
+
     // attack hostile creeps with HEAL
     target = pos.findClosestByRange(objects.hostileCreeps, {
       filter: (c) => _.any(c.body, "type", HEAL)
@@ -49,6 +53,23 @@ let tower = {
     });
     if (target !== null) {
       tower.heal(target);
+      return OK;
+    }
+
+    // repair things that are in danger of decaying away
+    target = _.min(objects.ramparts, (s) => (s.hits));
+    if ((target !== Infinity) && (target.hits <= RAMPART_DECAY_AMOUNT)) {
+      tower.repair(target);
+      return OK;
+    }
+    target = _.min(objects.containers, (s) => (s.hits));
+    if ((target !== Infinity) && (target.hits <= CONTAINER_DECAY)) {
+      tower.repair(target);
+      return OK;
+    }
+    target = _.min(objects.roads, (s) => (s.hits));
+    if ((target !== Infinity) && (target.hits <= ROAD_DECAY_AMOUNT)) {
+      tower.repair(target);
       return OK;
     }
 
