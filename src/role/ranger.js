@@ -1,134 +1,91 @@
-'use strict';
+"use strict";
 
 let worker = require("worker");
 
 let roleRanger = {
   run: function (creep) {
-    // creep.say("ranger");
+    creep.say("ranger");
 
-    let destination = creep.mem.destination;
-    if (destination === undefined) {
-      let pos = this.findRoadAtEdge(creep.room);
-      if (pos !== undefined) {
-        destination = creep.mem.destination = {x: pos.x, y: pos.y, roomName: pos.roomName};
-      }
-    }
-
-    if (destination === undefined) {
-      return OK;
-    }
-
-    if (creep.room.name != destination.roomName) {
-      // we're already in the other room
-
-      // first, if we're not on a road, drop a construction site
-      // let sites = creep.pos.lookFor(LOOK_STRUCTURES);
-      // if (!sites.length || _.all(sites, (s) => (s.structureType != STRUCTURE_ROAD))) {
-      //   creep.pos.createConstructionSite(STRUCTURE_ROAD);
-      // }
-      if (creep.room.controller.my) {
-        let container = creep.pos.findClosestByRange(FIND_STRUCTURES, {
-          filter: (s) => (s.structureType == STRUCTURE_CONTAINER)
-        });
-        if (container !== null) {
-          if (creep.pos.isNearTo(container)) {
-            creep.mem.role = "harvester";
-            return OK;
-          }
-          else {
-            creep.moveTo(container);
-            return OK;
-          }
-        }
-
-        let source = creep.pos.findClosestByRange(FIND_SOURCES);
-        if (source !== null) {
-          if (creep.pos.isNearTo(source)) {
-            creep.mem.role = "harvester";
-            return OK;
-          }
-          else {
-            creep.moveTo(source);
-            return OK;
-          }
-        }
-
-        creep.mem.role = "builder";
+    if (!creep.mem.path) {
+      if (Memory.colonize === undefined) {
+        // colonize was deleted before the ranger ran the first time?
+        // not much to do but bail out
+        creep.suicide();
         return OK;
       }
 
-      let controller = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-        filter: (s) => (s.structureType == STRUCTURE_CONTROLLER) && !s.my
-      });
-      if (controller !== null) {
-        if (creep.pos.isNearTo(controller)) {
-          creep.claimController(controller);
-          creep.mem.role = "harvester";
-          return OK;
-        }
+      let destination;
 
-        creep.moveTo(controller);
-        return OK;
-      }
-
-      return OK;
-    }
-
-    let destPos = new RoomPosition(destination.x, destination.y, destination.roomName);
-    if (creep.pos.isEqualTo(destPos)) {
-      exits = destPos.findInRange(FIND_EXIT, 1, {
-        filter: (p) => (p.x == destPos.x) || (p.y == destPos.y)
-      });
-      if (exits.length) {
-        creep.moveTo(exits[0]);
-        return OK;
+      if (Game.rooms[Memory.colonize] === undefined) {
+        // no visibility in destination room, so set up path to the middle of the room
+        destination = new RoomPosition(25, 25, Memory.colonize);
+        creep.mem.destinationRoomName = destination.roomName;
       }
       else {
-        creep.mem.role = "harvester";
-        delete creep.mem.destination;
-        return OK;
+        // visibility in destination room, so set up path to the controller
+        destination = Game.rooms[Memory.colonize].controller.pos;
+        delete creep.mem.destinationRoomName;
+      }
+
+      creep.mem.path = creep.room.findPath(creep.pos, destination);
+    }
+
+    if (creep.room.name == creep.mem.destinationRoomName) {
+      creep.mem.path = creep.pos.findPathTo(creep.room.controller);
+      delete creep.mem.destinationRoomName;
+    }
+
+    let structures = creep.pos.lookFor(LOOK_STRUCTURES);
+    if (!structures.length || _.all(structures, (s) => (s.structureType != STRUCTURE_ROAD))) {
+      switch (creep.pos.createConstructionSite(STRUCTURE_ROAD)) {
+        case OK:
+          break;
+        case ERR_INVALID_TARGET:
+          // console.log("The structure cannot be placed at the specified location.");
+          break;
+        case ERR_FULL:
+          // console.log("You have too many construction sites.");
+          break;
+        case ERR_INVALID_ARGS:
+          // console.log("The location is incorrect.")
+          break;
+        case ERR_RCL_NOT_ENOUGH:
+          // console.log("Room Controller Level insufficient.");
+          break;
       }
     }
 
-    creep.moveTo(destPos);
-    return OK;
+    if (creep.mem.path) {
+      switch (creep.moveByPath(creep.mem.path)) {
+        case OK:
+          break;
+        case ERR_TIRED:
+          console.log("tired");
+          break;
+        case ERR_NOT_OWNER:
+          console.log("not owner");
+          delete creep.mem.path;
+          break;
+        case ERR_BUSY:
+          console.log("busy");
+          delete creep.mem.path;
+          break;
+        case ERR_NOT_FOUND:
+          console.log("not found");
+          delete creep.mem.path;
+          break;
+        case ERR_INVALID_ARGS:
+          console.log("invalid args");
+          delete creep.mem.path;
+          break;
+        case ERR_NO_BODYPART:
+          console.log("no bodypart");
+          creep.suicide();
+          break;
+      }
+      return OK;
+    }
   },
-
-  findRoadAtEdge: function (room) {
-    // search the top
-    for (let x = 1; x <= 48; x++) {
-      const found = room.lookForAt(LOOK_STRUCTURES, x, 1);
-      if (found.length && _.any(found, (s) => (s.structureType == STRUCTURE_ROAD))) {
-        return new RoomPosition(x, 1, room.name);
-      }
-    }
-
-    // search the left
-    for (let y = 1; y <= 48; y++) {
-      const found = room.lookForAt(LOOK_STRUCTURES, 1, y);
-      if (found.length && _.any(found, (s) => (s.structureType == STRUCTURE_ROAD))) {
-        return new RoomPosition(1, y, room.name);
-      }
-    }
-
-    // search the bottom
-    for (let x = 1; x <= 48; x++) {
-      const found = room.lookForAt(LOOK_STRUCTURES, x, 48);
-      if (found.length && _.any(found, (s) => (s.structureType == STRUCTURE_ROAD))) {
-        return new RoomPosition(x, 48, room.name);
-      }
-    }
-
-    // search the right
-    for (let y = 1; y <= 48; y++) {
-      const found = room.lookForAt(LOOK_STRUCTURES, 48, y);
-      if (found.length && _.any(found, (s) => (s.structureType == STRUCTURE_ROAD))) {
-        return new RoomPosition(48, y, room.name);
-      }
-    }
-
-    return undefined;
-  }
 }
 
 module.exports = roleRanger;

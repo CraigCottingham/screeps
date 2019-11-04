@@ -10,6 +10,7 @@ require("spawn");
 let roleBreacher = require("role.breacher");
 let roleBuilder = require("role.builder");
 let roleHarvester = require("role.harvester");
+let roleRanger = require("role.ranger");
 let roleRepairer = require("role.repairer");
 let roleReplenisher = require("role.replenisher");
 let roleScavenger = require("role.scavenger");
@@ -312,6 +313,9 @@ module.exports.loop = function () {
           break;
         case "harvester":
           roleHarvester.run(creep);
+          break;
+        case "ranger":
+          roleRanger.run(creep);
           break;
         case "repairer":
           roleRepairer.run(creep);
