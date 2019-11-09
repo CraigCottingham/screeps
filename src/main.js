@@ -61,6 +61,13 @@ module.exports.loop = function () {
       walls: structures[STRUCTURE_WALL] || []
     };
 
+    // const room = Game.rooms["E15S32"];
+    // const extensions = room.find(FIND_STRUCTURES, {filter: (s) => (s.structureType == STRUCTURE_EXTENSION)});
+    // const s = Game.getObjectById("5bbcadd49099fc012e637f02");
+    // _.forEach(_.sortBy(extensions, (e) => (s.pos.getRangeTo(e))), (e2) => {
+    //   console.log(`${s.id}: ${e2.id}`);
+    // });
+
     room.mem.endangered = (objects.creeps.length < (objects.sources.length * 2)); // (objects.creeps.length < 10);
     room.mem.maxCreeps = (objects.sources.length * 6) + objects.flags.length + roomsAllowed - roomsControlled;
     room.mem.redAlert = (objects.hostileCreeps.length > 0);
@@ -173,6 +180,8 @@ module.exports.loop = function () {
             filter: (c) => (c.carry.energy > 0)
           })
           if (creep !== null) {
+            delete creep.mem.parkedAt;
+            delete creep.mem.path;
             creep.mem.role = "upgrader";
           }
         }
@@ -182,6 +191,7 @@ module.exports.loop = function () {
     // TODO: look for a spawn that isn't busy, instead of using the first?
     //       Is it even possible to have more than one spawn per room?
     let spawn = _.first(objects.spawns);
+    // if ((spawn !== undefined) && (spawn.spawning === null)) {
     if (spawn !== undefined) {
       // the number of creeps in a room should be some function of the number of WORK parts
       // ((5 WORK parts) * (number of sources)) + (number of controllers = 1) + (number of towers)
@@ -199,34 +209,35 @@ module.exports.loop = function () {
 
           // add minimum viable creep cost ([WORK, MOVE, CARRY, MOVE] == 250) to each of these thresholds?
 
-          if (availableEnergy > 350) {
-            parts = [WORK, MOVE, CARRY, MOVE, CARRY, MOVE];
-          }
-
-          if (availableEnergy > 450) {
-            parts = [WORK, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE];
+          if (availableEnergy > 400) {
+            parts = [WORK, MOVE, WORK, MOVE, CARRY, MOVE];
           }
 
           if (availableEnergy > 550) {
-            parts = [WORK, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE];
+            parts = [WORK, MOVE, WORK, MOVE, WORK, MOVE, CARRY, MOVE];
           }
 
           if (availableEnergy > 700) {
-            parts = [WORK, MOVE, WORK, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE];
+            parts = [WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, CARRY, MOVE];
           }
 
           if (availableEnergy > 850) {
-            parts = [WORK, MOVE, WORK, MOVE, WORK, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE];
+            parts = [WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, CARRY, MOVE];
           }
 
-          // if (availableEnergy > 1000) {
-          //   parts = [WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE];
-          // }
+          if (availableEnergy > 950) {
+            parts = [WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, CARRY, MOVE, CARRY, MOVE];
+          }
 
-          // if (availableEnergy > 1150) {
-          //   parts = [WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE];
-          // }
+          if (availableEnergy > 1050) {
+            parts = [WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE];
+          }
 
+          if (availableEnergy > 1150) {
+            parts = [WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE];
+          }
+
+          // console.log("spawning worker");
           worker.spawn(spawn, parts);
           room.mem.spawns[spawn.id] = spawnCooldown;
         }
