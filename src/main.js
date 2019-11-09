@@ -5,6 +5,7 @@ require("visualizer");
 
 require("creep.mem");
 require("room.mem");
+require("spawn");
 
 let roleBreacher = require("role.breacher");
 let roleBuilder = require("role.builder");
@@ -238,14 +239,14 @@ module.exports.loop = function () {
           }
 
           // console.log("spawning worker");
-          worker.spawn(spawn, parts);
+          spawn.spawnCreep(parts, undefined);
           room.mem.spawns[spawn.id] = spawnCooldown;
         }
         else {
           if (Memory.colonize !== undefined) {
             // spawn ranger
             let parts = [CLAIM, MOVE, CARRY, MOVE, CARRY, MOVE, WORK, MOVE];
-            worker.spawn(spawn, parts, "ranger");
+            spawn.spawnCreep(parts, undefined, {memory: {role: "ranger"}});
             room.mem.spawns[spawn.id] = spawnCooldown;
           }
         }
