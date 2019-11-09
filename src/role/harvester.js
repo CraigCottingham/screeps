@@ -53,6 +53,7 @@ let roleHarvester = {
       }
 
       creep.mem.role = "repairer";
+      // creep.mem.role = "replenisher";
       return OK;
     }
 
