@@ -9,16 +9,20 @@ let spawnExtensions = {
     // sort extensions & spawns in order of increasing distance from each source in the room
     // zipper them (sort of) into a single array that rotates (sort of) between sources
 
-    // const room = spawn.room;
-    // const extensions = room.find(FIND_STRUCTURES, {filter: (s) => (s.structureType == STRUCTURE_EXTENSION)});
-    // const sources = room.find(FIND_SOURCES);
-    // const extensionsBySource = _.reduce(sources, (acc, s) => {
-    //   return acc.push(_.sortBy(extensions, (e) => (s.pos.getRangeTo(e))));
-    // }, []);
-    // const energyStructures = _.uniq(_.flattenDeep(_.zip(extensionsBySource))).push(spawn);
-    // console.log(energyStructures);
+    const room = this.room;
+    const extensions = room.find(FIND_STRUCTURES, {filter: (s) => (s.structureType == STRUCTURE_EXTENSION)});
+    const sources = room.find(FIND_SOURCES);
 
-    // const opts = {memory: {role: role}, energyStructures: energyStructures};
+    const extensionsByDistanceFromSource = _.reduce(sources, (acc, s) => {
+      acc.push(_.sortBy(extensions, (e) => (s.pos.getRangeTo(e))));
+      return acc;
+    }, []);
+    let energyStructures = _.uniq(_.flatten(_.zip(...extensionsByDistanceFromSource)));
+    energyStructures.push(this);
+
+    opts = opts || {};
+    opts.energyStructures = energyStructures;
+
     const result = this._spawnCreep(parts, name, opts);
     switch (result) {
       case OK:
