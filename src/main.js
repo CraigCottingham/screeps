@@ -5,6 +5,7 @@ require("visualizer");
 
 require("creep.mem");
 require("room.mem");
+require("spawn");
 
 let roleBreacher = require("role.breacher");
 let roleBuilder = require("role.builder");
@@ -199,54 +200,56 @@ module.exports.loop = function () {
       // since the number of sources determines how much energy is available in the room
 
       if (room.mem.spawns[spawn.id] <= 0) {
-        const spawnCooldown = _.floor(CREEP_LIFE_TIME / room.mem.maxCreeps);
+        if (spawn.spawning === null) {
+          const spawnCooldown = _.floor(CREEP_LIFE_TIME / room.mem.maxCreeps);
 
-        if (objects.creeps.length < room.mem.maxCreeps) {
-          let parts = [WORK, MOVE, CARRY, MOVE];
-          let availableEnergy = room.energyAvailable;
+          if (objects.creeps.length < room.mem.maxCreeps) {
+            let parts = [WORK, MOVE, CARRY, MOVE];
+            let availableEnergy = room.energyAvailable;
 
-          // console.log(`partsRangedRCL5 = ${_.sum(_.map(partsRangedRCL5, (p) => BODYPART_COST[p]))}`);
+            // console.log(`partsRangedRCL5 = ${_.sum(_.map(partsRangedRCL5, (p) => BODYPART_COST[p]))}`);
 
-          // add minimum viable creep cost ([WORK, MOVE, CARRY, MOVE] == 250) to each of these thresholds?
+            // add minimum viable creep cost ([WORK, MOVE, CARRY, MOVE] == 250) to each of these thresholds?
 
-          if (availableEnergy > 400) {
-            parts = [WORK, MOVE, WORK, MOVE, CARRY, MOVE];
-          }
+            if (availableEnergy > 400) {
+              parts = [WORK, MOVE, WORK, MOVE, CARRY, MOVE];
+            }
 
-          if (availableEnergy > 550) {
-            parts = [WORK, MOVE, WORK, MOVE, WORK, MOVE, CARRY, MOVE];
-          }
+            if (availableEnergy > 550) {
+              parts = [WORK, MOVE, WORK, MOVE, WORK, MOVE, CARRY, MOVE];
+            }
 
-          if (availableEnergy > 700) {
-            parts = [WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, CARRY, MOVE];
-          }
+            if (availableEnergy > 700) {
+              parts = [WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, CARRY, MOVE];
+            }
 
-          if (availableEnergy > 850) {
-            parts = [WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, CARRY, MOVE];
-          }
+            if (availableEnergy > 850) {
+              parts = [WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, CARRY, MOVE];
+            }
 
-          if (availableEnergy > 950) {
-            parts = [WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, CARRY, MOVE, CARRY, MOVE];
-          }
+            if (availableEnergy > 950) {
+              parts = [WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, CARRY, MOVE, CARRY, MOVE];
+            }
 
-          if (availableEnergy > 1050) {
-            parts = [WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE];
-          }
+            if (availableEnergy > 1050) {
+              parts = [WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE];
+            }
 
-          if (availableEnergy > 1150) {
-            parts = [WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE];
-          }
+            if (availableEnergy > 1150) {
+              parts = [WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE];
+            }
 
-          // console.log("spawning worker");
-          worker.spawn(spawn, parts);
-          room.mem.spawns[spawn.id] = spawnCooldown;
-        }
-        else {
-          if (Memory.colonize !== undefined) {
-            // spawn ranger
-            let parts = [CLAIM, MOVE, CARRY, MOVE, CARRY, MOVE, WORK, MOVE];
-            worker.spawn(spawn, parts, "ranger");
+            // console.log("spawning worker");
+            spawn.spawnCreep(parts, undefined);
             room.mem.spawns[spawn.id] = spawnCooldown;
+          }
+          else {
+            if (Memory.colonize !== undefined) {
+              // spawn ranger
+              let parts = [CLAIM, MOVE, CARRY, MOVE, CARRY, MOVE, WORK, MOVE];
+              spawn.spawnCreep(parts, undefined, {memory: {role: "ranger"}});
+              room.mem.spawns[spawn.id] = spawnCooldown;
+            }
           }
         }
       }
