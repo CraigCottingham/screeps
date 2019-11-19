@@ -117,6 +117,7 @@ let roleReplenisher = {
     // otherwise, find the closest tower that has enough room for what the creep is carrying
     target = pos.findClosestByPath(towers, {
       filter: (s) => (s.energy <= (s.energyCapacity - creep.carry.energy))
+      // filter: (s) => (s.energy < s.energyCapacity)
     });
     if (target !== null) {
       this.replenish(creep, target);

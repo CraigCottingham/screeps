@@ -89,7 +89,9 @@ if (config.visualizer.enabled) {
       const creepTotalCount = _.filter(_.values(Game.creeps), (c) => c.room.name == room.name).length;
       const energyAvailable = room.energyAvailable;
       const energyCapacityAvailable = room.energyCapacityAvailable;
-
+      const spawns = room.find(FIND_STRUCTURES, {filter: (s) => (s.structureType == STRUCTURE_SPAWN)});
+      const firstSpawn = _.first(spawns);
+      const spawnCooldown = firstSpawn ? room.mem.spawns[firstSpawn.id] : 0;
       const ramparts = room.find(FIND_STRUCTURES, {filter: (s) => (s.structureType == STRUCTURE_RAMPART)});
       const roads = room.find(FIND_STRUCTURES, {filter: (s) => (s.structureType == STRUCTURE_ROAD)});
       const walls = room.find(FIND_STRUCTURES, {filter: (s) => (s.structureType == STRUCTURE_WALL)});
@@ -97,7 +99,7 @@ if (config.visualizer.enabled) {
       const lines = [];
 
       lines.push({label: "CPU:", value: `${cpu.getUsed()} / ${cpu.limit} / ${cpu.tickLimit} / ${cpu.bucket}`});
-      lines.push({label: "Creeps:", value: `${creepTotalCount - creepSpawningCount} / ${creepSpawningCount}`})
+      lines.push({label: "Creeps:", value: `${creepTotalCount - creepSpawningCount} / ${creepSpawningCount} / ${spawnCooldown}`})
 
       if ((room.controller !== undefined) && room.controller.my) {
         lines.push({label: "Controller:", value: `${room.controller.progress} / ${room.controller.progressTotal}`})

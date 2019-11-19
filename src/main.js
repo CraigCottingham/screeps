@@ -5,6 +5,7 @@ require("visualizer");
 
 require("creep.mem");
 require("room.mem");
+require("spawn");
 
 let roleBreacher = require("role.breacher");
 let roleBuilder = require("role.builder");
@@ -52,6 +53,7 @@ module.exports.loop = function () {
       flags: room.find(FIND_FLAGS),
       hostileCreeps: room.find(FIND_HOSTILE_CREEPS),
       ramparts: structures[STRUCTURE_RAMPART] || [],
+      roads: structures[STRUCTURE_ROAD] || [],
       ruins: room.find(FIND_RUINS),
       sources: room.find(FIND_SOURCES),
       spawns: room.find(FIND_MY_SPAWNS),
@@ -60,17 +62,19 @@ module.exports.loop = function () {
       walls: structures[STRUCTURE_WALL] || []
     };
 
-    room.mem.endangered = (objects.creeps.length < 10);
+    // const room = Game.rooms["E15S32"];
+    // const extensions = room.find(FIND_STRUCTURES, {filter: (s) => (s.structureType == STRUCTURE_EXTENSION)});
+    // const s = Game.getObjectById("5bbcadd49099fc012e637f02");
+    // _.forEach(_.sortBy(extensions, (e) => (s.pos.getRangeTo(e))), (e2) => {
+    //   console.log(`${s.id}: ${e2.id}`);
+    // });
+
+    room.mem.endangered = (objects.creeps.length < (objects.sources.length * 2)); // (objects.creeps.length < 10);
+    room.mem.maxCreeps = (objects.sources.length * 6) + objects.flags.length + roomsAllowed - roomsControlled;
     room.mem.redAlert = (objects.hostileCreeps.length > 0);
-
-    // set up low water thresholds for defensive structures
-
-    if (room.mem.threshold === undefined) {
-      room.mem.threshold = {
-        rampart: RAMPART_HITS,
-        wall: WALL_HITS
-      };
-    }
+    room.mem.spawns = room.mem.spawns || {};
+    _.forEach(objects.spawns, (s) => room.mem.spawns[s.id] = room.mem.spawns[s.id] || 0);
+    room.mem.threshold = room.mem.threshold || {rampart: RAMPART_HITS, wall: WALL_HITS};
 
     if (room.mem.threshold.update) {
       // autoincrement low water threshold for ramparts
@@ -173,130 +177,85 @@ module.exports.loop = function () {
       if (room.controller.my) {
         if (_.all(objects.creeps, (c) => (c.memory.role != "upgrader"))) {
           let creep = room.controller.pos.findClosestByRange(FIND_MY_CREEPS, {
-            filter: (c) => (c.memory.parkedAt === undefined) && (c.carry.energy > 0)
+            // filter: (c) => (c.memory.parkedAt === undefined) && (c.carry.energy > 0)
+            filter: (c) => (c.carry.energy > 0)
           })
           if (creep !== null) {
+            delete creep.mem.parkedAt;
+            delete creep.mem.path;
             creep.mem.role = "upgrader";
           }
         }
       }
     }
 
-    if (objects.creeps.length > (objects.containers.length * 2)) {
-      // TODO: revisit this
-      // if (roomsAllowed > roomsControlled) {
-      //   if (_.all(_.values(Game.creeps), (c) => (c.memory.role != "ranger"))) {
-      //     creep = _.find(objects.creeps, (c) => (_.any(c.body, (p) => (p.type == CLAIM))));
-      //     if (creep !== undefined) {
-      //       creep.mem.role = "ranger";
-      //     }
-      //   }
-      // }
-      // else {
-        // only send rangers if any controlled room does not have its own spawn
-        // if (_.all(_.values(Game.creeps), (c) => (c.memory.role != "ranger"))) {
-        //   creep = _.find(objects.creeps, (c) => (c.memory.parkedAt === undefined) && (c.memory.role == "harvester") && (c.carry.energy > 0));
-        //   if (creep !== undefined) {
-        //     creep.mem.role = "ranger";
-        //   }
-        // }
-      // }
-    }
-
-    // if (objects.creeps.length >= ((objects.containers.length * 2) + objects.towers.length)) {
-    //   _.forEach(objects.towers, (t) => {
-    //     if (room.find(FIND_MY_CREEPS, {
-    //       filter: (c) => (c.memory.assignedToTower == t.id)
-    //     }).length == 0) {
-    //       creep = t.pos.findClosestByRange(FIND_MY_CREEPS, {
-    //         filter: (c) => ((c.memory.parkedAt === undefined) && (c.memory.role != "scavenger") && (c.memory.role != "upgrader"))
-    //       });
-    //       if (creep !== null) {
-    //         creep.mem.assignedToTower = t.id;
-    //       }
-    //     }
-    //   });
-    // }
-
-    // TODO: sum up all the things that need doing:
-    //   * number of extensions
-    //   * number of towers x 2
-    //   * +1 for controller
-    //   * +1 for spawn?
-    //   * number of construction sites? (or maybe a fraction thereof)
-    // that's the number of workers we should have
-    // maybe a few extras, but probably not many if any
-    // the makeup of new workers should be a function of
-    //   * energy and/or energy capacity in the room
-    //   * the current number (if very small, for instance -- see endangered flag)
-
     // TODO: look for a spawn that isn't busy, instead of using the first?
     //       Is it even possible to have more than one spawn per room?
     let spawn = _.first(objects.spawns);
+    // if ((spawn !== undefined) && (spawn.spawning === null)) {
     if (spawn !== undefined) {
-      // assumes all flags are for breaching
-      if (objects.creeps.length < ((_.max([objects.containers.length, 1]) * 4) + objects.flags.length + roomsAllowed - roomsControlled)) {
-        let parts = [WORK, MOVE, CARRY, MOVE];
-        let availableEnergy = room.energyAvailable;
+      // the number of creeps in a room should be some function of the number of WORK parts
+      // ((5 WORK parts) * (number of sources)) + (number of controllers = 1) + (number of towers)
+      // *** better yet, a function of the number of sources
+      // since the number of sources determines how much energy is available in the room
 
-        // console.log(`partsRangedRCL5 = ${_.sum(_.map(partsRangedRCL5, (p) => BODYPART_COST[p]))}`);
+      if (room.mem.spawns[spawn.id] <= 0) {
+        if (spawn.spawning === null) {
+          const spawnCooldown = _.floor(CREEP_LIFE_TIME / room.mem.maxCreeps);
 
-        // TODO: limit # of "extra work workers" to # of containers?
-        //       if we're intending to limit these to containers, maybe eliminate the CARRY?
-        if (availableEnergy > 350) {
-          parts = [WORK, WORK, MOVE, CARRY, MOVE];
+          if (objects.creeps.length < room.mem.maxCreeps) {
+            let parts = [WORK, MOVE, CARRY, MOVE];
+            let availableEnergy = room.energyAvailable;
+
+            // console.log(`partsRangedRCL5 = ${_.sum(_.map(partsRangedRCL5, (p) => BODYPART_COST[p]))}`);
+
+            // add minimum viable creep cost ([WORK, MOVE, CARRY, MOVE] == 250) to each of these thresholds?
+
+            if (availableEnergy > 400) {
+              parts = [WORK, MOVE, WORK, MOVE, CARRY, MOVE];
+            }
+
+            if (availableEnergy > 550) {
+              parts = [WORK, MOVE, WORK, MOVE, WORK, MOVE, CARRY, MOVE];
+            }
+
+            if (availableEnergy > 700) {
+              parts = [WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, CARRY, MOVE];
+            }
+
+            if (availableEnergy > 850) {
+              parts = [WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, CARRY, MOVE];
+            }
+
+            if (availableEnergy > 950) {
+              parts = [WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, CARRY, MOVE, CARRY, MOVE];
+            }
+
+            if (availableEnergy > 1050) {
+              parts = [WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE];
+            }
+
+            if (availableEnergy > 1150) {
+              parts = [WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE];
+            }
+
+            // console.log("spawning worker");
+            spawn.spawnCreep(parts, undefined);
+            room.mem.spawns[spawn.id] = spawnCooldown;
+          }
+          else {
+            if (Memory.colonize !== undefined) {
+              // spawn ranger
+              let parts = [CLAIM, MOVE, CARRY, MOVE, CARRY, MOVE, WORK, MOVE];
+              spawn.spawnCreep(parts, undefined, {memory: {role: "ranger"}});
+              room.mem.spawns[spawn.id] = spawnCooldown;
+            }
+          }
         }
-
-        // TODO: create haulers (CARRY, MOVE)?
-
-        // if room.mem.redAlert and availableEnergy > 200
-        //   parts = [WORK, CARRY, MOVE]
-        // if (availableEnergy > 750) {  // 500 + minimum creep build cost
-        //   parts = [WORK, MOVE, CARRY, MOVE, WORK, MOVE, CARRY, MOVE];
-        // }
-        // if (availableEnergy > 880) {  // 630 + minimum creep build cost
-        //   parts = [ATTACK, MOVE, WORK, MOVE, CARRY, MOVE, WORK, MOVE, CARRY, MOVE];
-        // }
-        // if (availableEnergy > 950) {  // 700 + minimum creep build cost
-        //   parts = [RANGED_ATTACK, MOVE, WORK, MOVE, CARRY, MOVE, WORK, MOVE, CARRY, MOVE];
-        // }
-        // if (availableEnergy > 2570) {  // 2320 + minimum  -- NPC melee, RCL >= 4
-        //   parts = [
-        //     TOUGH,  MOVE, TOUGH,         MOVE, TOUGH,         MOVE, TOUGH,         MOVE, TOUGH,  MOVE,
-        //     TOUGH,  MOVE, TOUGH,         MOVE, TOUGH,         MOVE, TOUGH,         MOVE, TOUGH,  MOVE,
-        //     TOUGH,  MOVE, TOUGH,         MOVE, TOUGH,         MOVE, TOUGH,         MOVE, TOUGH,  MOVE,
-        //     TOUGH,  MOVE, RANGED_ATTACK, MOVE, RANGED_ATTACK, MOVE, RANGED_ATTACK, MOVE, ATTACK, MOVE,
-        //     ATTACK, MOVE, WORK,          MOVE, CARRY,         MOVE, WORK,          MOVE, CARRY,  MOVE
-        //   ];
-        // }
-        // if (availableEnergy > 4360) {  // 4110 + minimum  -- NPC ranged, RCL >= 4
-        //   parts = [
-        //     TOUGH,         TOUGH,         TOUGH,         TOUGH,         TOUGH,         TOUGH,         MOVE,          MOVE,          MOVE,          MOVE,
-        //     MOVE,          MOVE,          MOVE,          MOVE,          MOVE,          MOVE,          MOVE,          MOVE,          MOVE,          MOVE,
-        //     MOVE,          MOVE,          MOVE,          MOVE,          MOVE,          MOVE,          MOVE,          MOVE,          MOVE,          MOVE,
-        //     RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK,
-        //     RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, RANGED_ATTACK, WORK,          MOVE
-        //   ];
-        // }
-
-        // if ((roomsAllowed > roomsControlled) && (_.all(_.values(Game.creeps), (c) => (c.memory.role != "ranger")))) {
-        //   parts = [WORK, CARRY, CLAIM, MOVE, MOVE, MOVE];
-        // }
-
-        worker.spawn(spawn, parts);
       }
-
-      // if (spawn.spawning === null) {
-      //   let pos = spawn.pos;
-      //   let creep = _.min(_.filter(objects.creeps, (c) => (pos.isNearTo(c))), "ticksToLive");
-      //   // renewCreep() increases the creep's timer by a number of ticks according to the formula
-      //   //   floor(600/body_size)
-      //   // so don't renew the creep if we can't restore that many ticks
-      //   if ((creep !== Infinity) && (creep.ticksToLive < (CREEP_LIFE_TIME - _.floor(600 / creep.body.length)))) {
-      //     // creep.say("zap!");
-      //     spawn.renewCreep(creep);
-      //   }
-      // }
+      else {
+        room.mem.spawns[spawn.id] = room.mem.spawns[spawn.id] - 1;
+      }
     }
 
     // not if creep is sitting on top of a construction site?
@@ -310,7 +269,7 @@ module.exports.loop = function () {
 
     if (room.mem.endangered) {
       _.each(objects.creeps, (c) => {
-        if ((c.memory.role != "harvester") && (c.memory.role != "replenisher")) {
+        if ((c.memory.role != "harvester") && (c.memory.role != "ranger") && (c.memory.role != "replenisher") && (c.memory.role != "upgrader")) {
           c.memory.role = "replenisher";
         }
       });

@@ -35,14 +35,6 @@ let worker = {
     }
 
     return result;
-  },
-
-  spawn: function(spawn, parts = [WORK, CARRY, MOVE], role = "harvester") {
-    let result = spawn.spawnCreep(parts, ("Worker" + Game.time), {memory: {role: role}});
-    if (result == OK) {
-      // spawn.room.visual.text("🛠️ Worker", spawn.pos.x + 1, spawn.pos.y, {align: "left", opacity: 0.8});
-    }
-    return result;
   }
 }
 

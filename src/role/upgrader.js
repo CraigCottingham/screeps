@@ -6,36 +6,66 @@ let roleUpgrader = {
   run: function(creep) {
     // creep.say("upgrade");
 
-    if (creep.carry.energy == 0) {
-      creep.mem.role = "harvester";
+    const room = creep.room;
+    const controller = room.controller;
+
+    if ((controller === undefined) || !controller.my || (creep.carry.energy == 0)) {
+      this.reset(creep);
       return OK;
     }
 
-    let target = creep.room.controller;
-    if (target === undefined) {
-      creep.mem.role = "replenisher";
+    if (!creep.mem.path) {
+      creep.mem.path = room.findPath(creep.pos, controller.pos, {range: 1, serialize: true});
     }
-    else {
-      // if we're not on a road, drop a construction site
-      // let sites = creep.pos.lookFor(LOOK_STRUCTURES);
-      // if (!sites.length || _.all(sites, (s) => (s.structureType != STRUCTURE_ROAD))) {
-      //   creep.pos.createConstructionSite(STRUCTURE_ROAD);
-      // }
 
-      // this.sign(creep, creep.room.controller);
-      this.upgrade(creep, creep.room.controller);
+    switch (creep.moveByPath(creep.mem.path)) {
+      case OK:
+      case ERR_NOT_FOUND:
+        // this.sign(creep, controller);
+        this.upgrade(creep, controller);
+        break;
+      case ERR_TIRED:
+        // try creep.build(site)
+        // but we need site....
+        break;
+      case ERR_NOT_OWNER:
+        console.log("ERR_NOT_OWNER");
+        this.reset(creep);
+        break;
+      case ERR_BUSY:
+        console.log("ERR_BUSY");
+        this.reset(creep);
+        break;
+      // case ERR_NOT_FOUND:
+      //   console.log("ERR_NOT_FOUND");
+      //   this.reset(creep);
+      //   break;
+      case ERR_INVALID_ARGS:
+        console.log("ERR_INVALID_ARGS");
+        this.reset(creep);
+        break;
+      case ERR_NO_BODYPART:
+        creep.suicide();
+        break;
     }
 
     return OK;
   },
 
+  reset: function(creep) {
+    delete creep.mem.path;
+    creep.mem.role = "harvester";
+    return OK;
+  },
+
   sign: function(creep, controller) {
     switch (creep.signController(controller, "CraigCottingham - github.com/CraigCottingham/screeps")) {
+      case OK:
+        break;
       case ERR_INVALID_TARGET:
-        creep.mem.role = "replenisher";
+        this.reset(creep);
         break;
       case ERR_NOT_IN_RANGE:
-        worker.moveTo(creep, controller);
         break;
       default:
         break;
@@ -45,20 +75,14 @@ let roleUpgrader = {
   upgrade: function (creep, controller) {
     switch (creep.upgradeController(controller)) {
       case OK:
-        worker.moveTo(creep, controller);
         break;
       case ERR_NOT_OWNER:
-        break;
       case ERR_BUSY:
+      case ERR_NOT_IN_RANGE:
         break;
       case ERR_NOT_ENOUGH_RESOURCES:
-        creep.mem.role = "harvester";
-        break;
       case ERR_INVALID_TARGET:
-        creep.mem.role = "harvester";
-        break;
-      case ERR_NOT_IN_RANGE:
-        worker.moveTo(creep, controller);
+        this.reset(creep);
         break;
       case ERR_NO_BODYPART:
         creep.suicide();
