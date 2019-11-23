@@ -10,6 +10,7 @@ require("spawn");
 let roleBreacher = require("role.breacher");
 let roleBuilder = require("role.builder");
 let roleHarvester = require("role.harvester");
+let roleRanger = require("role.ranger");
 let roleRepairer = require("role.repairer");
 let roleReplenisher = require("role.replenisher");
 let roleScavenger = require("role.scavenger");
@@ -62,13 +63,6 @@ module.exports.loop = function () {
       walls: structures[STRUCTURE_WALL] || []
     };
 
-    // const room = Game.rooms["E15S32"];
-    // const extensions = room.find(FIND_STRUCTURES, {filter: (s) => (s.structureType == STRUCTURE_EXTENSION)});
-    // const s = Game.getObjectById("5bbcadd49099fc012e637f02");
-    // _.forEach(_.sortBy(extensions, (e) => (s.pos.getRangeTo(e))), (e2) => {
-    //   console.log(`${s.id}: ${e2.id}`);
-    // });
-
     room.mem.endangered = (objects.creeps.length < (objects.sources.length * 2)); // (objects.creeps.length < 10);
     room.mem.maxCreeps = (objects.sources.length * 6) + objects.flags.length + roomsAllowed - roomsControlled;
     room.mem.redAlert = (objects.hostileCreeps.length > 0);
@@ -117,11 +111,17 @@ module.exports.loop = function () {
         let amount = drop.amount;
         if (amount > 0) {
           let creep = drop.pos.findClosestByPath(FIND_MY_CREEPS, {
-            filter: (c) => (c.memory.parkedAt === undefined) && (_.sum(c.carry) < c.carryCapacity)
+            filter: (c) => (c.store.getFreeCapacity(RESOURCE_ENERGY) > 0)
           });
           if (creep !== null) {
             creep.mem.assignment = drop.id;
-            creep.mem.role = "scavenger";
+            if (creep.mem.role == "ranger") {
+              creep.mem.task = "harvest";
+              delete creep.mem.path;
+            }
+            else {
+              creep.mem.role = "scavenger";
+            }
           }
         }
       }
@@ -132,11 +132,17 @@ module.exports.loop = function () {
         let amount = _.sum(tombstone.store);
         if (amount > 0) {
           let creep = tombstone.pos.findClosestByPath(FIND_MY_CREEPS, {
-            filter: (c) => (c.memory.parkedAt === undefined) && (_.sum(c.carry) < c.carryCapacity)
+            filter: (c) => (c.store.getFreeCapacity(RESOURCE_ENERGY) > 0)
           });
           if (creep !== null) {
             creep.mem.assignment = tombstone.id;
-            creep.mem.role = "scavenger";
+            if (creep.mem.role == "ranger") {
+              creep.mem.task = "harvest";
+              delete creep.mem.path;
+            }
+            else {
+              creep.mem.role = "scavenger";
+            }
           }
         }
       }
@@ -147,11 +153,17 @@ module.exports.loop = function () {
         let amount = _.sum(ruin.store);
         if (amount > 0) {
           let creep = ruin.pos.findClosestByPath(FIND_MY_CREEPS, {
-            filter: (c) => (c.memory.parkedAt === undefined) && (_.sum(c.carry) < c.carryCapacity)
+            filter: (c) => (c.store.getFreeCapacity(RESOURCE_ENERGY) > 0)
           });
           if (creep !== null) {
             creep.mem.assignment = ruin.id;
-            creep.mem.role = "scavenger";
+            if (creep.mem.role == "ranger") {
+              creep.mem.task = "harvest";
+              delete creep.mem.path;
+            }
+            else {
+              creep.mem.role = "scavenger";
+            }
           }
         }
       }
@@ -163,6 +175,7 @@ module.exports.loop = function () {
         for (let site of objects.constructionSites) {
           let creep = site.pos.findClosestByRange(FIND_MY_CREEPS, {
             filter: (c) => (c.memory.parkedAt === undefined) &&
+                           (c.memory.role != "ranger") &&
                            (c.memory.role != "replenisher") &&
                            (c.memory.role != "scavenger") &&
                            (c.carry.energy > 0) &&
@@ -174,8 +187,8 @@ module.exports.loop = function () {
         }
       }
 
-      if (room.controller.my) {
-        if (_.all(objects.creeps, (c) => (c.memory.role != "upgrader"))) {
+      if (room.controller.my && (room.name != "E16S32")) {
+        if (_.all(objects.creeps, (c) => (c.memory.role != "upgrader") && (c.memory.role != "ranger"))) {
           let creep = room.controller.pos.findClosestByRange(FIND_MY_CREEPS, {
             // filter: (c) => (c.memory.parkedAt === undefined) && (c.carry.energy > 0)
             filter: (c) => (c.carry.energy > 0)
@@ -199,11 +212,18 @@ module.exports.loop = function () {
       // *** better yet, a function of the number of sources
       // since the number of sources determines how much energy is available in the room
 
-      if (room.mem.spawns[spawn.id] <= 0) {
-        if (spawn.spawning === null) {
+      if ((room.mem.spawns[spawn.id] <= 0) || room.mem.endangered) {
+        if ((spawn.spawning === null) && (room.energyAvailable > 250)) {
           const spawnCooldown = _.floor(CREEP_LIFE_TIME / room.mem.maxCreeps);
 
-          if (objects.creeps.length < room.mem.maxCreeps) {
+          // TODO: should be checking that there are no rangers in the world, not just in this room
+          if ((Memory.colonize !== undefined) && _.all(_.values(Game.creeps), (c) => (c.mem.role != "ranger"))) {
+            // spawn ranger
+            let parts = [CLAIM, MOVE, WORK, MOVE, CARRY, MOVE];
+            spawn.spawnCreep(parts, `Ranger${Game.time}`, {memory: {role: "ranger"}});
+            room.mem.spawns[spawn.id] = spawnCooldown;
+          }
+          else if (objects.creeps.length < room.mem.maxCreeps) {
             let parts = [WORK, MOVE, CARRY, MOVE];
             let availableEnergy = room.energyAvailable;
 
@@ -243,14 +263,6 @@ module.exports.loop = function () {
             spawn.spawnCreep(parts, undefined);
             room.mem.spawns[spawn.id] = spawnCooldown;
           }
-          else {
-            if (Memory.colonize !== undefined) {
-              // spawn ranger
-              let parts = [CLAIM, MOVE, CARRY, MOVE, CARRY, MOVE, WORK, MOVE];
-              spawn.spawnCreep(parts, undefined, {memory: {role: "ranger"}});
-              room.mem.spawns[spawn.id] = spawnCooldown;
-            }
-          }
         }
       }
       else {
@@ -280,6 +292,10 @@ module.exports.loop = function () {
     for (let creep of objects.creeps) {
       if (creep.mem.role === undefined) {
         creep.mem.role = "upgrader";
+      }
+
+      if (creep.pos.roomName == "E16S32") {
+        creep.mem.role = "ranger";
       }
 
       // if we're not on a road, drop a construction site
@@ -312,6 +328,9 @@ module.exports.loop = function () {
           break;
         case "harvester":
           roleHarvester.run(creep);
+          break;
+        case "ranger":
+          roleRanger.run(creep);
           break;
         case "repairer":
           roleRepairer.run(creep);
