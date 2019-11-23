@@ -178,8 +178,8 @@ module.exports.loop = function () {
                            (c.memory.role != "ranger") &&
                            (c.memory.role != "replenisher") &&
                            (c.memory.role != "scavenger") &&
-                           (c.carry.energy > 0) &&
-                           (_.sum(c.carry) == c.carry.energy)
+                           (c.store.getUsedCapacity(RESOURCE_ENERGY) > 0) &&
+                           (c.store.getUsedCapacity(RESOURCE_ENERGY) == c.store.getUsedCapacity())
           });
           if (creep !== null) {
             creep.mem.role = "builder";
@@ -190,8 +190,7 @@ module.exports.loop = function () {
       if (room.controller.my && (room.name != "E16S32")) {
         if (_.all(objects.creeps, (c) => (c.memory.role != "upgrader") && (c.memory.role != "ranger"))) {
           let creep = room.controller.pos.findClosestByRange(FIND_MY_CREEPS, {
-            // filter: (c) => (c.memory.parkedAt === undefined) && (c.carry.energy > 0)
-            filter: (c) => (c.carry.energy > 0)
+            filter: (c) => (c.store.getUsedCapacity(RESOURCE_ENERGY) > 0)
           })
           if (creep !== null) {
             delete creep.mem.parkedAt;

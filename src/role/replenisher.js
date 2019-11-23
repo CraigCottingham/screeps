@@ -6,7 +6,7 @@ let roleReplenisher = {
   run: function (creep) {
     // creep.say("replenish");
 
-    if (_.sum(creep.carry) == 0) {
+    if (creep.store.getUsedCapacity() == 0) {
       creep.mem.role = "harvester";
       return OK;
     }
@@ -19,7 +19,7 @@ let roleReplenisher = {
     let towers = room.find(FIND_STRUCTURES, {filter: (s) => (s.structureType == STRUCTURE_TOWER)});
 
     // carrying something other than energy
-    if ((_.sum(creep.carry) - creep.carry.energy) > 0) {
+    if ((creep.store.getUsedCapacity() - creep.store.getUsedCapacity(RESOURCE_ENERGY)) > 0) {
       creep.say("~energy");
 
       if (storages.length) {
@@ -116,8 +116,7 @@ let roleReplenisher = {
 
     // otherwise, find the closest tower that has enough room for what the creep is carrying
     target = pos.findClosestByPath(towers, {
-      filter: (s) => (s.energy <= (s.energyCapacity - creep.carry.energy))
-      // filter: (s) => (s.energy < s.energyCapacity)
+      filter: (s) => (s.store.getUsedCapacity(RESOURCE_ENERGY) <= (s.store.getCapacity(RESOURCE_ENERGY) - creep.store.getUsedCapacity(RESOURCE_ENERGY)))
     });
     if (target !== null) {
       this.replenish(creep, target);
@@ -140,7 +139,7 @@ let roleReplenisher = {
 
   replenish: function (creep, target) {
     let resourceType = RESOURCE_ENERGY;
-    if (creep.carry.energy == 0) {
+    if (creep.store.getUsedCapacity(RESOURCE_ENERGY) == 0) {
       resourceType = _.findKey(creep.carry, (r) => (r > 0));
     }
 

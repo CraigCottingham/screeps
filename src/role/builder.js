@@ -6,7 +6,7 @@ let roleBuilder = {
   run: function (creep) {
     // creep.say("build");
 
-    if (creep.carry.energy == 0) {
+    if (creep.store.getUsedCapacity(RESOURCE_ENERGY) == 0) {
       creep.mem.role = "harvester";
       return OK;
     }
