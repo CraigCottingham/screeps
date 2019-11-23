@@ -215,7 +215,14 @@ module.exports.loop = function () {
         if ((spawn.spawning === null) && (room.energyAvailable > 250)) {
           const spawnCooldown = _.floor(CREEP_LIFE_TIME / room.mem.maxCreeps);
 
-          if (objects.creeps.length < room.mem.maxCreeps) {
+          // TODO: should be checking that there are no rangers in the world, not just in this room
+          if ((Memory.colonize !== undefined) && _.all(_.values(Game.creeps), (c) => (c.mem.role != "ranger"))) {
+            // spawn ranger
+            let parts = [CLAIM, MOVE, WORK, MOVE, CARRY, MOVE];
+            spawn.spawnCreep(parts, `Ranger${Game.time}`, {memory: {role: "ranger"}});
+            room.mem.spawns[spawn.id] = spawnCooldown;
+          }
+          else if (objects.creeps.length < room.mem.maxCreeps) {
             let parts = [WORK, MOVE, CARRY, MOVE];
             let availableEnergy = room.energyAvailable;
 
@@ -254,14 +261,6 @@ module.exports.loop = function () {
             // console.log("spawning worker");
             spawn.spawnCreep(parts, undefined);
             room.mem.spawns[spawn.id] = spawnCooldown;
-          }
-          else {
-            if (Memory.colonize !== undefined) {
-              // spawn ranger
-              let parts = [CLAIM, MOVE, CARRY, MOVE, CARRY, MOVE, WORK, MOVE];
-              spawn.spawnCreep(parts, undefined, {memory: {role: "ranger"}});
-              room.mem.spawns[spawn.id] = spawnCooldown;
-            }
           }
         }
       }
