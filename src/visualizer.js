@@ -73,7 +73,7 @@ if (config.visualizer.enabled) {
       });
       if (line.value !== undefined) {
         // rv.text(`${line.value}`, 6, 1.5 * fontSize + 2 * y * fontSize, {
-        rv.text(`${line.value}`, 4, 0.75 + 2 * y * fontSize, {
+        rv.text(`${line.value}`, 6.5, 0.75 + 2 * y * fontSize, {
           color: "rgb(192,192,192)", // color(line.coeff),
           font: fontSize,
           align: "left"
@@ -84,6 +84,7 @@ if (config.visualizer.enabled) {
     renderRoomDetails: function (room) {
       const fontSize = 0.65;
       const rv = room.visual;
+      const constructionSites = _.values(Game.constructionSites);
       const cpu = Game.cpu;
       const creepSpawningCount = _.reduce(_.filter(_.values(Game.spawns), (s) => s.room.name == room.name), (acc, s) => (s.spawning ? acc + 1 : acc), 0);
       const creepTotalCount = _.filter(_.values(Game.creeps), (c) => c.room.name == room.name).length;
@@ -93,7 +94,6 @@ if (config.visualizer.enabled) {
       const firstSpawn = _.first(spawns);
       const spawnCooldown = firstSpawn ? room.mem.spawns[firstSpawn.id] : 0;
       const ramparts = room.find(FIND_STRUCTURES, {filter: (s) => (s.structureType == STRUCTURE_RAMPART)});
-      const roads = room.find(FIND_STRUCTURES, {filter: (s) => (s.structureType == STRUCTURE_ROAD)});
       const walls = room.find(FIND_STRUCTURES, {filter: (s) => (s.structureType == STRUCTURE_WALL)});
 
       const lines = [];
@@ -102,7 +102,7 @@ if (config.visualizer.enabled) {
       lines.push({label: "Creeps:", value: `${creepTotalCount - creepSpawningCount} / ${creepSpawningCount} / ${spawnCooldown}`})
 
       if ((room.controller !== undefined) && room.controller.my) {
-        lines.push({label: "Controller:", value: `${room.controller.progress} / ${room.controller.progressTotal}`})
+        lines.push({label: "Controller:", value: `${room.controller.progress} / ${room.controller.progressTotal} / ${room.controller.ticksToDowngrade}`})
       }
 
       lines.push({label: "Energy:", value: `${energyAvailable} / ${energyCapacityAvailable}`});
@@ -112,19 +112,53 @@ if (config.visualizer.enabled) {
       }
 
       if (ramparts.length) {
-        const weakestRampart = _.min(ramparts, (r) => r.hits);
-        const strongestRampart = _.max(ramparts, (r) => r.hits);
-        lines.push({label: "Ramparts:", value: `${weakestRampart.hits} / ${strongestRampart.hits} / ${room.mem.threshold.rampart} / ${RAMPART_HITS_MAX[room.controller.level]}`});
+        const weakest = _.min(ramparts, (r) => r.hits);
+        const strongest = _.max(ramparts, (r) => r.hits);
+        lines.push({label: "Ramparts:", value: `${weakest.hits} / ${strongest.hits} / ${room.mem.threshold.rampart} / ${RAMPART_HITS_MAX[room.controller.level]}`});
       }
       if (walls.length) {
-        const weakestWall = _.min(walls, (w) => w.hits);
-        const strongestWall = _.max(walls, (w) => w.hits);
-        lines.push({label: "Walls:", value: `${weakestWall.hits} / ${strongestWall.hits} / ${room.mem.threshold.wall} / ${WALL_HITS_MAX}`});
+        const weakest = _.min(walls, (w) => w.hits);
+        const strongest = _.max(walls, (w) => w.hits);
+        lines.push({label: "Walls:", value: `${weakest.hits} / ${strongest.hits} / ${room.mem.threshold.wall} / ${WALL_HITS_MAX}`});
       }
-      if (roads.length) {
-        const weakestRoad = _.min(roads, (r) => r.hits);
-        const strongestRoad = _.max(roads, (r) => r.hits);
-        lines.push({label: "Roads:", value: `${weakestRoad.hits} / ${strongestRoad.hits} / ${ROAD_HITS}`});
+
+      if (false) {
+        const roomTerrain = Game.map.getRoomTerrain(room.name);
+        const roads = _.groupBy(room.find(FIND_STRUCTURES, {filter: (s) => (s.structureType == STRUCTURE_ROAD)}), (r) => roomTerrain.get(r.pos.x, r.pos.y));
+        const roads_plain = roads[0] || [];
+        const roads_swamp = roads[TERRAIN_MASK_SWAMP] || [];
+        const roads_wall = roads[TERRAIN_MASK_WALL] || [];
+
+        if (roads_plain.length) {
+          const weakest = _.min(roads_plain, (r) => r.hits);
+          const strongest = _.max(roads_plain, (r) => r.hits);
+          lines.push({label: "Roads:", value: `${weakest.hits} / ${strongest.hits} / ${ROAD_HITS}`});
+        }
+
+        if (roads_swamp.length) {
+          const weakest = _.min(roads_swamp, (r) => r.hits);
+          const strongest = _.max(roads_swamp, (r) => r.hits);
+          lines.push({label: "Roads (Swamp):", value: `${weakest.hits} / ${strongest.hits} / ${ROAD_HITS * CONSTRUCTION_COST_ROAD_SWAMP_RATIO}`});
+        }
+
+        if (roads_wall.length) {
+          const weakest = _.min(roads_wall, (r) => r.hits);
+          const strongest = _.max(roads_wall, (r) => r.hits);
+          lines.push({label: "Roads:", value: `${weakest.hits} / ${strongest.hits} / ${ROAD_HITS * CONSTRUCTION_COST_ROAD_WALL_RATIO}`});
+        }
+      }
+      else {
+        const roads = room.find(FIND_STRUCTURES, {filter: (s) => s.structureType == STRUCTURE_ROAD});
+
+        if (roads.length) {
+          const weakest = _.min(roads, (r) => r.hits);
+          const strongest = _.max(roads, (r) => r.hits);
+          lines.push({label: "Roads:", value: `${weakest.hits} / ${strongest.hits}`});
+        }
+      }
+
+      if (constructionSites.length) {
+        lines.push({label: "Construction Sites:", value: `${constructionSites.length}`});
       }
 
       let y = 0;

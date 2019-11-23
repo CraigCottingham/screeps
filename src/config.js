@@ -18,7 +18,7 @@ global.config = {
     highLowRampart: false,
     highLowRoad: false,
     highLowWall: false,
-    roomDetails: false,
+    roomDetails: true,
   },
 
   // debug: {
