@@ -175,6 +175,7 @@ module.exports.loop = function () {
         for (let site of objects.constructionSites) {
           let creep = site.pos.findClosestByRange(FIND_MY_CREEPS, {
             filter: (c) => (c.memory.parkedAt === undefined) &&
+                           (c.memory.role != "ranger") &&
                            (c.memory.role != "replenisher") &&
                            (c.memory.role != "scavenger") &&
                            (c.carry.energy > 0) &&
