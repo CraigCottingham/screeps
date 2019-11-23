@@ -151,6 +151,7 @@ let roleRanger = {
       // console.log(`ranger.dismantle (${creep.name}): can't find anything to dismantle`);
       creep.mem.task = "harvest";
       delete creep.mem.path;
+      delete creep.mem.assignment;
       // don't jump back to run(); that would enter an infinite loop
       return OK;
     }
@@ -361,8 +362,7 @@ let roleRanger = {
       // on the last move, we changed rooms, so recalculate path
       delete creep.mem.path;
       if (creep.pos.roomName == creep.mem.targetRoomName) {
-        creep.mem.task = "claim";
-        return this.run(creep);
+        return this.switchTo(creep, "claim");
       }
     }
 
@@ -433,9 +433,7 @@ let roleRanger = {
 
   repair: function (creep) {
     if (creep.store.getUsedCapacity(RESOURCE_ENERGY) == 0) {
-      creep.mem.task = "harvest";
-      delete creep.mem.path;
-      return this.run(creep);
+      return this.switchTo(creep, "harvest");
     }
 
     const target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
@@ -443,9 +441,7 @@ let roleRanger = {
     });
     if (target === null) {
       // console.log(`ranger.repair (${creep.name}): nothing to repair except roads`);
-      creep.mem.task = "replenish";
-      delete creep.mem.path;
-      return this.run(creep);
+      return this.switchTo(creep, "replenish");
     }
 
     switch (creep.repair(target)) {
@@ -484,15 +480,11 @@ let roleRanger = {
 
   replenish: function (creep) {
     if (creep.store.getUsedCapacity(RESOURCE_ENERGY) == 0) {
-      creep.mem.task = "harvest";
-      delete creep.mem.path;
-      return this.run(creep);
+      return this.switchTo(creep, "harvest");
     }
 
     if (creep.room.controller.ticksToDowngrade < (CONTROLLER_DOWNGRADE[creep.room.controller.level] - 1000)) {
-      creep.mem.task = "upgrade";
-      delete creep.mem.path;
-      return this.run(creep);
+      return this.switchTo(creep, "upgrade");
     }
 
     const extensions = creep.room.find(FIND_MY_STRUCTURES, {
@@ -550,17 +542,13 @@ let roleRanger = {
         break;
       case ERR_NOT_ENOUGH_RESOURCES:
         console.log("ranger.transfer: not enough resources");
-        creep.mem.task = "harvest";
-        delete creep.mem.path;
-        break;
+        return this.switchTo(creep, harvest);
       case ERR_INVALID_TARGET:
         console.log("ranger.transfer: invalid target");
         break;
       case ERR_FULL:
         // console.log("ranger.transfer: full");
-        creep.mem.task = "replenish";
-        delete creep.mem.path;
-        break;
+        return this.switchTo(creep, "replenish");
       case ERR_NOT_IN_RANGE:
         // console.log("ranger.transfer: not in range");
         if (creep.mem.path === undefined) {
@@ -640,46 +628,40 @@ let roleRanger = {
   },
 
   upgrade: function (creep) {
-    if (creep.store.getUsedCapacity(RESOURCE_ENERGY) > 0) {
-      switch (creep.upgradeController(creep.room.controller)) {
-        case OK:
-          break;
-        case ERR_NOT_OWNER:
-          console.log("ranger.upgrade: not owner");
-          break;
-        case ERR_BUSY:
-          console.log("ranger.upgrade: busy");
-          break;
-        case ERR_NOT_ENOUGH_RESOURCES:
-          console.log("ranger.upgrade: not enough resources");
-          creep.mem.task = "harvest";
-          delete creep.mem.path;
-          break;
-        case ERR_INVALID_TARGET:
-          console.log("ranger.upgrade: invalid target");
-          break;
-        case ERR_NOT_IN_RANGE:
-          // console.log("ranger.upgrade: not in range");
-          break;
-        case ERR_NO_BODYPART:
-          console.log("ranger.upgrade: no bodypart");
-          creep.suicide();
-          break;
-      }
-
-      this.sign(creep);
-
-      if (creep.mem.path === undefined) {
-        creep.mem.path = creep.room.findPath(creep.pos, creep.room.controller.pos, { range: 1 });
-      }
-      this.moveByPath(creep);
-    }
-    else {
-      creep.mem.task = "harvest";
-      delete creep.mem.path;
+    if (creep.store.getUsedCapacity(RESOURCE_ENERGY) == 0) {
+      return this.switchTo(creep, "harvest");
     }
 
-    return OK;
+    switch (creep.upgradeController(creep.room.controller)) {
+      case OK:
+        break;
+      case ERR_NOT_OWNER:
+        console.log("ranger.upgrade: not owner");
+        break;
+      case ERR_BUSY:
+        console.log("ranger.upgrade: busy");
+        break;
+      case ERR_NOT_ENOUGH_RESOURCES:
+        console.log("ranger.upgrade: not enough resources");
+        return this.switchTo(creep, "harvest");
+      case ERR_INVALID_TARGET:
+        console.log("ranger.upgrade: invalid target");
+        break;
+      case ERR_NOT_IN_RANGE:
+        // console.log("ranger.upgrade: not in range");
+        break;
+      case ERR_NO_BODYPART:
+        console.log("ranger.upgrade: no bodypart");
+        creep.suicide();
+        break;
+    }
+
+    this.sign(creep);
+
+    if (creep.mem.path === undefined) {
+      creep.mem.path = creep.room.findPath(creep.pos, creep.room.controller.pos, { range: 1 });
+    }
+    return this.moveByPath(creep);
   }
 }
 
