@@ -297,26 +297,28 @@ module.exports.loop = function () {
         creep.mem.role = "ranger";
       }
 
-      // if we're not on a road, drop a construction site
-      // let structures = creep.pos.lookFor(LOOK_STRUCTURES);
-      // if (!structures.length || _.all(structures, (s) => (s.structureType != STRUCTURE_ROAD))) {
-      //   switch (creep.pos.createConstructionSite(STRUCTURE_ROAD)) {
-      //     case OK:
-      //       break;
-      //     case ERR_INVALID_TARGET:
-      //       // console.log("The structure cannot be placed at the specified location.");
-      //       break;
-      //     case ERR_FULL:
-      //       // console.log("You have too many construction sites.");
-      //       break;
-      //     case ERR_INVALID_ARGS:
-      //       // console.log("The location is incorrect.")
-      //       break;
-      //     case ERR_RCL_NOT_ENOUGH:
-      //       // console.log("Room Controller Level insufficient.");
-      //       break;
-      //   }
-      // }
+      if (config.desirePathing.enabled) {
+        // if we're not on a road, drop a construction site
+        let structures = creep.pos.lookFor(LOOK_STRUCTURES);
+        if (!structures.length || _.all(structures, (s) => (s.structureType != STRUCTURE_ROAD))) {
+          switch (creep.pos.createConstructionSite(STRUCTURE_ROAD)) {
+            case OK:
+              break;
+            case ERR_INVALID_TARGET:
+              // console.log("The structure cannot be placed at the specified location.");
+              break;
+            case ERR_FULL:
+              // console.log("You have too many construction sites.");
+              break;
+            case ERR_INVALID_ARGS:
+              // console.log("The location is incorrect.")
+              break;
+            case ERR_RCL_NOT_ENOUGH:
+              // console.log("Room Controller Level insufficient.");
+              break;
+          }
+        }
+      }
 
       switch (creep.mem.role) {
         case "breacher":
