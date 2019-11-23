@@ -63,13 +63,6 @@ module.exports.loop = function () {
       walls: structures[STRUCTURE_WALL] || []
     };
 
-    // const room = Game.rooms["E15S32"];
-    // const extensions = room.find(FIND_STRUCTURES, {filter: (s) => (s.structureType == STRUCTURE_EXTENSION)});
-    // const s = Game.getObjectById("5bbcadd49099fc012e637f02");
-    // _.forEach(_.sortBy(extensions, (e) => (s.pos.getRangeTo(e))), (e2) => {
-    //   console.log(`${s.id}: ${e2.id}`);
-    // });
-
     room.mem.endangered = (objects.creeps.length < (objects.sources.length * 2)); // (objects.creeps.length < 10);
     room.mem.maxCreeps = (objects.sources.length * 6) + objects.flags.length + roomsAllowed - roomsControlled;
     room.mem.redAlert = (objects.hostileCreeps.length > 0);
@@ -118,11 +111,17 @@ module.exports.loop = function () {
         let amount = drop.amount;
         if (amount > 0) {
           let creep = drop.pos.findClosestByPath(FIND_MY_CREEPS, {
-            filter: (c) => (c.memory.parkedAt === undefined) && (_.sum(c.carry) < c.carryCapacity)
+            filter: (c) => (c.store.getFreeCapacity(RESOURCE_ENERGY) > 0)
           });
           if (creep !== null) {
             creep.mem.assignment = drop.id;
-            creep.mem.role = "scavenger";
+            if (creep.mem.role == "ranger") {
+              creep.mem.task = "harvest";
+              delete creep.mem.path;
+            }
+            else {
+              creep.mem.role = "scavenger";
+            }
           }
         }
       }
@@ -133,11 +132,17 @@ module.exports.loop = function () {
         let amount = _.sum(tombstone.store);
         if (amount > 0) {
           let creep = tombstone.pos.findClosestByPath(FIND_MY_CREEPS, {
-            filter: (c) => (c.memory.parkedAt === undefined) && (_.sum(c.carry) < c.carryCapacity)
+            filter: (c) => (c.store.getFreeCapacity(RESOURCE_ENERGY) > 0)
           });
           if (creep !== null) {
             creep.mem.assignment = tombstone.id;
-            creep.mem.role = "scavenger";
+            if (creep.mem.role == "ranger") {
+              creep.mem.task = "harvest";
+              delete creep.mem.path;
+            }
+            else {
+              creep.mem.role = "scavenger";
+            }
           }
         }
       }
@@ -148,11 +153,17 @@ module.exports.loop = function () {
         let amount = _.sum(ruin.store);
         if (amount > 0) {
           let creep = ruin.pos.findClosestByPath(FIND_MY_CREEPS, {
-            filter: (c) => (c.memory.parkedAt === undefined) && (_.sum(c.carry) < c.carryCapacity)
+            filter: (c) => (c.store.getFreeCapacity(RESOURCE_ENERGY) > 0)
           });
           if (creep !== null) {
             creep.mem.assignment = ruin.id;
-            creep.mem.role = "scavenger";
+            if (creep.mem.role == "ranger") {
+              creep.mem.task = "harvest";
+              delete creep.mem.path;
+            }
+            else {
+              creep.mem.role = "scavenger";
+            }
           }
         }
       }
