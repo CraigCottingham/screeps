@@ -230,31 +230,31 @@ module.exports.loop = function () {
 
             // add minimum viable creep cost ([WORK, MOVE, CARRY, MOVE] == 250) to each of these thresholds?
 
-            if (availableEnergy > 400) {
+            if (availableEnergy >= 400) {
               parts = [WORK, MOVE, WORK, MOVE, CARRY, MOVE];
             }
 
-            if (availableEnergy > 550) {
+            if (availableEnergy >= 550) {
               parts = [WORK, MOVE, WORK, MOVE, WORK, MOVE, CARRY, MOVE];
             }
 
-            if (availableEnergy > 700) {
+            if (availableEnergy >= 700) {
               parts = [WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, CARRY, MOVE];
             }
 
-            if (availableEnergy > 850) {
+            if (availableEnergy >= 850) {
               parts = [WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, CARRY, MOVE];
             }
 
-            if (availableEnergy > 950) {
+            if (availableEnergy >= 950) {
               parts = [WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, CARRY, MOVE, CARRY, MOVE];
             }
 
-            if (availableEnergy > 1050) {
+            if (availableEnergy >= 1050) {
               parts = [WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE];
             }
 
-            if (availableEnergy > 1150) {
+            if (availableEnergy >= 1150) {
               parts = [WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE];
             }
 
