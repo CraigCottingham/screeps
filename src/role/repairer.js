@@ -19,7 +19,7 @@ let roleRepairer = {
       filter: (s) => (s.energy < s.energyCapacity)
     });
     if (tower === null) {
-      console.log(`repairer.run (${creep.id}): no towers found`);
+      // console.log(`repairer.run (${creep.id}): no towers found`);
       // no towers, so go looking for ramparts or walls that need repairing
 
       let target;
@@ -49,7 +49,7 @@ let roleRepairer = {
         filter: (s) => (s.hits < room.mem.threshold.rampart)
       });
       if (target !== null) {
-        console.log(`repairer.run (${creep.id}): found rampart to repair`);
+        // console.log(`repairer.run (${creep.id}): found rampart to repair`);
         this.repair(creep, target);
         return OK;
       }
