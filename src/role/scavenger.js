@@ -6,7 +6,7 @@ let roleScavenger = {
   run: function (creep) {
     // creep.say("scavenge");
 
-    if (_.sum(creep.carry) >= creep.carryCapacity) {
+    if (creep.store.getFreeCapacity() == 0) {
       creep.mem.role = "builder";
       return OK;
     }
@@ -54,7 +54,7 @@ let roleScavenger = {
     }
 
     if (creep.mem.assignment === undefined) {
-      if (_.sum(creep.carry) > 0) {
+      if (creep.store.getUsedCapacity() > 0) {
         creep.mem.role = "replenisher";
       }
       else {
@@ -82,7 +82,7 @@ let roleScavenger = {
     }
 
     if (creep.mem.assignment === undefined) {
-      if (_.sum(creep.carry) > 0) {
+      if (creep.store.getUsedCapacity() > 0) {
         creep.mem.role = "replenisher";
       }
       else {

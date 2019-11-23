@@ -457,7 +457,7 @@ let roleRanger = {
         console.log("ranger.repair: invalid target");
         break;
       case ERR_NOT_IN_RANGE:
-        console.log("ranger.repair: not in range");
+        // console.log("ranger.repair: not in range");
         break;
       case ERR_NO_BODYPART:
         console.log("ranger.repair: no bodypart");

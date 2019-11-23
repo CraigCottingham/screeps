@@ -4,7 +4,7 @@ let worker = require("worker");
 
 let roleRepairer = {
   run: function (creep) {
-    if (creep.carry.energy == 0) {
+    if (creep.store.getUsedCapacity(RESOURCE_ENERGY) == 0) {
       creep.mem.role = "harvester";
       return OK;
     }

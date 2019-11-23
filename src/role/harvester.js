@@ -141,7 +141,7 @@ let roleHarvester = {
     }
 
     if (room.mem.redAlert) {
-      if (creep.carry.energy > 0) {
+      if (creep.store.getUsedCapacity(RESOURCE_ENERGY) > 0) {
         // creep is carrying energy, so go put it somewhere useful
 
         creep.mem.role = "replenisher";
@@ -246,7 +246,7 @@ let roleHarvester = {
     // creep.say("parked");
     creep.mem.parkedAt = container.id;
 
-    if (creep.carry.energy >= creep.carryCapacity) {
+    if (creep.store.getFreeCapacity() == 0) {
       if (container.hits < container.hitsMax) {
         creep.repair(container);
         return OK;
