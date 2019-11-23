@@ -439,7 +439,7 @@ let roleRanger = {
     }
 
     const target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-      filter: (s) => (s.structureType != STRUCTURE_ROAD) && (s.hits < s.hitsMax)
+      filter: (s) => (s.structureType != STRUCTURE_RAMPART) && (s.structureType != STRUCTURE_ROAD) && (s.structureType != STRUCTURE_WALL) && (s.hits < s.hitsMax)
     });
     if (target === null) {
       // console.log(`ranger.repair (${creep.name}): nothing to repair except roads`);
