@@ -6,14 +6,12 @@ let roleRanger = {
   run: function (creep) {
     if (creep.mem.task === undefined) {
       if ((Memory.colonize === undefined) || (creep.pos.roomName == Memory.colonize)) {
-        creep.mem.task = "harvest";
-        delete creep.mem.path;
+        return this.switchTo(creep, "harvest");
       }
       else {
-        creep.mem.task = "insert";
-        delete creep.mem.path;
         creep.mem.targetRoomName = Memory.colonize;
         creep.mem.roomName = creep.pos.roomName;
+        return this.switchTo(creep, "insert");
       }
     }
 
@@ -59,82 +57,69 @@ let roleRanger = {
   },
 
   build: function (creep) {
-    if (creep.store.getUsedCapacity(RESOURCE_ENERGY) > 0) {
-      if (creep.room.controller.ticksToDowngrade < (CONTROLLER_DOWNGRADE[creep.room.controller.level] - 1000)) {
-        creep.mem.task = "upgrade";
-        delete creep.mem.path;
-        return this.run(creep);
-      }
-
-      let site = creep.pos.findClosestByPath(FIND_CONSTRUCTION_SITES, {
-        filter: (cs) => (cs.structureType == STRUCTURE_SPAWN)
-      });
-      if (site === null) {
-        site = creep.pos.findClosestByPath(FIND_CONSTRUCTION_SITES);
-      }
-
-      switch (creep.build(site)) {
-        case OK:
-          break;
-        case ERR_NOT_OWNER:
-          console.log("ranger.build: not owner");
-          break;
-        case ERR_BUSY:
-          console.log("ranger.build: busy");
-          break;
-        case ERR_NOT_ENOUGH_RESOURCES:
-          console.log("ranger.build: not enough resources");
-          creep.mem.task = "harvest";
-          delete creep.mem.path;
-          break;
-        case ERR_INVALID_TARGET:
-          console.log("ranger.build: invalid target");
-          break;
-        case ERR_NOT_IN_RANGE:
-          // console.log("ranger.build: not in range");
-          break;
-        case ERR_NO_BODYPART:
-          console.log("ranger.build: no bodypart");
-          creep.suicide();
-          break;
-      }
-
-      if (creep.mem.path === undefined) {
-        creep.mem.path = creep.room.findPath(creep.pos, site.pos, { range: 0 });
-      }
-      this.moveByPath(creep);
-    }
-    else {
-      creep.mem.task = "harvest";
-      delete creep.mem.path;
+    if (creep.store.getUsedCapacity(RESOURCE_ENERGY) == 0) {
+      return this.switchTo(creep, "harvest");
     }
 
-    return OK;
+    if (creep.room.controller.ticksToDowngrade < (CONTROLLER_DOWNGRADE[creep.room.controller.level] - 1000)) {
+      return this.switchTo(creep, "upgrade");
+    }
+
+    let site = creep.pos.findClosestByPath(FIND_CONSTRUCTION_SITES, {
+      filter: (cs) => (cs.structureType == STRUCTURE_SPAWN)
+    });
+    if (site === null) {
+      site = creep.pos.findClosestByPath(FIND_CONSTRUCTION_SITES);
+    }
+
+    switch (creep.build(site)) {
+      case OK:
+        break;
+      case ERR_NOT_OWNER:
+        console.log("ranger.build: not owner");
+        break;
+      case ERR_BUSY:
+        console.log("ranger.build: busy");
+        break;
+      case ERR_NOT_ENOUGH_RESOURCES:
+        console.log("ranger.build: not enough resources");
+        return this.switchTo(creep, "harvest");
+      case ERR_INVALID_TARGET:
+        console.log("ranger.build: invalid target");
+        break;
+      case ERR_NOT_IN_RANGE:
+        // console.log("ranger.build: not in range");
+        break;
+      case ERR_NO_BODYPART:
+        console.log("ranger.build: no bodypart");
+        creep.suicide();
+        break;
+    }
+
+    if (creep.mem.path === undefined) {
+      creep.mem.path = creep.room.findPath(creep.pos, site.pos, { range: 0 });
+    }
+    return this.moveByPath(creep);
   },
 
   claim: function (creep) {
     if (creep.room.controller.my && (!creep.room.controller.sign || creep.room.controller.sign.username != "CraigCottingham")) {
-      this.tryToSignController(creep);
+      return this.tryToSignController(creep);
     }
-    else if (!creep.room.controller.my && creep.pos.isNearTo(creep.room.controller)) {
+
+    if (!creep.room.controller.my && creep.pos.isNearTo(creep.room.controller)) {
       this.tryToClaimController(creep);
-      creep.mem.task = "harvest";
-      delete creep.mem.path;
-    }
-    else {
-      // creep.mem.path = creep.room.findPath(creep.pos, creep.room.controller.pos, { range: 1 });
-      if (creep.room.controller.my) {
-        creep.mem.task = "harvest";
-        delete creep.mem.path;
-      }
-
-      if (creep.mem.path === undefined) {
-        creep.mem.path = creep.room.findPath(creep.pos, creep.room.controller.pos, { range: 1 });
-      }
-      this.moveByPath(creep);
+      return this.switchTo(creep, "harvest");
     }
 
-    return OK;
+    if (creep.room.controller.my) {
+      return this.switchTo(creep, "harvest");
+    }
+
+    if (creep.mem.path === undefined) {
+      creep.mem.path = creep.room.findPath(creep.pos, creep.room.controller.pos, { range: 1 });
+    }
+    return this.moveByPath(creep);
   },
 
   createContainer: function (pos) {
@@ -201,9 +186,7 @@ let roleRanger = {
   harvest: function (creep) {
     if (creep.store.getFreeCapacity(RESOURCE_ENERGY) == 0) {
       if (creep.room.mem.endangered) {
-        creep.mem.task = "replenish";
-        delete creep.mem.path;
-        return this.run(creep);
+        this.switchTo(creep, "replenish");
       }
 
       // if on top of a container, drop store into the container
@@ -216,10 +199,7 @@ let roleRanger = {
         return OK;
       }
 
-      creep.mem.task = "repair";
-      delete creep.mem.path;
-      delete creep.mem.assignment;
-      return this.run(creep);
+      this.switchTo(creep, "repair");
     }
 
     let target = null;
@@ -242,29 +222,60 @@ let roleRanger = {
       }
     }
 
-    target = creep.pos.findClosestByPath(FIND_SOURCES);
-    if (target !== null) {
-      return this.harvestFromSource(creep, target);
+    if (false) {
+      let candidateTargets = [];
+
+      target = creep.pos.findClosestByPath(FIND_SOURCES);
+      if (target !== null) {
+        candidateTargets.push(target);
+      }
+
+      target = creep.pos.findClosestByPath(FIND_HOSTILE_STRUCTURES, {
+        filter: (s) => (s.structureType == STRUCTURE_EXTENSION) && (s.store.getUsedCapacity(RESOURCE_ENERGY) > 0)
+      });
+      if (target !== null) {
+        candidateTargets.push(target);
+      }
+
+      target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+        filter: (s) => (s.structureType == STRUCTURE_CONTAINER) && (s.store.getUsedCapacity(RESOURCE_ENERGY) > 0)
+      });
+      if (target !== null) {
+        candidateTargets.push(target);
+      }
+
+      target = creep.pos.findClosestByPath(candidateTargets);
+      if (target !== null) {
+        if (target instanceof Source) {
+          return this.harvestFromSource(creep, target);
+        }
+        else {
+          return this.harvestFromStructure(creep, target);
+        }
+      }
+    }
+    else {
+      target = creep.pos.findClosestByPath(FIND_SOURCES);
+      if (target !== null) {
+        return this.harvestFromSource(creep, target);
+      }
+
+      target = creep.pos.findClosestByPath(FIND_HOSTILE_STRUCTURES, {
+        filter: (s) => (s.structureType == STRUCTURE_EXTENSION) && (s.store.getUsedCapacity(RESOURCE_ENERGY) > 0)
+      });
+      if (target !== null) {
+        return this.harvestFromStructure(creep, target);
+      }
+
+      target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+        filter: (s) => (s.structureType == STRUCTURE_CONTAINER) && (s.store.getUsedCapacity(RESOURCE_ENERGY) > 0)
+      });
+      if (target !== null) {
+        return this.harvestFromStructure(creep, target);
+      }
     }
 
-    target = creep.pos.findClosestByPath(FIND_HOSTILE_STRUCTURES, {
-      filter: (s) => (s.structureType == STRUCTURE_EXTENSION) && (s.store.getUsedCapacity(RESOURCE_ENERGY) > 0)
-    });
-    if (target !== null) {
-      return this.harvestFromStructure(creep, target)
-    }
-
-    target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-      filter: (s) => (s.structureType == STRUCTURE_CONTAINER) && (s.store.getUsedCapacity(RESOURCE_ENERGY) > 0)
-    });
-    if (target !== null) {
-      return this.harvestFromStructure(creep, target)
-    }
-
-    // console.log("ranger.harvest: no path to source");
-    creep.mem.task = "dismantle";
-    delete creep.mem.path;
-    return this.run(creep);
+    return this.switchTo("dismantle");
   },
 
   harvestFromSource: function (creep, source) {
@@ -328,10 +339,8 @@ let roleRanger = {
         console.log("ranger.harvestFromStructure: invalid target");
         break;
       case ERR_FULL:
-        console.log("ranger.harvestFromStructure: full");
-        creep.mem.task = "repair";
-        delete creep.mem.path;
-        break;
+        // console.log("ranger.harvestFromStructure: full");
+        return this.switchTo(creep, "repair");
       case ERR_NOT_IN_RANGE:
         // console.log("ranger.harvestFromStructure: not in range");
         if (creep.mem.path === undefined) {
