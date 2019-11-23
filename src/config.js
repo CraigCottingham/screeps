@@ -11,6 +11,10 @@ global.config = {
   //   enabled: false,
   // },
 
+  desirePathing: {
+    enabled: true
+  },
+
   visualizer: {
     enabled: true,
 
