@@ -11,6 +11,10 @@ global.config = {
   //   enabled: false,
   // },
 
+  desirePathing: {
+    enabled: true
+  },
+
   visualizer: {
     enabled: true,
 
@@ -18,7 +22,7 @@ global.config = {
     highLowRampart: false,
     highLowRoad: false,
     highLowWall: false,
-    roomDetails: false,
+    roomDetails: true,
   },
 
   // debug: {

@@ -4,21 +4,22 @@ let worker = require("worker");
 
 let roleRepairer = {
   run: function (creep) {
-    if (creep.carry.energy == 0) {
+    if (creep.store.getUsedCapacity(RESOURCE_ENERGY) == 0) {
       creep.mem.role = "harvester";
       return OK;
     }
 
     let pos = creep.pos;
     let room = creep.room;
-    let ramparts = room.find(FIND_STRUCTURES, {filter: (s) => (s.structureType == STRUCTURE_RAMPART)});
-    let towers = room.find(FIND_STRUCTURES, {filter: (s) => (s.structureType == STRUCTURE_TOWER)});
+    let ramparts = room.find(FIND_MY_STRUCTURES, {filter: (s) => (s.structureType == STRUCTURE_RAMPART)});
+    let towers = room.find(FIND_MY_STRUCTURES, {filter: (s) => (s.structureType == STRUCTURE_TOWER)});
     let walls = room.find(FIND_STRUCTURES, {filter: (s) => (s.structureType == STRUCTURE_WALL)});
 
     let tower = pos.findClosestByPath(towers, {
       filter: (s) => (s.energy < s.energyCapacity)
     });
     if (tower === null) {
+      console.log(`repairer.run (${creep.id}): no towers found`);
       // no towers, so go looking for ramparts or walls that need repairing
 
       let target;
@@ -27,6 +28,7 @@ let roleRepairer = {
         filter: (s) => (s.hits <= (RAMPART_DECAY_AMOUNT * 5))
       });
       if (target !== null) {
+        console.log(`repairer.run (${creep.id}): found critical rampart to repair`);
         this.repair(creep, target);
         return OK;
       }
@@ -37,6 +39,7 @@ let roleRepairer = {
         filter: (s) => (s.hits <= (RAMPART_DECAY_AMOUNT * 5))
       });
       if (target !== null) {
+        console.log(`repairer.run (${creep.id}): found wall to repair`);
         this.repair(creep, target);
         return OK;
       }
@@ -46,6 +49,7 @@ let roleRepairer = {
         filter: (s) => (s.hits < room.mem.threshold.rampart)
       });
       if (target !== null) {
+        console.log(`repairer.run (${creep.id}): found rampart to repair`);
         this.repair(creep, target);
         return OK;
       }
@@ -66,6 +70,7 @@ let roleRepairer = {
       });
       if (target !== null) {
         // creep.say("repair");
+        console.log(`repairer.run (${creep.id}): found other structure to repair`);
         this.repair(creep, target);
         return OK;
       }

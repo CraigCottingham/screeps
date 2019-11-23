@@ -6,11 +6,20 @@ let roleHarvester = {
   run: function (creep) {
     // creep.say("harvest");
 
-    let containers = creep.room.find(FIND_STRUCTURES, {
-      filter: (s) => (s.structureType == STRUCTURE_CONTAINER) && (creep.pos.getRangeTo(s) == 0)
+    delete creep.mem.assignment;
+
+    const containers = creep.room.find(FIND_STRUCTURES, {
+      filter: (s) => (s.structureType == STRUCTURE_CONTAINER)
     });
-    if (containers.length > 0) {
-      this.runParked(creep, containers[0]);
+    if (containers.length == 0) {
+      creep.mem.role = "ranger";
+      return OK;
+    }
+
+    const nearbyContainers = _.filter(containers, (s) => (creep.pos.getRangeTo(s) == 0));
+
+    if (nearbyContainers.length > 0) {
+      this.runParked(creep, nearbyContainers[0]);
     }
     else {
       this.runFree(creep);
@@ -20,12 +29,14 @@ let roleHarvester = {
   },
 
   runFree: function (creep) {
+    // creep.say("free");
+
     // not parked
     creep.mem.parkedAt = undefined;
 
     let room = creep.room;
 
-    if (_.sum(creep.carry) >= creep.carryCapacity) {
+    if (creep.store.getFreeCapacity(RESOURCE_ENERGY) <= 0) {
       if (room.mem.redAlert) {
         creep.mem.role = "replenisher";
         return OK;
@@ -61,6 +72,8 @@ let roleHarvester = {
     let source = creep.pos.findClosestByPath(FIND_SOURCES);
     if (source !== null) {
       if (creep.pos.isNearTo(source)) {
+        console.log("harvester.runFree: near to container");
+
         // adjacent, but there's no container
         switch (creep.pos.createConstructionSite(STRUCTURE_CONTAINER)) {
           case OK:
@@ -81,6 +94,7 @@ let roleHarvester = {
             break;
         }
 
+        console.log("harvester.runFree: harvesting");
         switch (creep.harvest(source)) {
           case OK:
             break;
@@ -127,7 +141,7 @@ let roleHarvester = {
     }
 
     if (room.mem.redAlert) {
-      if (creep.carry.energy > 0) {
+      if (creep.store.getUsedCapacity(RESOURCE_ENERGY) > 0) {
         // creep is carrying energy, so go put it somewhere useful
 
         creep.mem.role = "replenisher";
@@ -232,7 +246,7 @@ let roleHarvester = {
     // creep.say("parked");
     creep.mem.parkedAt = container.id;
 
-    if (creep.carry.energy >= creep.carryCapacity) {
+    if (creep.store.getFreeCapacity() == 0) {
       if (container.hits < container.hitsMax) {
         creep.repair(container);
         return OK;

@@ -9,7 +9,7 @@ let roleUpgrader = {
     const room = creep.room;
     const controller = room.controller;
 
-    if ((controller === undefined) || !controller.my || (creep.carry.energy == 0)) {
+    if ((controller === undefined) || !controller.my || (creep.store.getUsedCapacity(RESOURCE_ENERGY) == 0)) {
       this.reset(creep);
       return OK;
     }
