@@ -474,35 +474,30 @@ let roleRanger = {
   },
 
   replenish: function (creep) {
-    if (creep.store.getUsedCapacity(RESOURCE_ENERGY) > 0) {
-      if (creep.room.controller.ticksToDowngrade < (CONTROLLER_DOWNGRADE[creep.room.controller.level] - 1000)) {
-        creep.mem.task = "upgrade";
-        delete creep.mem.path;
-        return this.run(creep);
-      }
-
-      let target = creep.pos.findClosestByPath(FIND_MY_SPAWNS);
-      if (target === null) {
-        console.log("ranger.replenish: nowhere to put energy");
-        creep.suicide();
-        return OK;
-      }
-
-      if (target.store.getFreeCapacity(RESOURCE_ENERGY) == 0) {
-        // console.log("ranger.replenish: spawn is full, so go build something");
-        creep.mem.task = "build";
-        delete creep.mem.path;
-        return this.run(creep);
-      }
-
-      this.transfer(creep, target);
-    }
-    else {
+    if (creep.store.getUsedCapacity(RESOURCE_ENERGY) == 0) {
       creep.mem.task = "harvest";
       delete creep.mem.path;
+      return this.run(creep);
     }
 
-    return OK;
+    if (creep.room.controller.ticksToDowngrade < (CONTROLLER_DOWNGRADE[creep.room.controller.level] - 1000)) {
+      creep.mem.task = "upgrade";
+      delete creep.mem.path;
+      return this.run(creep);
+    }
+
+    const extensions = creep.room.find(FIND_MY_STRUCTURES, {
+      filter: (s) => (s.structureType == STRUCTURE_EXTENSION) && (s.store.getFreeCapacity(RESOURCE_ENERGY) > 0)
+    });
+    const spawns = creep.room.find(FIND_MY_STRUCTURES, {
+      filter: (s) => (s.structureType == STRUCTURE_SPAWN) && (s.store.getFreeCapacity(RESOURCE_ENERGY) > 0)
+    });
+    const target = creep.pos.findClosestByPath(_.union(extensions, spawns));
+    if (target !== null) {
+      return this.transfer(creep, target);
+    }
+
+    return this.switchTo(creep, "build");
   },
 
   sign: function (creep) {
@@ -525,6 +520,13 @@ let roleRanger = {
     }
 
     return OK;
+  },
+
+  switchTo(creep, task) {
+    creep.mem.task = task;
+    delete creep.mem.path;
+    delete creep.mem.assignment;
+    return this.run(creep);
   },
 
   transfer: function (creep, target) {
