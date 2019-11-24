@@ -6,7 +6,13 @@ let roleRanger = {
   run: function (creep) {
     if (creep.mem.task === undefined) {
       if ((Memory.colonize === undefined) || (creep.pos.roomName == Memory.colonize)) {
-        return this.switchTo(creep, "harvest");
+        if (creep.store.getFreeCapacity(RESOURCE_ENERGY) == 0) {
+          return this.switchTo(creep, "repair");
+        }
+        else {
+          // console.log(`ranger.run (${creep.name}): task is undefined`);
+          return this.switchTo(creep, "harvest");
+        }
       }
       else {
         creep.mem.targetRoomName = Memory.colonize;
