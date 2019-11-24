@@ -111,17 +111,11 @@ module.exports.loop = function () {
         let amount = drop.amount;
         if (amount > 0) {
           let creep = drop.pos.findClosestByPath(FIND_MY_CREEPS, {
-            filter: (c) => (c.store.getFreeCapacity(RESOURCE_ENERGY) > 0)
+            filter: (c) => (c.store.getFreeCapacity(RESOURCE_ENERGY) > 0) && (c.mem.role != "ranger")
           });
           if (creep !== null) {
             creep.mem.assignment = drop.id;
-            if (creep.mem.role == "ranger") {
-              creep.mem.task = "harvest";
-              delete creep.mem.path;
-            }
-            else {
-              creep.mem.role = "scavenger";
-            }
+            creep.mem.role = "scavenger";
           }
         }
       }
@@ -132,17 +126,11 @@ module.exports.loop = function () {
         let amount = _.sum(tombstone.store);
         if (amount > 0) {
           let creep = tombstone.pos.findClosestByPath(FIND_MY_CREEPS, {
-            filter: (c) => (c.store.getFreeCapacity(RESOURCE_ENERGY) > 0)
+            filter: (c) => (c.store.getFreeCapacity(RESOURCE_ENERGY) > 0) && (c.mem.role != "ranger")
           });
           if (creep !== null) {
             creep.mem.assignment = tombstone.id;
-            if (creep.mem.role == "ranger") {
-              creep.mem.task = "harvest";
-              delete creep.mem.path;
-            }
-            else {
-              creep.mem.role = "scavenger";
-            }
+            creep.mem.role = "scavenger";
           }
         }
       }
@@ -153,17 +141,11 @@ module.exports.loop = function () {
         let amount = _.sum(ruin.store);
         if (amount > 0) {
           let creep = ruin.pos.findClosestByPath(FIND_MY_CREEPS, {
-            filter: (c) => (c.store.getFreeCapacity(RESOURCE_ENERGY) > 0)
+            filter: (c) => (c.store.getFreeCapacity(RESOURCE_ENERGY) > 0) && (c.mem.role != "ranger")
           });
           if (creep !== null) {
             creep.mem.assignment = ruin.id;
-            if (creep.mem.role == "ranger") {
-              creep.mem.task = "harvest";
-              delete creep.mem.path;
-            }
-            else {
-              creep.mem.role = "scavenger";
-            }
+            creep.mem.role = "scavenger";
           }
         }
       }

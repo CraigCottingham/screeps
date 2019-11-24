@@ -151,7 +151,6 @@ let roleRanger = {
       // console.log(`ranger.dismantle (${creep.name}): can't find anything to dismantle`);
       creep.mem.task = "harvest";
       delete creep.mem.path;
-      delete creep.mem.assignment;
       // don't jump back to run(); that would enter an infinite loop
       return OK;
     }
@@ -205,13 +204,26 @@ let roleRanger = {
 
     let target = null;
 
-    if (creep.mem.assignment) {
-      target = Game.getObjectById(creep.mem.assignment);
-      if ((target !== null) && (target.store !== undefined) && (target.store.getUsedCapacity(RESOURCE_ENERGY) > 0)) {
-        creep.say("scavenge");
-        return this.harvestFromStructure(creep, target);
-      }
-      delete creep.mem.assignment;
+    target = creep.pos.findClosestByPath(FIND_DROPPED_RESOURCES);
+    if (target !== null) {
+      creep.say("scavenge");
+      return this.pickup(creep, target);
+    }
+
+    target = creep.pos.findClosestByPath(FIND_TOMBSTONES, {
+      filter: (ts) => (ts.store.getUsedCapacity(RESOURCE_ENERGY) > 0)
+    });
+    if (target !== null) {
+      creep.say("scavenge");
+      return this.withdraw(creep, target);
+    }
+
+    target = creep.pos.findClosestByPath(FIND_RUINS, {
+      filter: (r) => (r.store.getUsedCapacity(RESOURCE_ENERGY) > 0)
+    });
+    if (target !== null) {
+      creep.say("scavenge");
+      return this.withdraw(creep, target);
     }
 
     if (creep.room.mem.endangered) {
@@ -431,8 +443,43 @@ let roleRanger = {
     return OK;
   },
 
+  pickup: function (creep, target) {
+    if (creep.store.getFreeCapacity(RESOURCE_ENERGY) == 0) {
+      console.log(`ranger.pickup (${creep.name}): full`);
+      return this.switchTo(creep, "repair");
+    }
+
+    switch (creep.pickup(target)) {
+      case OK:
+        break;
+      case ERR_NOT_OWNER:
+        console.log("ranger.pickup: not owner");
+        break;
+      case ERR_BUSY:
+        console.log("ranger.pickup: busy");
+        break;
+      case ERR_INVALID_TARGET:
+        console.log("ranger.pickup: invalid target");
+        break;
+      case ERR_FULL:
+        console.log("ranger.pickup: full");
+        return this.switchTo(creep, "repair");
+        break;
+      case ERR_NOT_IN_RANGE:
+        console.log("ranger.pickup: not in range");
+        if (creep.mem.path === undefined) {
+          creep.mem.path = creep.room.findPath(creep.pos, target.pos, { range: 1 });
+        }
+        this.moveByPath(creep);
+        break;
+    }
+
+    return OK;
+  },
+
   repair: function (creep) {
     if (creep.store.getUsedCapacity(RESOURCE_ENERGY) == 0) {
+      // console.log(`ranger.repair (${creep.name}): empty`)
       return this.switchTo(creep, "harvest");
     }
 
@@ -523,10 +570,9 @@ let roleRanger = {
     return OK;
   },
 
-  switchTo(creep, task) {
+  switchTo: function (creep, task) {
     creep.mem.task = task;
     delete creep.mem.path;
-    delete creep.mem.assignment;
     return this.run(creep);
   },
 
