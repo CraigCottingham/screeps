@@ -7,7 +7,7 @@ let roleRanger = {
     if (creep.mem.task === undefined) {
       if ((Memory.colonize === undefined) || (creep.pos.roomName == Memory.colonize)) {
         if (creep.store.getFreeCapacity(RESOURCE_ENERGY) == 0) {
-          return this.switchTo(creep, "repair");
+          return this.switchTo(creep, "replenish");
         }
         else {
           // console.log(`ranger.run (${creep.name}): task is undefined`);
@@ -68,23 +68,29 @@ let roleRanger = {
       return this.switchTo(creep, "harvest");
     }
 
+    if (creep.room.energyAvailable < creep.room.energyCapacityAvailable) {
+      return this.switchTo(creep, "replenish");
+    }
+
     if (creep.room.controller.ticksToDowngrade < (CONTROLLER_DOWNGRADE[creep.room.controller.level] - 1000)) {
       return this.switchTo(creep, "upgrade");
     }
 
-    let site = creep.pos.findClosestByPath(FIND_CONSTRUCTION_SITES, {
+    let target = creep.pos.findClosestByPath(FIND_CONSTRUCTION_SITES, {
       filter: (cs) => (cs.structureType == STRUCTURE_SPAWN)
     });
-    if (site === null) {
-      site = creep.pos.findClosestByPath(FIND_CONSTRUCTION_SITES);
+    if (target === null) {
+      target = creep.pos.findClosestByPath(FIND_CONSTRUCTION_SITES);
     }
 
-    if (site === null) {
-      console.log(`ranger.build (${creep.name}): no more construction sites`);
+    if (target === null) {
+      // console.log(`ranger.build (${creep.name}): no more construction sites`);
       return this.switchTo(creep, "upgrade");
     }
 
-    switch (creep.build(site)) {
+    this.recalculate(creep, target);
+
+    switch (creep.build(target)) {
       case OK:
         break;
       case ERR_NOT_OWNER:
@@ -109,7 +115,7 @@ let roleRanger = {
     }
 
     if (creep.mem.path === undefined) {
-      creep.mem.path = creep.room.findPath(creep.pos, site.pos, { range: 0 });
+      creep.mem.path = creep.room.findPath(creep.pos, target.pos, { range: 0 });
     }
     return this.moveByPath(creep);
   },
@@ -232,8 +238,12 @@ let roleRanger = {
 
   harvest: function (creep) {
     if (creep.store.getFreeCapacity(RESOURCE_ENERGY) == 0) {
-      if (creep.room.mem.endangered) {
-        this.switchTo(creep, "replenish");
+      if (creep.room.energyAvailable < creep.room.energyCapacityAvailable) {
+        return this.switchTo(creep, "replenish");
+      }
+
+      if (creep.room.controller.ticksToDowngrade < (CONTROLLER_DOWNGRADE[creep.room.controller.level] - 1000)) {
+        return this.switchTo(creep, "upgrade");
       }
 
       // if on top of a container, drop store into the container
@@ -245,7 +255,7 @@ let roleRanger = {
         return this.transfer(creep, container);
       }
 
-      this.switchTo(creep, "repair");
+      return this.switchTo(creep, "replenish");
     }
 
     let target = null;
@@ -253,6 +263,7 @@ let roleRanger = {
     target = creep.pos.findClosestByPath(FIND_DROPPED_RESOURCES);
     if (target !== null) {
       creep.say("scavenge");
+      this.recalculate(creep, target);
       return this.pickup(creep, target);
     }
 
@@ -261,6 +272,7 @@ let roleRanger = {
     });
     if (target !== null) {
       creep.say("scavenge");
+      this.recalculate(creep, target);
       return this.withdraw(creep, target);
     }
 
@@ -269,6 +281,7 @@ let roleRanger = {
     });
     if (target !== null) {
       creep.say("scavenge");
+      this.recalculate(creep, target);
       return this.withdraw(creep, target);
     }
 
@@ -277,20 +290,24 @@ let roleRanger = {
         filter: (s) => (s.structureType == STRUCTURE_CONTAINER) && (s.store.getUsedCapacity(RESOURCE_ENERGY) > 0)
       });
       if (target !== null) {
+        this.recalculate(creep, target);
         return this.withdraw(creep, target);
       }
     }
 
-    if (creep.room.energy < creep.room.energyCapacity) {
+    if ((creep.room.energyAvailable < creep.room.energyCapacityAvailable) ||
+        (creep.room.controller.ticksToDowngrade < (CONTROLLER_DOWNGRADE[creep.room.controller.level] - 1000))) {
       target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
         filter: (s) => (s.structureType == STRUCTURE_CONTAINER) && (s.store.getUsedCapacity(RESOURCE_ENERGY) > 0)
       });
       if (target !== null) {
+        this.recalculate(creep, target);
         return this.withdraw(creep, target);
       }
 
       target = creep.pos.findClosestByPath(FIND_SOURCES);
       if (target !== null) {
+        this.recalculate(creep, target);
         return this.harvestFromSource(creep, target);
       }
     }
@@ -333,6 +350,7 @@ let roleRanger = {
     else {
       target = creep.pos.findClosestByPath(FIND_SOURCES);
       if (target !== null) {
+        this.recalculate(creep, target);
         return this.harvestFromSource(creep, target);
       }
 
@@ -340,6 +358,7 @@ let roleRanger = {
         filter: (s) => (s.structureType == STRUCTURE_EXTENSION) && (s.store.getUsedCapacity(RESOURCE_ENERGY) > 0)
       });
       if (target !== null) {
+        this.recalculate(creep, target);
         return this.withdraw(creep, target);
       }
 
@@ -347,6 +366,7 @@ let roleRanger = {
         filter: (s) => (s.structureType == STRUCTURE_CONTAINER) && (s.store.getUsedCapacity(RESOURCE_ENERGY) > 0)
       });
       if (target !== null) {
+        this.recalculate(creep, target);
         return this.withdraw(creep, target);
       }
     }
@@ -474,8 +494,8 @@ let roleRanger = {
 
   pickup: function (creep, target) {
     if (creep.store.getFreeCapacity(RESOURCE_ENERGY) == 0) {
-      console.log(`ranger.pickup (${creep.name}): full`);
-      return this.switchTo(creep, "repair");
+      // console.log(`ranger.pickup (${creep.name}): full`);
+      return this.switchTo(creep, "replenish");
     }
 
     switch (creep.pickup(target)) {
@@ -492,10 +512,10 @@ let roleRanger = {
         break;
       case ERR_FULL:
         console.log("ranger.pickup: full");
-        return this.switchTo(creep, "repair");
+        return this.switchTo(creep, "replenish");
         break;
       case ERR_NOT_IN_RANGE:
-        console.log("ranger.pickup: not in range");
+        // console.log("ranger.pickup: not in range");
         if (creep.mem.path === undefined) {
           creep.mem.path = creep.room.findPath(creep.pos, target.pos, { range: 1 });
         }
@@ -506,10 +526,26 @@ let roleRanger = {
     return OK;
   },
 
+  recalculate: function (creep, target) {
+    if (target.id != creep.mem.targetId) {
+      // console.log(`ranger.recalculate (${creep.name}): recalculating`);
+      delete creep.mem.path;
+      creep.mem.targetId = target.id;
+    }
+  },
+
   repair: function (creep) {
     if (creep.store.getUsedCapacity(RESOURCE_ENERGY) == 0) {
       // console.log(`ranger.repair (${creep.name}): empty`)
       return this.switchTo(creep, "harvest");
+    }
+
+    if (creep.room.energyAvailable < creep.room.energyCapacityAvailable) {
+      return this.switchTo(creep, "replenish");
+    }
+
+    if (creep.room.controller.ticksToDowngrade < (CONTROLLER_DOWNGRADE[creep.room.controller.level] - 1000)) {
+      return this.switchTo(creep, "upgrade");
     }
 
     const target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
@@ -517,7 +553,7 @@ let roleRanger = {
     });
     if (target === null) {
       // console.log(`ranger.repair (${creep.name}): nothing to repair except roads`);
-      return this.switchTo(creep, "replenish");
+      return this.switchTo(creep, "build");
     }
 
     switch (creep.repair(target)) {
@@ -568,10 +604,11 @@ let roleRanger = {
     });
     const target = creep.pos.findClosestByPath(_.union(extensions, spawns));
     if (target !== null) {
+      this.recalculate(creep, target);
       return this.transfer(creep, target);
     }
 
-    return this.switchTo(creep, "build");
+    return this.switchTo(creep, "repair");
   },
 
   reserveController: function (creep) {
@@ -629,6 +666,7 @@ let roleRanger = {
   switchTo: function (creep, task) {
     creep.mem.task = task;
     delete creep.mem.path;
+    delete creep.mem.targetId;
     return this.run(creep);
   },
 
@@ -644,7 +682,7 @@ let roleRanger = {
         break;
       case ERR_NOT_ENOUGH_RESOURCES:
         console.log("ranger.transfer: not enough resources");
-        return this.switchTo(creep, harvest);
+        return this.switchTo(creep, "harvest");
       case ERR_INVALID_TARGET:
         console.log("ranger.transfer: invalid target");
         break;
@@ -670,6 +708,10 @@ let roleRanger = {
     if (creep.store.getUsedCapacity(RESOURCE_ENERGY) == 0) {
       // console.log(`ranger.upgrade (${creep.name}): empty`)
       return this.switchTo(creep, "harvest");
+    }
+
+    if (creep.room.energyAvailable < creep.room.energyCapacityAvailable) {
+      return this.switchTo(creep, "replenish");
     }
 
     switch (creep.upgradeController(creep.room.controller)) {
@@ -722,7 +764,7 @@ let roleRanger = {
         break;
       case ERR_FULL:
         // console.log("ranger.withdraw: full");
-        return this.switchTo(creep, "repair");
+        return this.switchTo(creep, "replenish");
       case ERR_NOT_IN_RANGE:
         // console.log("ranger.withdraw: not in range");
         if (creep.mem.path === undefined) {
