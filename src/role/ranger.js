@@ -58,6 +58,7 @@ let roleRanger = {
 
   build: function (creep) {
     if (creep.store.getUsedCapacity(RESOURCE_ENERGY) == 0) {
+      // console.log(`ranger.build (${creep.name}): empty`);
       return this.switchTo(creep, "harvest");
     }
 
@@ -109,10 +110,12 @@ let roleRanger = {
 
     if (!creep.room.controller.my && creep.pos.isNearTo(creep.room.controller)) {
       this.claimController(creep);
+      console.log(`ranger.claim (${creep.name}): claimed controller`)
       return this.switchTo(creep, "harvest");
     }
 
     if (creep.room.controller.my) {
+      console.log(`ranger.claim (${creep.name}): already own controller`)
       return this.switchTo(creep, "harvest");
     }
 
@@ -526,6 +529,7 @@ let roleRanger = {
 
   replenish: function (creep) {
     if (creep.store.getUsedCapacity(RESOURCE_ENERGY) == 0) {
+      // console.log(`ranger.replenish (${creep.name}): empty`)
       return this.switchTo(creep, "harvest");
     }
 
@@ -641,6 +645,7 @@ let roleRanger = {
 
   upgrade: function (creep) {
     if (creep.store.getUsedCapacity(RESOURCE_ENERGY) == 0) {
+      // console.log(`ranger.upgrade (${creep.name}): empty`)
       return this.switchTo(creep, "harvest");
     }
 
