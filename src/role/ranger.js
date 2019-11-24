@@ -242,8 +242,7 @@ let roleRanger = {
       })
       if ((container !== null) && (creep.pos.getRangeTo(container) == 0)) {
         // console.log(`ranger.harvest (${creep.name}): transferring to container ${container.id}`);
-        this.transfer(creep, container);
-        return OK;
+        return this.transfer(creep, container);
       }
 
       this.switchTo(creep, "repair");
@@ -515,9 +514,7 @@ let roleRanger = {
         break;
       case ERR_NOT_ENOUGH_RESOURCES:
         console.log("ranger.repair: not enough resources");
-        creep.mem.role = "harvester";
-        delete creep.mem.path;
-        return this.run(creep);
+        return this.switchTo(creep, "harvest");
       case ERR_INVALID_TARGET:
         console.log("ranger.repair: invalid target");
         break;
@@ -527,8 +524,6 @@ let roleRanger = {
       case ERR_NO_BODYPART:
         console.log("ranger.repair: no bodypart");
         creep.suicide();
-        break;
-      default:
         break;
     }
 
