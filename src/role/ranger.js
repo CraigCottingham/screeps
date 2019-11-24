@@ -252,7 +252,7 @@ let roleRanger = {
 
     target = creep.pos.findClosestByPath(FIND_DROPPED_RESOURCES);
     if (target !== null) {
-      creep.say("scavenge");
+      this.recalculate(creep, target);
       return this.pickup(creep, target);
     }
 
@@ -260,7 +260,7 @@ let roleRanger = {
       filter: (ts) => (ts.store.getUsedCapacity(RESOURCE_ENERGY) > 0)
     });
     if (target !== null) {
-      creep.say("scavenge");
+      this.recalculate(creep, target);
       return this.withdraw(creep, target);
     }
 
@@ -268,7 +268,7 @@ let roleRanger = {
       filter: (r) => (r.store.getUsedCapacity(RESOURCE_ENERGY) > 0)
     });
     if (target !== null) {
-      creep.say("scavenge");
+      this.recalculate(creep, target);
       return this.withdraw(creep, target);
     }
 
@@ -277,6 +277,7 @@ let roleRanger = {
         filter: (s) => (s.structureType == STRUCTURE_CONTAINER) && (s.store.getUsedCapacity(RESOURCE_ENERGY) > 0)
       });
       if (target !== null) {
+        this.recalculate(creep, target);
         return this.withdraw(creep, target);
       }
     }
@@ -333,6 +334,7 @@ let roleRanger = {
     else {
       target = creep.pos.findClosestByPath(FIND_SOURCES);
       if (target !== null) {
+        this.recalculate(creep, target);
         return this.harvestFromSource(creep, target);
       }
 
@@ -340,6 +342,7 @@ let roleRanger = {
         filter: (s) => (s.structureType == STRUCTURE_EXTENSION) && (s.store.getUsedCapacity(RESOURCE_ENERGY) > 0)
       });
       if (target !== null) {
+        this.recalculate(creep, target);
         return this.withdraw(creep, target);
       }
 
@@ -347,6 +350,7 @@ let roleRanger = {
         filter: (s) => (s.structureType == STRUCTURE_CONTAINER) && (s.store.getUsedCapacity(RESOURCE_ENERGY) > 0)
       });
       if (target !== null) {
+        this.recalculate(creep, target);
         return this.withdraw(creep, target);
       }
     }
@@ -506,6 +510,14 @@ let roleRanger = {
     return OK;
   },
 
+  recalculate: function (creep, target) {
+    if (target.id != creep.mem.targetId) {
+      // console.log(`ranger.recalculate (${creep.name}): recalculating`);
+      delete creep.mem.path;
+      creep.mem.targetId = target.id;
+    }
+  },
+
   repair: function (creep) {
     if (creep.store.getUsedCapacity(RESOURCE_ENERGY) == 0) {
       // console.log(`ranger.repair (${creep.name}): empty`)
@@ -629,6 +641,7 @@ let roleRanger = {
   switchTo: function (creep, task) {
     creep.mem.task = task;
     delete creep.mem.path;
+    delete creep.mem.targetId;
     return this.run(creep);
   },
 
