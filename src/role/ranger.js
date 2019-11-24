@@ -281,6 +281,23 @@ let roleRanger = {
       }
     }
 
+    if (creep.room.energy < creep.room.energyCapacity) {
+      target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+        filter: (s) => (s.structureType == STRUCTURE_CONTAINER) && (s.store.getUsedCapacity(RESOURCE_ENERGY) > 0)
+      });
+      if (target !== null) {
+        return this.withdraw(creep, target);
+      }
+
+      target = creep.pos.findClosestByPath(FIND_SOURCES);
+      if (target !== null) {
+        return this.harvestFromSource(creep, target);
+      }
+    }
+
+    // see if all containers are occupied
+    // equivalently, if there's not a path to any source?
+
     if (false) {
       let candidateTargets = [];
 
