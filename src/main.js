@@ -111,17 +111,11 @@ module.exports.loop = function () {
         let amount = drop.amount;
         if (amount > 0) {
           let creep = drop.pos.findClosestByPath(FIND_MY_CREEPS, {
-            filter: (c) => (c.store.getFreeCapacity(RESOURCE_ENERGY) > 0)
+            filter: (c) => (c.store.getFreeCapacity(RESOURCE_ENERGY) > 0) && (c.mem.role != "ranger")
           });
           if (creep !== null) {
             creep.mem.assignment = drop.id;
-            if (creep.mem.role == "ranger") {
-              creep.mem.task = "harvest";
-              delete creep.mem.path;
-            }
-            else {
-              creep.mem.role = "scavenger";
-            }
+            creep.mem.role = "scavenger";
           }
         }
       }
@@ -132,17 +126,11 @@ module.exports.loop = function () {
         let amount = _.sum(tombstone.store);
         if (amount > 0) {
           let creep = tombstone.pos.findClosestByPath(FIND_MY_CREEPS, {
-            filter: (c) => (c.store.getFreeCapacity(RESOURCE_ENERGY) > 0)
+            filter: (c) => (c.store.getFreeCapacity(RESOURCE_ENERGY) > 0) && (c.mem.role != "ranger")
           });
           if (creep !== null) {
             creep.mem.assignment = tombstone.id;
-            if (creep.mem.role == "ranger") {
-              creep.mem.task = "harvest";
-              delete creep.mem.path;
-            }
-            else {
-              creep.mem.role = "scavenger";
-            }
+            creep.mem.role = "scavenger";
           }
         }
       }
@@ -153,17 +141,11 @@ module.exports.loop = function () {
         let amount = _.sum(ruin.store);
         if (amount > 0) {
           let creep = ruin.pos.findClosestByPath(FIND_MY_CREEPS, {
-            filter: (c) => (c.store.getFreeCapacity(RESOURCE_ENERGY) > 0)
+            filter: (c) => (c.store.getFreeCapacity(RESOURCE_ENERGY) > 0) && (c.mem.role != "ranger")
           });
           if (creep !== null) {
             creep.mem.assignment = ruin.id;
-            if (creep.mem.role == "ranger") {
-              creep.mem.task = "harvest";
-              delete creep.mem.path;
-            }
-            else {
-              creep.mem.role = "scavenger";
-            }
+            creep.mem.role = "scavenger";
           }
         }
       }
@@ -230,31 +212,31 @@ module.exports.loop = function () {
 
             // add minimum viable creep cost ([WORK, MOVE, CARRY, MOVE] == 250) to each of these thresholds?
 
-            if (availableEnergy > 400) {
+            if (availableEnergy >= 400) {
               parts = [WORK, MOVE, WORK, MOVE, CARRY, MOVE];
             }
 
-            if (availableEnergy > 550) {
+            if (availableEnergy >= 550) {
               parts = [WORK, MOVE, WORK, MOVE, WORK, MOVE, CARRY, MOVE];
             }
 
-            if (availableEnergy > 700) {
+            if (availableEnergy >= 700) {
               parts = [WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, CARRY, MOVE];
             }
 
-            if (availableEnergy > 850) {
+            if (availableEnergy >= 850) {
               parts = [WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, CARRY, MOVE];
             }
 
-            if (availableEnergy > 950) {
+            if (availableEnergy >= 950) {
               parts = [WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, CARRY, MOVE, CARRY, MOVE];
             }
 
-            if (availableEnergy > 1050) {
+            if (availableEnergy >= 1050) {
               parts = [WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE];
             }
 
-            if (availableEnergy > 1150) {
+            if (availableEnergy >= 1150) {
               parts = [WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE];
             }
 
