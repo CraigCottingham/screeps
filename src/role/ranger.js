@@ -264,7 +264,7 @@ let roleRanger = {
         filter: (s) => (s.structureType == STRUCTURE_CONTAINER) && (s.store.getUsedCapacity(RESOURCE_ENERGY) > 0)
       });
       if (target !== null) {
-        return this.harvestFromStructure(creep, target);
+        return this.withdraw(creep, target);
       }
     }
 
@@ -296,7 +296,7 @@ let roleRanger = {
           return this.harvestFromSource(creep, target);
         }
         else {
-          return this.harvestFromStructure(creep, target);
+          return this.withdraw(creep, target);
         }
       }
     }
@@ -310,14 +310,14 @@ let roleRanger = {
         filter: (s) => (s.structureType == STRUCTURE_EXTENSION) && (s.store.getUsedCapacity(RESOURCE_ENERGY) > 0)
       });
       if (target !== null) {
-        return this.harvestFromStructure(creep, target);
+        return this.withdraw(creep, target);
       }
 
       target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
         filter: (s) => (s.structureType == STRUCTURE_CONTAINER) && (s.store.getUsedCapacity(RESOURCE_ENERGY) > 0)
       });
       if (target !== null) {
-        return this.harvestFromStructure(creep, target);
+        return this.withdraw(creep, target);
       }
     }
 
@@ -362,40 +362,6 @@ let roleRanger = {
         break;
       case ERR_NO_BODYPART:
         console.log("ranger.harvestFromSource: no bodypart");
-        break;
-    }
-
-    return OK;
-  },
-
-  harvestFromStructure: function (creep, structure) {
-    switch (creep.withdraw(structure, RESOURCE_ENERGY)) {
-      case OK:
-        break;
-      case ERR_NOT_OWNER:
-        console.log("ranger.harvestFromStructure: not owner");
-        break;
-      case ERR_BUSY:
-        console.log("ranger.harvestFromStructure: busy");
-        break;
-      case ERR_NOT_ENOUGH_RESOURCES:
-        console.log("ranger.harvestFromStructure: not enough resources");
-        break;
-      case ERR_INVALID_TARGET:
-        console.log("ranger.harvestFromStructure: invalid target");
-        break;
-      case ERR_FULL:
-        // console.log("ranger.harvestFromStructure: full");
-        return this.switchTo(creep, "repair");
-      case ERR_NOT_IN_RANGE:
-        // console.log("ranger.harvestFromStructure: not in range");
-        if (creep.mem.path === undefined) {
-          creep.mem.path = creep.room.findPath(creep.pos, structure.pos, { range: 0 });
-        }
-        this.moveByPath(creep);
-        break;
-      case ERR_INVALID_ARGS:
-        console.log("ranger.harvestFromStructure: invalid args");
         break;
     }
 
@@ -708,7 +674,41 @@ let roleRanger = {
       creep.mem.path = creep.room.findPath(creep.pos, creep.room.controller.pos, { range: 1 });
     }
     return this.moveByPath(creep);
-  }
+  },
+
+  withdraw: function (creep, structure) {
+    switch (creep.withdraw(structure, RESOURCE_ENERGY)) {
+      case OK:
+        break;
+      case ERR_NOT_OWNER:
+        console.log("ranger.withdraw: not owner");
+        break;
+      case ERR_BUSY:
+        console.log("ranger.withdraw: busy");
+        break;
+      case ERR_NOT_ENOUGH_RESOURCES:
+        console.log("ranger.withdraw: not enough resources");
+        break;
+      case ERR_INVALID_TARGET:
+        console.log("ranger.withdraw: invalid target");
+        break;
+      case ERR_FULL:
+        // console.log("ranger.withdraw: full");
+        return this.switchTo(creep, "repair");
+      case ERR_NOT_IN_RANGE:
+        // console.log("ranger.withdraw: not in range");
+        if (creep.mem.path === undefined) {
+          creep.mem.path = creep.room.findPath(creep.pos, structure.pos, { range: 0 });
+        }
+        this.moveByPath(creep);
+        break;
+      case ERR_INVALID_ARGS:
+        console.log("ranger.withdraw: invalid args");
+        break;
+    }
+
+    return OK;
+  },
 }
 
 module.exports = roleRanger;
