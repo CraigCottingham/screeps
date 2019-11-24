@@ -79,6 +79,11 @@ let roleRanger = {
       site = creep.pos.findClosestByPath(FIND_CONSTRUCTION_SITES);
     }
 
+    if (site === null) {
+      console.log(`ranger.build (${creep.name}): no more construction sites`);
+      return this.switchTo(creep, "upgrade");
+    }
+
     switch (creep.build(site)) {
       case OK:
         break;
