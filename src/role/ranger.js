@@ -581,6 +581,36 @@ let roleRanger = {
     return this.switchTo(creep, "build");
   },
 
+  reserveController: function (creep) {
+    if (!creep.room.controller.my && creep.pos.isNearTo(creep.room.controller)) {
+      switch (creep.reserveController(creep.room.controller)) {
+        case OK:
+          break;
+        case ERR_NOT_OWNER:
+          console.log("ranger.reserveController: not owner");
+          break;
+        case ERR_BUSY:
+          console.log("ranger.reserveController: busy");
+          break;
+        case ERR_INVALID_TARGET:
+          console.log("ranger.reserveController: invalid target");
+          break;
+        case ERR_NOT_IN_RANGE:
+          console.log("ranger.reserveController: not in range");
+          if (creep.mem.path === undefined) {
+            creep.mem.path = creep.room.findPath(creep.pos, creep.room.controller.pos, { range: 1 });
+          }
+          this.moveByPath(creep);
+          break;
+        case ERR_NO_BODYPART:
+          console.log("ranger.reserveController: no bodypart");
+          break;
+      }
+    }
+
+    return OK;
+  },
+
   sign: function (creep) {
     switch (creep.signController(creep.room.controller, "CraigCottingham - github.com/CraigCottingham/screeps")) {
       case OK:
@@ -638,36 +668,6 @@ let roleRanger = {
       case ERR_INVALID_ARGS:
         console.log("ranger.transfer: invalid args");
         break;
-    }
-
-    return OK;
-  },
-
-  tryToReserveController: function (creep) {
-    if (!creep.room.controller.my && creep.pos.isNearTo(creep.room.controller)) {
-      switch (creep.reserveController(creep.room.controller)) {
-        case OK:
-          break;
-        case ERR_NOT_OWNER:
-          console.log("ranger.tryToReserveController: not owner");
-          break;
-        case ERR_BUSY:
-          console.log("ranger.tryToReserveController: busy");
-          break;
-        case ERR_INVALID_TARGET:
-          console.log("ranger.tryToReserveController: invalid target");
-          break;
-        case ERR_NOT_IN_RANGE:
-          console.log("ranger.tryToReserveController: not in range");
-          if (creep.mem.path === undefined) {
-            creep.mem.path = creep.room.findPath(creep.pos, creep.room.controller.pos, { range: 1 });
-          }
-          this.moveByPath(creep);
-          break;
-        case ERR_NO_BODYPART:
-          console.log("ranger.tryToReserveController: no bodypart");
-          break;
-      }
     }
 
     return OK;
