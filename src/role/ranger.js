@@ -108,7 +108,7 @@ let roleRanger = {
     }
 
     if (!creep.room.controller.my && creep.pos.isNearTo(creep.room.controller)) {
-      this.tryToClaimController(creep);
+      this.claimController(creep);
       return this.switchTo(creep, "harvest");
     }
 
@@ -120,6 +120,39 @@ let roleRanger = {
       creep.mem.path = creep.room.findPath(creep.pos, creep.room.controller.pos, { range: 1 });
     }
     return this.moveByPath(creep);
+  },
+
+  claimController: function (creep) {
+    if (!creep.room.controller.my && creep.pos.isNearTo(creep.room.controller)) {
+      switch (creep.claimController(creep.room.controller)) {
+        case OK:
+          break;
+        case ERR_NOT_OWNER:
+          console.log("ranger.claimController: not owner");
+          break;
+        case ERR_BUSY:
+          console.log("ranger.claimController: busy");
+          break;
+        case ERR_INVALID_TARGET:
+          console.log("ranger.claimController: invalid target");
+          break;
+        case ERR_FULL:
+          console.log("ranger.claimController: full");
+          break;
+        case ERR_NOT_IN_RANGE:
+          console.log("ranger.claimController: not in range");
+          break;
+        case ERR_NO_BODYPART:
+          console.log("ranger.claimController: no bodypart");
+          break;
+        case ERR_GCL_NOT_ENOUGH:
+          // this.reserveController(creep);
+          console.log("ranger.claimController: gcl not enough");
+          break;
+      }
+    }
+
+    return OK;
   },
 
   createContainer: function (pos) {
@@ -605,39 +638,6 @@ let roleRanger = {
       case ERR_INVALID_ARGS:
         console.log("ranger.transfer: invalid args");
         break;
-    }
-
-    return OK;
-  },
-
-  tryToClaimController: function (creep) {
-    if (!creep.room.controller.my && creep.pos.isNearTo(creep.room.controller)) {
-      switch (creep.claimController(creep.room.controller)) {
-        case OK:
-          break;
-        case ERR_NOT_OWNER:
-          console.log("ranger.tryToClaimController: not owner");
-          break;
-        case ERR_BUSY:
-          console.log("ranger.tryToClaimController: busy");
-          break;
-        case ERR_INVALID_TARGET:
-          console.log("ranger.tryToClaimController: invalid target");
-          break;
-        case ERR_FULL:
-          console.log("ranger.tryToClaimController: full");
-          break;
-        case ERR_NOT_IN_RANGE:
-          console.log("ranger.tryToClaimController: not in range");
-          break;
-        case ERR_NO_BODYPART:
-          console.log("ranger.tryToClaimController: no bodypart");
-          break;
-        case ERR_GCL_NOT_ENOUGH:
-          // this.tryToReserveController(creep);
-          console.log("ranger.tryToClaimController: gcl not enough");
-          break;
-      }
     }
 
     return OK;
