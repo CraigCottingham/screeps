@@ -260,6 +260,7 @@ let roleRanger = {
 
     target = creep.pos.findClosestByPath(FIND_DROPPED_RESOURCES);
     if (target !== null) {
+      creep.say("scavenge");
       this.recalculate(creep, target);
       return this.pickup(creep, target);
     }
@@ -268,6 +269,7 @@ let roleRanger = {
       filter: (ts) => (ts.store.getUsedCapacity(RESOURCE_ENERGY) > 0)
     });
     if (target !== null) {
+      creep.say("scavenge");
       this.recalculate(creep, target);
       return this.withdraw(creep, target);
     }
@@ -276,6 +278,7 @@ let roleRanger = {
       filter: (r) => (r.store.getUsedCapacity(RESOURCE_ENERGY) > 0)
     });
     if (target !== null) {
+      creep.say("scavenge");
       this.recalculate(creep, target);
       return this.withdraw(creep, target);
     }
