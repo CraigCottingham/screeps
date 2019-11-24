@@ -599,6 +599,7 @@ let roleRanger = {
     });
     const target = creep.pos.findClosestByPath(_.union(extensions, spawns));
     if (target !== null) {
+      this.recalculate(creep, target);
       return this.transfer(creep, target);
     }
 
