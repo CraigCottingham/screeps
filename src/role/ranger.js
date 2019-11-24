@@ -76,19 +76,21 @@ let roleRanger = {
       return this.switchTo(creep, "upgrade");
     }
 
-    let site = creep.pos.findClosestByPath(FIND_CONSTRUCTION_SITES, {
+    let target = creep.pos.findClosestByPath(FIND_CONSTRUCTION_SITES, {
       filter: (cs) => (cs.structureType == STRUCTURE_SPAWN)
     });
-    if (site === null) {
-      site = creep.pos.findClosestByPath(FIND_CONSTRUCTION_SITES);
+    if (target === null) {
+      target = creep.pos.findClosestByPath(FIND_CONSTRUCTION_SITES);
     }
 
-    if (site === null) {
+    if (target === null) {
       // console.log(`ranger.build (${creep.name}): no more construction sites`);
       return this.switchTo(creep, "upgrade");
     }
 
-    switch (creep.build(site)) {
+    this.recalculate(creep, target);
+
+    switch (creep.build(target)) {
       case OK:
         break;
       case ERR_NOT_OWNER:
@@ -113,7 +115,7 @@ let roleRanger = {
     }
 
     if (creep.mem.path === undefined) {
-      creep.mem.path = creep.room.findPath(creep.pos, site.pos, { range: 0 });
+      creep.mem.path = creep.room.findPath(creep.pos, target.pos, { range: 0 });
     }
     return this.moveByPath(creep);
   },
