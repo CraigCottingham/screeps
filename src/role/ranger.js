@@ -84,13 +84,13 @@ let roleRanger = {
       filter: (cs) => (cs.structureType == STRUCTURE_SPAWN)
     });
     if (target !== null) {
-      this.recalculate(creep, target);
+      this.updateTarget(creep, target);
       return this.buildSite(creep, target);
     }
 
     target = creep.pos.findClosestByPath(FIND_CONSTRUCTION_SITES);
     if (target !== null) {
-      this.recalculate(creep, target);
+      this.updateTarget(creep, target);
       return this.buildSite(creep, target);
     }
 
@@ -100,7 +100,7 @@ let roleRanger = {
     });
     if (target !== null) {
       // console.log(`ranger.build (${creep.name}): found critical rampart to repair`);
-      this.recalculate(creep, target);
+      this.updateTarget(creep, target);
       return this.repairStructure(creep, target);
     }
 
@@ -110,7 +110,7 @@ let roleRanger = {
     });
     if (target !== null) {
       // console.log(`ranger.build (${creep.name}): found rampart to repair`);
-      this.recalculate(creep, target);
+      this.updateTarget(creep, target);
       return this.repairStructure(creep, target);
     }
 
@@ -121,7 +121,7 @@ let roleRanger = {
     });
     if (target !== null) {
       // console.log(`ranger.build (${creep.name}): found wall to repair`);
-      this.recalculate(creep, target);
+      this.updateTarget(creep, target);
       return this.repairStructure(creep, target);
     }
 
@@ -156,9 +156,7 @@ let roleRanger = {
         break;
     }
 
-    if (creep.mem.path === undefined) {
-      creep.mem.path = creep.room.findPath(creep.pos, target.pos, { range: 0 });
-    }
+    this.recalculatePath(creep, target.pos, { range: 0 });
     return this.moveByPath(creep);
   },
 
@@ -178,9 +176,10 @@ let roleRanger = {
       return this.switchTo(creep, "harvest");
     }
 
-    if (creep.mem.path === undefined) {
-      creep.mem.path = creep.room.findPath(creep.pos, creep.room.controller.pos, { range: 1 });
-    }
+    this.recalculatePath(creep, creep.room.controller.pos, { range: 1, calledFrom: "claim" });
+    // if (creep.mem.path === undefined) {
+    //   creep.mem.path = creep.room.findPath(creep.pos, creep.room.controller.pos, { range: 1 });
+    // }
     return this.moveByPath(creep);
   },
 
@@ -264,9 +263,10 @@ let roleRanger = {
         break;
       case ERR_NOT_IN_RANGE:
         // console.log("ranger.dismantle: not in range");
-        if (creep.mem.path === undefined) {
-          creep.mem.path = creep.room.findPath(creep.pos, target.pos, { range: 0 });
-        }
+        this.recalculatePath(creep, target.pos, { range: 0, calledFrom: "dismantle" });
+        // if (creep.mem.path === undefined) {
+        //   creep.mem.path = creep.room.findPath(creep.pos, target.pos, { range: 0 });
+        // }
         this.moveByPath(creep);
         break;
       case ERR_NO_BODYPART:
@@ -297,9 +297,9 @@ let roleRanger = {
         return this.transfer(creep, structures[0]);
       }
 
-      if (creep.room.controller.ticksToDowngrade < (CONTROLLER_DOWNGRADE[creep.room.controller.level] - 1000)) {
-        return this.switchTo(creep, "upgrade");
-      }
+      // if (creep.room.controller.ticksToDowngrade < (CONTROLLER_DOWNGRADE[creep.room.controller.level] - 1000)) {
+      //   return this.switchTo(creep, "upgrade");
+      // }
 
       return this.switchTo(creep, "replenish");
     }
@@ -314,7 +314,7 @@ let roleRanger = {
         filter: (s) => (s.energy > 0)
       });
       if (target !== null) {
-        this.recalculate(creep, target);
+        this.updateTarget(creep, target);
         return this.harvestFromSource(creep, target);
       }
 
@@ -331,7 +331,7 @@ let roleRanger = {
     });
     if (target !== null) {
       creep.say("scavenge");
-      this.recalculate(creep, target);
+      this.updateTarget(creep, target);
       return this.pickup(creep, target);
     }
 
@@ -340,7 +340,7 @@ let roleRanger = {
     });
     if (target !== null) {
       creep.say("scavenge");
-      this.recalculate(creep, target);
+      this.updateTarget(creep, target);
       return this.withdraw(creep, target);
     }
 
@@ -349,7 +349,7 @@ let roleRanger = {
     });
     if (target !== null) {
       creep.say("scavenge");
-      this.recalculate(creep, target);
+      this.updateTarget(creep, target);
       return this.withdraw(creep, target);
     }
 
@@ -358,7 +358,7 @@ let roleRanger = {
         filter: (s) => (s.structureType == STRUCTURE_CONTAINER) && (s.store.getUsedCapacity(RESOURCE_ENERGY) > 0)
       });
       if (target !== null) {
-        this.recalculate(creep, target);
+        this.updateTarget(creep, target);
         return this.withdraw(creep, target);
       }
     }
@@ -369,7 +369,7 @@ let roleRanger = {
         filter: (s) => (s.structureType == STRUCTURE_CONTAINER) && (s.store.getUsedCapacity(RESOURCE_ENERGY) > 0)
       });
       if (target !== null) {
-        this.recalculate(creep, target);
+        this.updateTarget(creep, target);
         return this.withdraw(creep, target);
       }
 
@@ -377,7 +377,7 @@ let roleRanger = {
         filter: (s) => (s.energy > 0)
       });
       if (target !== null) {
-        this.recalculate(creep, target);
+        this.updateTarget(creep, target);
         return this.harvestFromSource(creep, target);
       }
     }
@@ -424,7 +424,7 @@ let roleRanger = {
         filter: (s) => (s.energy > 0)
       });
       if (target !== null) {
-        this.recalculate(creep, target);
+        this.updateTarget(creep, target);
         return this.harvestFromSource(creep, target);
       }
 
@@ -432,7 +432,7 @@ let roleRanger = {
         filter: (s) => (s.structureType == STRUCTURE_EXTENSION) && (s.store.getUsedCapacity(RESOURCE_ENERGY) > 0)
       });
       if (target !== null) {
-        this.recalculate(creep, target);
+        this.updateTarget(creep, target);
         return this.withdraw(creep, target);
       }
 
@@ -441,7 +441,7 @@ let roleRanger = {
       });
       if (target !== null) {
         // TODO: only if target isn't the container we're sitting on
-        this.recalculate(creep, target);
+        this.updateTarget(creep, target);
         return this.withdraw(creep, target);
       }
     }
@@ -477,9 +477,7 @@ let roleRanger = {
         break;
       case ERR_NOT_IN_RANGE:
         // console.log("ranger.harvestFromSource: not in range");
-        if (creep.mem.path === undefined) {
-          creep.mem.path = creep.room.findPath(creep.pos, source.pos, { range: 1 });
-        }
+        this.recalculatePath(creep, source.pos, { range: 1 });
         this.moveByPath(creep);
         break;
       case ERR_TIRED:
@@ -510,7 +508,8 @@ let roleRanger = {
         destination = Game.rooms[creep.mem.targetRoomName].controller.pos;
       }
 
-      creep.mem.path = creep.room.findPath(creep.pos, destination, { range: 1 });
+      this.recalculatePath(creep, destination, { range: 1, calledFrom: "insert" });
+      // creep.mem.path = creep.room.findPath(creep.pos, destination, { range: 1 });
     }
 
     this.moveByPath(creep);
@@ -591,9 +590,7 @@ let roleRanger = {
         return this.switchTo(creep, "replenish");
       case ERR_NOT_IN_RANGE:
         // console.log("ranger.pickup: not in range");
-        if (creep.mem.path === undefined) {
-          creep.mem.path = creep.room.findPath(creep.pos, target.pos, { range: 1 });
-        }
+        this.recalculatePath(creep, target.pos, { range: 1 });
         this.moveByPath(creep);
         break;
     }
@@ -601,11 +598,20 @@ let roleRanger = {
     return OK;
   },
 
-  recalculate: function (creep, target) {
-    if (target.id != creep.mem.targetId) {
-      // console.log(`ranger.recalculate (${creep.name}): recalculating`);
-      delete creep.mem.path;
-      creep.mem.targetId = target.id;
+  recalculatePath: function (creep, toPos, options) {
+    if (!creep.mem.path) {
+      let allOptions = {};
+      allOptions["range"] = options.range || 0;
+
+      if (config.desirePathing.enabled && config.desirePathing.terrain.swamp) {
+        allOptions["swampCost"] = 1;
+      }
+
+      if (options.calledFrom) {
+        console.log(`ranger.recalculatePath (<- ${options.calledFrom}): (${creep.pos.x},${creep.pos.y}) -> (${toPos.x},${toPos.y}) with range ${allOptions.range}`);
+      }
+
+      creep.mem.path = creep.room.findPath(creep.pos, toPos, allOptions);
     }
   },
 
@@ -628,7 +634,7 @@ let roleRanger = {
       filter: (s) => (s.structureType != STRUCTURE_RAMPART) && (s.structureType != STRUCTURE_ROAD) && (s.structureType != STRUCTURE_WALL) && (s.hits < s.hitsMax)
     });
     if (target !== null) {
-      this.recalculate(creep, target);
+      this.updateTarget(creep, target);
       return this.repairStructure(creep, target);
     }
 
@@ -661,9 +667,7 @@ let roleRanger = {
         break;
     }
 
-    if (creep.mem.path === undefined) {
-      creep.mem.path = creep.room.findPath(creep.pos, target.pos, { range: 3 });
-    }
+    this.recalculatePath(creep, target.pos, { range: 3 });
     return this.moveByPath(creep);
   },
 
@@ -685,7 +689,7 @@ let roleRanger = {
     });
     const target = creep.pos.findClosestByPath(_.union(extensions, spawns));
     if (target !== null) {
-      this.recalculate(creep, target);
+      this.updateTarget(creep, target);
       return this.transfer(creep, target);
     }
 
@@ -708,9 +712,10 @@ let roleRanger = {
           break;
         case ERR_NOT_IN_RANGE:
           console.log("ranger.reserveController: not in range");
-          if (creep.mem.path === undefined) {
-            creep.mem.path = creep.room.findPath(creep.pos, creep.room.controller.pos, { range: 1 });
-          }
+          this.recalculatePath(creep, creep.room.controller.pos, { range: 1, calledFrom: "reserveController" });
+          // if (creep.mem.path === undefined) {
+          //   creep.mem.path = creep.room.findPath(creep.pos, creep.room.controller.pos, { range: 1 });
+          // }
           this.moveByPath(creep);
           break;
         case ERR_NO_BODYPART:
@@ -734,9 +739,7 @@ let roleRanger = {
         break;
       case ERR_NOT_IN_RANGE:
         // console.log("ranger.sign: not in range");
-        if (creep.mem.path === undefined) {
-          creep.mem.path = creep.room.findPath(creep.pos, creep.room.controller.pos, { range: 1 });
-        }
+        this.recalculatePath(creep, creep.room.controller.pos, { range: 1 });
         this.moveByPath(creep);
         break;
     }
@@ -772,9 +775,7 @@ let roleRanger = {
         return this.switchTo(creep, "replenish");
       case ERR_NOT_IN_RANGE:
         // console.log("ranger.transfer: not in range");
-        if (creep.mem.path === undefined) {
-          creep.mem.path = creep.room.findPath(creep.pos, target.pos, { range: 1 });
-        }
+        this.recalculatePath(creep, target.pos, { range: 1 });
         this.moveByPath(creep);
         break;
       case ERR_INVALID_ARGS:
@@ -783,6 +784,14 @@ let roleRanger = {
     }
 
     return OK;
+  },
+
+  updateTarget: function (creep, target) {
+    if (target.id != creep.mem.targetId) {
+      // console.log(`ranger.updateTarget (${creep.name}): recalculating`);
+      delete creep.mem.path;
+      creep.mem.targetId = target.id;
+    }
   },
 
   upgrade: function (creep) {
@@ -817,9 +826,7 @@ let roleRanger = {
 
     this.sign(creep);
 
-    if (creep.mem.path === undefined) {
-      creep.mem.path = creep.room.findPath(creep.pos, creep.room.controller.pos, { range: 1 });
-    }
+    this.recalculatePath(creep, creep.room.controller.pos, { range: 1 });
     return this.moveByPath(creep);
   },
 
@@ -844,9 +851,7 @@ let roleRanger = {
         return this.switchTo(creep, "replenish");
       case ERR_NOT_IN_RANGE:
         // console.log("ranger.withdraw: not in range");
-        if (creep.mem.path === undefined) {
-          creep.mem.path = creep.room.findPath(creep.pos, structure.pos, { range: 0 });
-        }
+        this.recalculatePath(creep, structure.pos, { range: 0 });
         this.moveByPath(creep);
         break;
       case ERR_INVALID_ARGS:
