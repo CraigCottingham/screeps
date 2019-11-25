@@ -365,20 +365,20 @@ let roleRanger = {
 
     if ((creep.room.energyAvailable < creep.room.energyCapacityAvailable) ||
         (creep.room.controller.ticksToDowngrade < (CONTROLLER_DOWNGRADE[creep.room.controller.level] - 1000))) {
-      target = creep.pos.findClosestByPath(FIND_SOURCES, {
-        filter: (s) => (s.energy > 0)
-      });
-      if (target !== null) {
-        this.recalculate(creep, target);
-        return this.harvestFromSource(creep, target);
-      }
-
       target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
         filter: (s) => (s.structureType == STRUCTURE_CONTAINER) && (s.store.getUsedCapacity(RESOURCE_ENERGY) > 0)
       });
       if (target !== null) {
         this.recalculate(creep, target);
         return this.withdraw(creep, target);
+      }
+
+      target = creep.pos.findClosestByPath(FIND_SOURCES, {
+        filter: (s) => (s.energy > 0)
+      });
+      if (target !== null) {
+        this.recalculate(creep, target);
+        return this.harvestFromSource(creep, target);
       }
     }
 
