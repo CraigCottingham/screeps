@@ -1,7 +1,5 @@
 "use strict";
 
-let worker = require("worker");
-
 let roleRanger = {
   run: function (creep) {
     if (creep.mem.task === undefined) {
@@ -128,7 +126,7 @@ let roleRanger = {
     }
 
     // if we got this far, bump up the low water threshold
-    room.mem.threshold.update = true;
+    creep.room.mem.threshold.update = true;
 
     return this.switchTo(creep, "upgrade");
   },
@@ -281,30 +279,56 @@ let roleRanger = {
   },
 
   harvest: function (creep) {
+    let container = null;
+    const structures = creep.pos.lookFor(LOOK_STRUCTURES);
+    if (structures.length && _.any(structures, (s) => (s.structureType == STRUCTURE_CONTAINER) && (s.store.getFreeCapacity(RESOURCE_ENERGY) > 0))) {
+      container = structures[0];
+    }
+
+    let source = null;
+    const sources = creep.pos.findInRange(FIND_SOURCES, 1);
+    if (sources.length && _.any(sources, (s) => (s.energy > 0))) {
+      source = sources[0];
+    }
+
+    // creep is full
     if (creep.store.getFreeCapacity(RESOURCE_ENERGY) == 0) {
-      if (creep.room.energyAvailable < creep.room.energyCapacityAvailable) {
-        return this.switchTo(creep, "replenish");
+      if ((container !== null) && (source !== null)) {
+        return this.transfer(creep, structures[0]);
       }
 
       if (creep.room.controller.ticksToDowngrade < (CONTROLLER_DOWNGRADE[creep.room.controller.level] - 1000)) {
         return this.switchTo(creep, "upgrade");
       }
 
-      // if on top of a container, drop store into the container
-      const container = creep.pos.findClosestByRange(FIND_STRUCTURES, {
-        filter: (s) => (s.structureType == STRUCTURE_CONTAINER) && (s.store.getFreeCapacity(RESOURCE_ENERGY) > 0)
-      })
-      if ((container !== null) && (creep.pos.getRangeTo(container) == 0)) {
-        // console.log(`ranger.harvest (${creep.name}): transferring to container ${container.id}`);
-        return this.transfer(creep, container);
-      }
-
       return this.switchTo(creep, "replenish");
     }
 
+    // creep is parked on a container with free space
+    if (container !== null) {
+      if (creep.room.mem.endangered) {
+        return this.withdraw(creep, container);
+      }
+
+      let target = creep.pos.findClosestByPath(FIND_SOURCES, {
+        filter: (s) => (s.energy > 0)
+      });
+      if (target !== null) {
+        this.recalculate(creep, target);
+        return this.harvestFromSource(creep, target);
+      }
+
+      // fall through, since apparently our source is empty
+      // TODO: don't fall through, because that causes us to repeatedly withdraw and transfer
+      // instead, find some *other* source and/or container
+    }
+
+    // creep is not parked on a container with free space
     let target = null;
 
-    target = creep.pos.findClosestByPath(FIND_DROPPED_RESOURCES);
+    target = creep.pos.findClosestByPath(FIND_DROPPED_RESOURCES, {
+      filter: (r) => (r.resourceType == RESOURCE_ENERGY)
+    });
     if (target !== null) {
       creep.say("scavenge");
       this.recalculate(creep, target);
@@ -341,18 +365,20 @@ let roleRanger = {
 
     if ((creep.room.energyAvailable < creep.room.energyCapacityAvailable) ||
         (creep.room.controller.ticksToDowngrade < (CONTROLLER_DOWNGRADE[creep.room.controller.level] - 1000))) {
+      target = creep.pos.findClosestByPath(FIND_SOURCES, {
+        filter: (s) => (s.energy > 0)
+      });
+      if (target !== null) {
+        this.recalculate(creep, target);
+        return this.harvestFromSource(creep, target);
+      }
+
       target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
         filter: (s) => (s.structureType == STRUCTURE_CONTAINER) && (s.store.getUsedCapacity(RESOURCE_ENERGY) > 0)
       });
       if (target !== null) {
         this.recalculate(creep, target);
         return this.withdraw(creep, target);
-      }
-
-      target = creep.pos.findClosestByPath(FIND_SOURCES);
-      if (target !== null) {
-        this.recalculate(creep, target);
-        return this.harvestFromSource(creep, target);
       }
     }
 
@@ -414,6 +440,7 @@ let roleRanger = {
         filter: (s) => (s.structureType == STRUCTURE_CONTAINER) && (s.store.getUsedCapacity(RESOURCE_ENERGY) > 0)
       });
       if (target !== null) {
+        // TODO: only if target isn't the container we're sitting on
         this.recalculate(creep, target);
         return this.withdraw(creep, target);
       }
