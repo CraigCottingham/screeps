@@ -63,6 +63,8 @@ module.exports.loop = function () {
       walls: structures[STRUCTURE_WALL] || []
     };
 
+    const terrain = room.getTerrain();
+
     room.mem.endangered = (objects.creeps.length < (objects.sources.length * 2)); // (objects.creeps.length < 10);
     room.mem.maxCreeps = (objects.sources.length * 6) + objects.flags.length + roomsAllowed - roomsControlled;
     room.mem.redAlert = (objects.hostileCreeps.length > 0);
@@ -193,7 +195,7 @@ module.exports.loop = function () {
       // *** better yet, a function of the number of sources
       // since the number of sources determines how much energy is available in the room
 
-      if ((room.mem.spawns[spawn.id] <= 0) || room.mem.endangered) {
+      if ((room.mem.spawns[spawn.id] <= 0) || room.mem.endangered || room.mem.redAlert) {
         if ((spawn.spawning === null) && ((room.energyAvailable >= 250) || ((room.mem.endangered && (room.energyAvailable >= 200))))) {
           const spawnCooldown = _.floor(CREEP_LIFE_TIME / room.mem.maxCreeps);
 
@@ -287,21 +289,38 @@ module.exports.loop = function () {
         // if we're not on a road, drop a construction site
         let structures = creep.pos.lookFor(LOOK_STRUCTURES);
         if (!structures.length || _.all(structures, (s) => (s.structureType != STRUCTURE_ROAD))) {
-          switch (creep.pos.createConstructionSite(STRUCTURE_ROAD)) {
-            case OK:
+          let dropSite = false;
+
+          switch (terrain.get(creep.pos.x, creep.pos.y)) {
+            case TERRAIN_MASK_SWAMP:
+              dropSite = config.desirePathing.terrain.swamp;
               break;
-            case ERR_INVALID_TARGET:
-              // console.log("The structure cannot be placed at the specified location.");
+            case TERRAIN_MASK_WALL:
+              dropSite = config.desirePathing.terrain.wall;
               break;
-            case ERR_FULL:
-              // console.log("You have too many construction sites.");
-              break;
-            case ERR_INVALID_ARGS:
-              // console.log("The location is incorrect.")
-              break;
-            case ERR_RCL_NOT_ENOUGH:
-              // console.log("Room Controller Level insufficient.");
-              break;
+            default:
+              dropSite = config.desirePathing.terrain.plain;
+            break;
+          }
+
+          if (dropSite) {
+            switch (creep.pos.createConstructionSite(STRUCTURE_ROAD)) {
+              case OK:
+                break;
+              case ERR_INVALID_TARGET:
+                // we get this error if there's already a site at this position?
+                // console.log(`main.desirePathing (${room.name}:${creep.pos.x},${creep.pos.y}): invalid target`);
+                break;
+              case ERR_FULL:
+                console.log(`main.desirePathing (${room.name}:${creep.pos.x},${creep.pos.y}): full`);
+                break;
+              case ERR_INVALID_ARGS:
+                console.log(`main.desirePathing (${room.name}:${creep.pos.x},${creep.pos.y}): invalid args`);
+                break;
+              case ERR_RCL_NOT_ENOUGH:
+                console.log(`main.desirePathing (${room.name}:${creep.pos.x},${creep.pos.y}): rcl not enough`);
+                break;
+            }
           }
         }
       }
