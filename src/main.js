@@ -68,7 +68,7 @@ module.exports.loop = function () {
     room.mem.redAlert = (objects.hostileCreeps.length > 0);
     room.mem.spawns = room.mem.spawns || {};
     _.forEach(objects.spawns, (s) => room.mem.spawns[s.id] = room.mem.spawns[s.id] || 0);
-    room.mem.threshold = room.mem.threshold || {rampart: RAMPART_HITS, wall: WALL_HITS};
+    room.mem.threshold = room.mem.threshold || {rampart: RAMPART_HITS + 1, wall: WALL_HITS + 1};
 
     if (room.mem.threshold.update) {
       // autoincrement low water threshold for ramparts
