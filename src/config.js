@@ -12,7 +12,12 @@ global.config = {
   // },
 
   desirePathing: {
-    enabled: false,
+    enabled: true,
+    terrain: {
+      plain: false,
+      swamp: true,
+      wall: false,
+    }
   },
 
   visualizer: {
