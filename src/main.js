@@ -68,7 +68,7 @@ module.exports.loop = function () {
     room.mem.redAlert = (objects.hostileCreeps.length > 0);
     room.mem.spawns = room.mem.spawns || {};
     _.forEach(objects.spawns, (s) => room.mem.spawns[s.id] = room.mem.spawns[s.id] || 0);
-    room.mem.threshold = room.mem.threshold || {rampart: RAMPART_HITS, wall: WALL_HITS};
+    room.mem.threshold = room.mem.threshold || {rampart: RAMPART_HITS + 1, wall: WALL_HITS + 1};
 
     if (room.mem.threshold.update) {
       // autoincrement low water threshold for ramparts
@@ -194,7 +194,7 @@ module.exports.loop = function () {
       // since the number of sources determines how much energy is available in the room
 
       if ((room.mem.spawns[spawn.id] <= 0) || room.mem.endangered) {
-        if ((spawn.spawning === null) && (room.energyAvailable > 250)) {
+        if ((spawn.spawning === null) && ((room.energyAvailable >= 250) || ((room.mem.endangered && (room.energyAvailable >= 200))))) {
           const spawnCooldown = _.floor(CREEP_LIFE_TIME / room.mem.maxCreeps);
 
           // TODO: should be checking that there are no rangers in the world, not just in this room
@@ -206,6 +206,10 @@ module.exports.loop = function () {
           }
           else if (objects.creeps.length < room.mem.maxCreeps) {
             let parts = [WORK, MOVE, CARRY, MOVE];
+            if (room.mem.endangered) {
+              parts = [WORK, CARRY, MOVE];
+            }
+
             let availableEnergy = room.energyAvailable;
 
             // console.log(`partsRangedRCL5 = ${_.sum(_.map(partsRangedRCL5, (p) => BODYPART_COST[p]))}`);
