@@ -106,7 +106,7 @@ let roleRanger = {
 
     // repair ramparts that are below the low water threshold
     target = creep.pos.findClosestByRange(FIND_MY_STRUCTURES, {
-      filter: (s) => (s.structureType == STRUCTURE_RAMPART) && (s.hits < room.mem.threshold.rampart)
+      filter: (s) => (s.structureType == STRUCTURE_RAMPART) && (s.hits < creep.room.mem.threshold.rampart)
     });
     if (target !== null) {
       // console.log(`ranger.build (${creep.name}): found rampart to repair`);
@@ -116,8 +116,8 @@ let roleRanger = {
 
     // repair walls thar are below the low water threshold
     // TODO: only if there aren't any towers in the room?
-    target = creep.pos.findClosestByRange(FIND_MY_STRUCTURES, {
-      filter: (s) => (s.structureType == STRUCTURE_WALL) && (s.hits < room.mem.threshold.wall)
+    target = creep.pos.findClosestByRange(FIND_STRUCTURES, {
+      filter: (s) => (s.structureType == STRUCTURE_WALL) && (s.hits < creep.room.mem.threshold.wall)
     });
     if (target !== null) {
       // console.log(`ranger.build (${creep.name}): found wall to repair`);
