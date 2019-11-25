@@ -601,6 +601,20 @@ let roleRanger = {
     return OK;
   },
 
+  recalculatePath: function (creep, toPos, options) {
+    if (!creep.mem.path) {
+      let allOptions = {};
+      allOptions["range"] = options.range || 0;
+
+      if (config.desirePathing.enabled && config.desirePathing.terrain.swamp) {
+        allOptions["swampCost"] = 1;
+      }
+
+      if (options.calledFrom) {
+        console.log(`ranger.recalculatePath (<- ${options.calledFrom}): (${creep.pos.x},${creep.pos.y}) -> (${toPos.x},${toPos.y}) with range ${allOptions.range}`);
+      }
+
+      creep.mem.path = creep.room.findPath(creep.pos, toPos, allOptions);
     }
   },
 
