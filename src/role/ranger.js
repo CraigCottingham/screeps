@@ -132,6 +132,8 @@ let roleRanger = {
   },
 
   buildSite: function (creep, target) {
+    this.requireBodyPart(creep, WORK);
+
     switch (creep.build(target)) {
       case OK:
         break;
@@ -240,6 +242,8 @@ let roleRanger = {
   },
 
   dismantle: function (creep) {
+    this.requireBodyPart(creep, WORK);
+
     const target = creep.pos.findClosestByPath(FIND_HOSTILE_STRUCTURES);
     if (target === null) {
       // console.log(`ranger.dismantle (${creep.name}): can't find anything to dismantle`);
@@ -279,6 +283,8 @@ let roleRanger = {
   },
 
   harvest: function (creep) {
+    this.requireBodyPart(creep, WORK);
+
     let container = null;
     const structures = creep.pos.lookFor(LOOK_STRUCTURES);
     if (structures.length && _.any(structures, (s) => (s.structureType == STRUCTURE_CONTAINER) && (s.store.getFreeCapacity(RESOURCE_ENERGY) > 0))) {
@@ -568,6 +574,8 @@ let roleRanger = {
   },
 
   pickup: function (creep, target) {
+    this.requireBodyPart(creep, CARRY);
+
     if (creep.store.getFreeCapacity(RESOURCE_ENERGY) == 0) {
       // console.log(`ranger.pickup (${creep.name}): full`);
       return this.switchTo(creep, "replenish");
@@ -642,6 +650,9 @@ let roleRanger = {
   },
 
   repairStructure: function (creep, target) {
+    this.requireBodyPart(creep, CARRY);
+    this.requireBodyPart(creep, WORK);
+
     switch (creep.repair(target)) {
       case OK:
         // creep.moveTo(target);
@@ -694,6 +705,12 @@ let roleRanger = {
     }
 
     return this.switchTo(creep, "repair");
+  },
+
+  requireBodyPart: function (creep, partType) {
+    if (_.all(creep.body, (p) => (p.type != partType))) {
+      creep.suicide();
+    }
   },
 
   reserveController: function (creep) {
@@ -795,6 +812,8 @@ let roleRanger = {
   },
 
   upgrade: function (creep) {
+    this.requireBodyPart(creep, WORK);
+
     if (creep.store.getUsedCapacity(RESOURCE_ENERGY) == 0) {
       // console.log(`ranger.upgrade (${creep.name}): empty`)
       return this.switchTo(creep, "harvest");
