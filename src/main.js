@@ -195,7 +195,7 @@ module.exports.loop = function () {
       // *** better yet, a function of the number of sources
       // since the number of sources determines how much energy is available in the room
 
-      if ((room.mem.spawns[spawn.id] <= 0) || room.mem.endangered) {
+      if ((room.mem.spawns[spawn.id] <= 0) || room.mem.endangered || room.mem.redAlert) {
         if ((spawn.spawning === null) && ((room.energyAvailable >= 250) || ((room.mem.endangered && (room.energyAvailable >= 200))))) {
           const spawnCooldown = _.floor(CREEP_LIFE_TIME / room.mem.maxCreeps);
 
