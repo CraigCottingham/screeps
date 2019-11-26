@@ -75,12 +75,6 @@ let tower = {
       return OK;
     }
 
-    // target = _.min(objects.roads, (s) => (s.hits));
-    // if ((target !== Infinity) && (target.hits <= ROAD_DECAY_AMOUNT)) {
-    //   tower.repair(target);
-    //   return OK;
-    // }
-
     // repair lowest rampart
     target = _.min(ramparts, (s) => (s.hits));
     if ((target !== Infinity) && (target.hits < room.mem.threshold.rampart)) {
@@ -90,7 +84,7 @@ let tower = {
 
     // repair other structures (besides ramparts and walls)
     let allOthers = room.find(FIND_STRUCTURES, {
-      filter: (s) => (s.structureType != STRUCTURE_RAMPART) && (s.structureType != STRUCTURE_WALL) && (s.hits < (s.hitsMax - (towers.length * TOWER_POWER_REPAIR * (1.0 - TOWER_FALLOFF))))
+      filter: (s) => (s.structureType != STRUCTURE_RAMPART) &&(s.structureType != STRUCTURE_ROAD) &&(s.structureType != STRUCTURE_WALL) && (s.hits < (s.hitsMax - (towers.length * TOWER_POWER_REPAIR * (1.0 - TOWER_FALLOFF))))
     });
     target = _.min(allOthers, (s) => (s.hits));
     if (target !== Infinity) {
