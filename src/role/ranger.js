@@ -382,7 +382,7 @@ let roleRanger = {
       }
 
       target = creep.room.storage;
-      if ((target !== null) && (target.store.getUsedCapacity(RESOURCE_ENERGY) > 0)) {
+      if ((target !== undefined) && (target.store.getUsedCapacity(RESOURCE_ENERGY) > 0)) {
         this.updateTarget(creep, target);
         return this.withdraw(creep, target);
       }
