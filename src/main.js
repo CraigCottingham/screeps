@@ -7,14 +7,7 @@ require("creep.mem");
 require("room.mem");
 require("spawn");
 
-let roleBreacher = require("role.breacher");
-let roleBuilder = require("role.builder");
-let roleHarvester = require("role.harvester");
 let roleRanger = require("role.ranger");
-let roleRepairer = require("role.repairer");
-let roleReplenisher = require("role.replenisher");
-let roleScavenger = require("role.scavenger");
-let roleUpgrader = require("role.upgrader");
 let tower = require("tower");
 let worker = require("worker");
 
@@ -118,7 +111,7 @@ module.exports.loop = function () {
         if ((spawn.spawning === null) && ((room.energyAvailable >= 250) || ((room.mem.endangered && (room.energyAvailable >= 200))))) {
           const spawnCooldown = _.floor(CREEP_LIFE_TIME / room.mem.maxCreeps);
 
-          // TODO: should be checking that there are no rangers in the world, not just in this room
+          // TODO: this needs to be done differently, since everything's a ranger now
           if ((Memory.colonize !== undefined) && _.all(_.values(Game.creeps), (c) => (c.mem.role != "ranger"))) {
             // spawn ranger
             let parts = [CLAIM, MOVE, WORK, MOVE, CARRY, MOVE];
@@ -222,29 +215,8 @@ module.exports.loop = function () {
       }
 
       switch (creep.mem.role) {
-        case "breacher":
-          roleBreacher.run(creep);
-          break;
-        case "builder":
-          roleBuilder.run(creep);
-          break;
-        case "harvester":
-          roleHarvester.run(creep);
-          break;
         case "ranger":
           roleRanger.run(creep);
-          break;
-        case "repairer":
-          roleRepairer.run(creep);
-          break;
-        case "replenisher":
-          roleReplenisher.run(creep);
-          break;
-        case "scavenger":
-          roleScavenger.run(creep);
-          break;
-        case "upgrader":
-          roleUpgrader.run(creep);
           break;
       }
     }
