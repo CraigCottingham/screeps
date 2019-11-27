@@ -104,87 +104,6 @@ module.exports.loop = function () {
 
     _.forEach(objects.towers, (t) => tower.run(t));
 
-    if (objects.creeps.length > objects.containers.length) {
-      // run flags
-
-      // run drops
-
-      for (let drop of objects.drops) {
-        let amount = drop.amount;
-        if (amount > 0) {
-          let creep = drop.pos.findClosestByPath(FIND_MY_CREEPS, {
-            filter: (c) => (c.store.getFreeCapacity(RESOURCE_ENERGY) > 0) && (c.mem.role != "ranger")
-          });
-          if (creep !== null) {
-            creep.mem.assignment = drop.id;
-            creep.mem.role = "scavenger";
-          }
-        }
-      }
-
-      // run tombstones
-
-      for (let tombstone of objects.tombstones) {
-        let amount = _.sum(tombstone.store);
-        if (amount > 0) {
-          let creep = tombstone.pos.findClosestByPath(FIND_MY_CREEPS, {
-            filter: (c) => (c.store.getFreeCapacity(RESOURCE_ENERGY) > 0) && (c.mem.role != "ranger")
-          });
-          if (creep !== null) {
-            creep.mem.assignment = tombstone.id;
-            creep.mem.role = "scavenger";
-          }
-        }
-      }
-
-      // run ruins
-
-      for (let ruin of objects.ruins) {
-        let amount = _.sum(ruin.store);
-        if (amount > 0) {
-          let creep = ruin.pos.findClosestByPath(FIND_MY_CREEPS, {
-            filter: (c) => (c.store.getFreeCapacity(RESOURCE_ENERGY) > 0) && (c.mem.role != "ranger")
-          });
-          if (creep !== null) {
-            creep.mem.assignment = ruin.id;
-            creep.mem.role = "scavenger";
-          }
-        }
-      }
-
-      // don't run this if there are too many things needing repair?
-      if (!room.mem.redAlert) {
-        // run construction sites
-
-        for (let site of objects.constructionSites) {
-          let creep = site.pos.findClosestByRange(FIND_MY_CREEPS, {
-            filter: (c) => (c.memory.parkedAt === undefined) &&
-                           (c.memory.role != "ranger") &&
-                           (c.memory.role != "replenisher") &&
-                           (c.memory.role != "scavenger") &&
-                           (c.store.getUsedCapacity(RESOURCE_ENERGY) > 0) &&
-                           (c.store.getUsedCapacity(RESOURCE_ENERGY) == c.store.getUsedCapacity())
-          });
-          if (creep !== null) {
-            creep.mem.role = "builder";
-          }
-        }
-      }
-
-      if (room.controller.my && (room.name != "E16S32")) {
-        if (_.all(objects.creeps, (c) => (c.memory.role != "upgrader") && (c.memory.role != "ranger"))) {
-          let creep = room.controller.pos.findClosestByRange(FIND_MY_CREEPS, {
-            filter: (c) => (c.store.getUsedCapacity(RESOURCE_ENERGY) > 0)
-          })
-          if (creep !== null) {
-            delete creep.mem.parkedAt;
-            delete creep.mem.path;
-            creep.mem.role = "upgrader";
-          }
-        }
-      }
-    }
-
     // TODO: look for a spawn that isn't busy, instead of using the first?
     //       Is it even possible to have more than one spawn per room?
     let spawn = _.first(objects.spawns);
@@ -257,33 +176,10 @@ module.exports.loop = function () {
       }
     }
 
-    // not if creep is sitting on top of a construction site?
-    if (room.energyAvailable < (objects.extensions.length * EXTENSION_ENERGY_CAPACITY[room.controller.level])) {
-      _.each(objects.creeps, (c) => {
-        if (c.memory.role == "builder") {
-          c.memory.role = "replenisher";
-        }
-      });
-    }
-
-    if (room.mem.endangered) {
-      _.each(objects.creeps, (c) => {
-        if ((c.memory.role != "harvester") && (c.memory.role != "ranger") && (c.memory.role != "replenisher") && (c.memory.role != "upgrader")) {
-          c.memory.role = "replenisher";
-        }
-      });
-    }
-
     // TODO: dynamic dispatch, rather than role transitions hardcoded in roles
 
     for (let creep of objects.creeps) {
-      if (creep.mem.role === undefined) {
-        creep.mem.role = "upgrader";
-      }
-
-      if (creep.pos.roomName == "E16S32") {
-        creep.mem.role = "ranger";
-      }
+      creep.mem.role = "ranger";
 
       if (config.desirePathing.enabled) {
         // if we're not on a road, drop a construction site
