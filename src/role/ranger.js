@@ -483,7 +483,12 @@ let roleRanger = {
       }
     }
 
-    return this.switchTo(creep, "dismantle");
+    if (creep.store.getUsedCapacity(RESOURCE_ENERGY) > 0) {
+      return this.switchTo(creep, "upgrade");
+    }
+    else {
+      return this.switchTo(creep, "dismantle");
+    }
   },
 
   harvestFromSource: function (creep, source) {
