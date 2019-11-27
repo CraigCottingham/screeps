@@ -9,7 +9,6 @@ require("spawn");
 
 let roleRanger = require("role.ranger");
 let tower = require("tower");
-let worker = require("worker");
 
 // override functions:
 //   extendFunction: function(obj, funcName, replacementFunc, prefix) {
@@ -26,6 +25,10 @@ let worker = require("worker");
 module.exports.loop = function () {
   let roomsControlled = _.filter(_.values(Game.structures), (s) => (s.structureType == STRUCTURE_CONTROLLER)).length;
   let roomsAllowed = Game.gcl.level;
+
+  // if (rooms visible) > (rooms controlled)
+  //   for each room visible that isn't controlled
+  //    spawn a creep with CLAIM in the controlled room closest to the visible room
 
   //
   // run objects
@@ -112,13 +115,13 @@ module.exports.loop = function () {
           const spawnCooldown = _.floor(CREEP_LIFE_TIME / room.mem.maxCreeps);
 
           // TODO: this needs to be done differently, since everything's a ranger now
-          if ((Memory.colonize !== undefined) && _.all(_.values(Game.creeps), (c) => (c.mem.role != "ranger"))) {
-            // spawn ranger
-            let parts = [CLAIM, MOVE, WORK, MOVE, CARRY, MOVE];
-            spawn.spawnCreep(parts, `Ranger${Game.time}`, {memory: {role: "ranger"}});
-            room.mem.spawns[spawn.id] = spawnCooldown;
-          }
-          else if (objects.creeps.length < room.mem.maxCreeps) {
+          // if ((Memory.colonize !== undefined) && _.all(_.values(Game.creeps), (c) => (c.mem.role != "ranger"))) {
+          //   // spawn ranger
+          //   let parts = [CLAIM, MOVE, WORK, MOVE, CARRY, MOVE];
+          //   spawn.spawnCreep(parts, `Ranger${Game.time}`, {memory: {role: "ranger"}});
+          //   room.mem.spawns[spawn.id] = spawnCooldown;
+          // }
+          if (objects.creeps.length < room.mem.maxCreeps) {
             let parts = [WORK, MOVE, CARRY, MOVE];
             if (room.mem.endangered) {
               parts = [WORK, CARRY, MOVE];
@@ -172,8 +175,6 @@ module.exports.loop = function () {
     // TODO: dynamic dispatch, rather than role transitions hardcoded in roles
 
     for (let creep of objects.creeps) {
-      creep.mem.role = "ranger";
-
       if (config.desirePathing.enabled) {
         // if we're not on a road, drop a construction site
         let structures = creep.pos.lookFor(LOOK_STRUCTURES);
@@ -214,11 +215,7 @@ module.exports.loop = function () {
         }
       }
 
-      switch (creep.mem.role) {
-        case "ranger":
-          roleRanger.run(creep);
-          break;
-      }
+      roleRanger.run(creep);
     }
   }
 
