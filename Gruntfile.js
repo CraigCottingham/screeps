@@ -98,7 +98,7 @@ module.exports = function (grunt) {
       //     },
       //     src: ['dist/*.js']
       // }
-      mmo: {
+      dist: {
         src: ['dist/*.js'],
       },
     },
@@ -165,7 +165,7 @@ module.exports = function (grunt) {
     // },
   })
 
-  grunt.registerTask('mmo', ['clean', 'copy:screeps', 'file_append:versioning', 'screeps:mmo'])
+  grunt.registerTask('default', ['clean', 'copy:screeps', 'file_append:versioning', 'screeps'])
   grunt.registerTask('private', ['clean', 'copy:screeps', 'file_append:versioning', 'rsync:private'])
 
   // grunt.registerTask('default', ['private']);
