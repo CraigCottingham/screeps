@@ -11,8 +11,8 @@ module.exports = function (grunt) {
   const email = grunt.option('email') || config.email
   // const username = grunt.option('username') || config.username;
   const password = grunt.option('password') || config.password
+  const private_directory = grunt.option('private_directory') || config.private_directory
   const ptr = grunt.option('ptr') ? true : config.ptr
-  // const private_directory = grunt.option('private_directory') || config.private_directory;
 
   const currentdate = new Date()
   grunt.log.subhead(`Task Start: ${currentdate.toLocaleString()}`)
@@ -23,6 +23,7 @@ module.exports = function (grunt) {
   grunt.loadNpmTasks('grunt-contrib-copy')
   //     grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-file-append')
+  grunt.loadNpmTasks('grunt-rsync')
   //     grunt.loadNpmTasks("grunt-sync");
 
   grunt.initConfig({
@@ -134,6 +135,20 @@ module.exports = function (grunt) {
       },
     },
 
+    rsync: {
+      options: {
+        args: ['--verbose', '--checksum'],
+        exclude: ['.git*'],
+        recursive: true,
+      },
+      private: {
+        options: {
+          src: './dist/',
+          dest: private_directory,
+        },
+      },
+    },
+
     // sync: {
     //     private: {
     //         files: [{
@@ -151,9 +166,9 @@ module.exports = function (grunt) {
   })
 
   grunt.registerTask('mmo', ['clean', 'copy:screeps', 'file_append:versioning', 'screeps:mmo'])
+  grunt.registerTask('private', ['clean', 'copy:screeps', 'file_append:versioning', 'rsync:private'])
 
   // grunt.registerTask('default', ['private']);
-  // grunt.registerTask('private', ['clean', 'copy:screeps', 'file_append:versioning', 'sync:private']);
   // grunt.registerTask('s2', ['clean', 'copy:screeps', 'file_append:versioning', 'screeps:s2']);
   // grunt.registerTask('s1', ['clean', 'copy:screeps', 'file_append:versioning', 'screeps:s1']);
   // grunt.registerTask('prtest', ['clean', 'copy:screeps', 'file_append:versioning', 'screeps:prtest']);
