@@ -1,28 +1,28 @@
 // borrowed heavily from https://github.com/biosoup/screeps-v2/blob/master/gruntfile.js
 
-module.exports = function(grunt) {
+module.exports = function (grunt) {
   //     require('time-grunt')(grunt);
 
   // Pull defaults (including username and password) from .screeps.json
-  const config = require('./.screeps.json');
+  const config = require('./.screeps.json')
 
   // Allow grunt options to override default configuration
-  const branch = grunt.option('branch') || config.branch;
-  const email = grunt.option('email') || config.email;
+  const branch = grunt.option('branch') || config.branch
+  const email = grunt.option('email') || config.email
   // const username = grunt.option('username') || config.username;
-  const password = grunt.option('password') || config.password;
-  const ptr = grunt.option('ptr') ? true : config.ptr;
+  const password = grunt.option('password') || config.password
+  const ptr = grunt.option('ptr') ? true : config.ptr
   // const private_directory = grunt.option('private_directory') || config.private_directory;
 
-  // const currentdate = new Date();
-  // grunt.log.subhead(`Task Start: ${currentdate.toLocaleString()}`);
-  // grunt.log.writeln(`Branch: ${branch}`);
+  const currentdate = new Date()
+  grunt.log.subhead(`Task Start: ${currentdate.toLocaleString()}`)
+  grunt.log.writeln(`Branch: ${branch}`)
 
-  grunt.loadNpmTasks('grunt-screeps');
-  grunt.loadNpmTasks('grunt-contrib-clean');
-  grunt.loadNpmTasks('grunt-contrib-copy');
+  grunt.loadNpmTasks('grunt-screeps')
+  grunt.loadNpmTasks('grunt-contrib-clean')
+  grunt.loadNpmTasks('grunt-contrib-copy')
   //     grunt.loadNpmTasks('grunt-contrib-watch');
-  //     grunt.loadNpmTasks('grunt-file-append');
+  grunt.loadNpmTasks('grunt-file-append')
   //     grunt.loadNpmTasks("grunt-sync");
 
   grunt.initConfig({
@@ -40,10 +40,10 @@ module.exports = function(grunt) {
 
     screeps: {
       options: {
-        email: email,       // 'craig@cottingham.net',
+        email: email, // 'craig@cottingham.net',
         password: password, // 'Yw8CDiRg2BmMCRUeuQucdTbAJrCghpTg8DYCBgaTFxCQxZ4REULig3RBZ49NbH9c',
-        branch: branch,     // 'grunt',
-        ptr: ptr            //false
+        branch: branch, // 'grunt',
+        ptr: ptr, //false
       },
       // s2: {
       //     options: {
@@ -99,22 +99,39 @@ module.exports = function(grunt) {
       // }
       mmo: {
         src: ['dist/*.js'],
-      }
+      },
+    },
+
+    clean: {
+      dist: ['dist/*.js'],
     },
 
     copy: {
       screeps: {
-        files: [{
-          expand: true,
-          cwd: 'src/',
-          src: '**/*.js',
-          dest: 'dist/',
-          filter: 'isFile',
-          rename: function(dest, src) {
-            return dest + src.replace(/\//g, '.');
-          }
-        }],
-      }
+        files: [
+          {
+            expand: true,
+            cwd: 'src/',
+            src: '**/*.js',
+            dest: 'dist/',
+            filter: 'isFile',
+            rename: function (dest, src) {
+              return dest + src.replace(/\//g, '.')
+            },
+          },
+        ],
+      },
+    },
+
+    file_append: {
+      versioning: {
+        files: [
+          {
+            append: `\nglobal.SCRIPT_VERSION = ${currentdate.getTime()}\n`,
+            input: 'dist/version.js',
+          },
+        ],
+      },
     },
 
     // sync: {
@@ -131,26 +148,12 @@ module.exports = function(grunt) {
     //         compareUsing: "md5"
     //     }
     // },
+  })
 
-    // file_append: {
-    //     versioning: {
-    //         files: [{
-    //             append: `\nglobal.SCRIPT_VERSION = ${currentdate.getTime()}\n`,
-    //             input: 'dist/version.js',
-    //         }]
-    //     }
-    // },
-
-    clean: {
-      'dist': ['dist/*.js']
-    }
-  });
-
-  grunt.registerTask('mmo', ['clean', 'copy:screeps', 'screeps:mmo']);
+  grunt.registerTask('mmo', ['clean', 'copy:screeps', 'file_append:versioning', 'screeps:mmo'])
 
   // grunt.registerTask('default', ['private']);
   // grunt.registerTask('private', ['clean', 'copy:screeps', 'file_append:versioning', 'sync:private']);
-  // grunt.registerTask('mmo', ['clean', 'copy:screeps', 'file_append:versioning', 'screeps:mmo']);
   // grunt.registerTask('s2', ['clean', 'copy:screeps', 'file_append:versioning', 'screeps:s2']);
   // grunt.registerTask('s1', ['clean', 'copy:screeps', 'file_append:versioning', 'screeps:s1']);
   // grunt.registerTask('prtest', ['clean', 'copy:screeps', 'file_append:versioning', 'screeps:prtest']);
