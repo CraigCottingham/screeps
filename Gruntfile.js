@@ -135,6 +135,22 @@ module.exports = function (grunt) {
       },
     },
 
+    jsbeautifier: {
+      modify: {
+        src: ['src/**/*.js'],
+        options: {
+          config: '.jsbeautifyrc',
+        },
+      },
+      verify: {
+        src: ['src/**/*.js'],
+        options: {
+          mode: 'VERIFY_ONLY',
+          config: '.jsbeautifyrc',
+        },
+      },
+    },
+
     rsync: {
       options: {
         args: ['--verbose', '--checksum'],
@@ -148,25 +164,13 @@ module.exports = function (grunt) {
         },
       },
     },
-
-    // sync: {
-    //     private: {
-    //         files: [{
-    //             expand: true,
-    //             cwd: 'dist/',
-    //             src: '**/*.js',
-    //             dest: private_directory,
-    //
-    //         }],
-    //         verbose: true,
-    //         updateAndDelete: true,
-    //         compareUsing: "md5"
-    //     }
-    // },
   })
 
   grunt.registerTask('default', ['clean', 'copy:screeps', 'file_append:versioning', 'screeps'])
   grunt.registerTask('private', ['clean', 'copy:screeps', 'file_append:versioning', 'rsync:private'])
+
+  grunt.registerTask('test', ['jsbeautifier:verify'])
+  grunt.registerTask('pretty', ['jsbeautifier:modify'])
 
   // grunt.registerTask('default', ['private']);
   // grunt.registerTask('s2', ['clean', 'copy:screeps', 'file_append:versioning', 'screeps:s2']);
