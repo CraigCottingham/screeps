@@ -1,4 +1,4 @@
-"use strict";
+'use strict'
 
 // enable logging
 //   creeps
@@ -17,7 +17,7 @@ global.config = {
       plain: false,
       swamp: true,
       wall: false,
-    }
+    },
   },
 
   visualizer: {
@@ -52,10 +52,10 @@ global.config = {
   //   constructionSites: false,
   //   routing: false,
   // },
-};
+}
 
 try {
-  require("config_local"); // eslint-disable-line global-require
+  require('config_local') // eslint-disable-line global-require
 } catch (e) {
   // empty
 }
