@@ -1,14 +1,6 @@
-"use strict";
+'use strict'
 
-require("config");
-require("visualizer");
-
-require("creep.mem");
-require("room.mem");
-require("spawn");
-
-let roleRanger = require("role.ranger");
-let tower = require("tower");
+let level0 = require('room.level0')
 
 // override functions:
 //   extendFunction: function(obj, funcName, replacementFunc, prefix) {
@@ -23,8 +15,8 @@ let tower = require("tower");
 //   creep.prototype.foo = function (args) { ... }
 
 module.exports.loop = function () {
-  const roomsControlled = _.filter(_.values(Game.structures), (s) => (s.structureType == STRUCTURE_CONTROLLER)).length;
-  const roomsAllowed = Game.gcl.level;
+  const roomsControlled = _.filter(_.values(Game.structures), (s) => s.structureType == STRUCTURE_CONTROLLER)
+  const roomsAllowed = Game.gcl.level
 
   // if (rooms visible) > (rooms controlled)
   //   for each room visible that isn't controlled
@@ -35,192 +27,24 @@ module.exports.loop = function () {
   //
 
   for (let name in Game.rooms) {
-    let room = Game.rooms[name];
+    let room = Game.rooms[name]
 
-    if ((room.controller !== undefined) && room.controller.my) {
-      // fetch arrays of structures and other objects for this room
-
-      const structures = _.groupBy(room.find(FIND_STRUCTURES), "structureType");
-
-      const objects = {
-        containers: structures[STRUCTURE_CONTAINER] || [],
-        creeps: room.find(FIND_MY_CREEPS),
-        constructionSites: room.find(FIND_CONSTRUCTION_SITES),
-        drops: room.find(FIND_DROPPED_RESOURCES),
-        extensions: structures[STRUCTURE_EXTENSION] || [],
-        flags: room.find(FIND_FLAGS),
-        hostileCreeps: room.find(FIND_HOSTILE_CREEPS),
-        ramparts: structures[STRUCTURE_RAMPART] || [],
-        roads: structures[STRUCTURE_ROAD] || [],
-        ruins: room.find(FIND_RUINS),
-        sources: room.find(FIND_SOURCES),
-        spawns: room.find(FIND_MY_SPAWNS),
-        tombstones: room.find(FIND_TOMBSTONES),
-        towers: structures[STRUCTURE_TOWER] || [],
-        walls: structures[STRUCTURE_WALL] || []
-      };
-
-      const terrain = room.getTerrain();
-
-      room.mem.endangered = (objects.creeps.length < (objects.sources.length * 2)); // (objects.creeps.length < 10);
-      room.mem.maxCreeps = (objects.sources.length * 6) + objects.flags.length + roomsAllowed - roomsControlled;
-      room.mem.redAlert = (objects.hostileCreeps.length > 0);
-      room.mem.spawns = room.mem.spawns || {};
-      _.forEach(objects.spawns, (s) => room.mem.spawns[s.id] = room.mem.spawns[s.id] || 0);
-      room.mem.threshold = room.mem.threshold || {rampart: RAMPART_HITS + 1, wall: WALL_HITS + 1};
-
-      if (room.mem.threshold.update) {
-        // autoincrement low water threshold for ramparts
-
-        if (room.mem.threshold.rampart < RAMPART_HITS_MAX[room.controller.level]) {
-          let newThreshold = _.min(objects.ramparts, "hits").hits + TOWER_POWER_REPAIR;
-          if (newThreshold > RAMPART_HITS_MAX[room.controller.level]) {
-            newThreshold = RAMPART_HITS_MAX[room.controller.level];
-          }
-          if (newThreshold > room.mem.threshold.rampart) {
-            room.mem.threshold.rampart = newThreshold;
-          }
-        }
-
-        // autoincrement low water threshold for walls
-
-        if (room.mem.threshold.wall < WALL_HITS_MAX) {
-          let newThreshold = _.min(objects.walls, "hits").hits + TOWER_POWER_REPAIR;
-          if (newThreshold > WALL_HITS_MAX) {
-            newThreshold = WALL_HITS_MAX;
-          }
-          if (newThreshold > room.mem.threshold.wall) {
-            room.mem.threshold.wall = newThreshold;
-          }
-        }
-
-        room.mem.threshold.update = false;
+    if (room.controller !== undefined && room.controller.my) {
+      switch (room.controller.level) {
+        case 0:
+        case 1:
+        case 2:
+        case 3:
+        case 4:
+        case 5:
+        case 6:
+        case 7:
+        case 8:
+        default:
+          level0.run(room)
       }
-
-      // run towers
-
-      _.forEach(objects.towers, (t) => tower.run(t));
-
-      // TODO: look for a spawn that isn't busy, instead of using the first?
-      //       Is it even possible to have more than one spawn per room?
-      let spawn = _.first(objects.spawns);
-      // if ((spawn !== undefined) && (spawn.spawning === null)) {
-      if (spawn !== undefined) {
-        // the number of creeps in a room should be some function of the number of WORK parts
-        // ((5 WORK parts) * (number of sources)) + (number of controllers = 1) + (number of towers)
-        // *** better yet, a function of the number of sources
-        // since the number of sources determines how much energy is available in the room
-
-        if ((room.mem.spawns[spawn.id] <= 0) || room.mem.endangered || room.mem.redAlert) {
-          if ((spawn.spawning === null) && ((room.energyAvailable >= 250) || ((room.mem.endangered && (room.energyAvailable >= 200))))) {
-            const spawnCooldown = _.floor(CREEP_LIFE_TIME / room.mem.maxCreeps);
-
-            // TODO: this needs to be done differently, since everything's a ranger now
-            // if ((Memory.colonize !== undefined) && _.all(_.values(Game.creeps), (c) => (c.mem.role != "ranger"))) {
-            //   // spawn ranger
-            //   let parts = [CLAIM, MOVE, WORK, MOVE, CARRY, MOVE];
-            //   spawn.spawnCreep(parts, `Ranger${Game.time}`, {memory: {role: "ranger"}});
-            //   room.mem.spawns[spawn.id] = spawnCooldown;
-            // }
-            if (objects.creeps.length < room.mem.maxCreeps) {
-              let parts = [WORK, MOVE, CARRY, MOVE];
-              if (room.mem.endangered) {
-                parts = [WORK, CARRY, MOVE];
-              }
-
-              let availableEnergy = room.energyAvailable;
-
-              // console.log(`partsRangedRCL5 = ${_.sum(_.map(partsRangedRCL5, (p) => BODYPART_COST[p]))}`);
-
-              // add minimum viable creep cost ([WORK, MOVE, CARRY, MOVE] == 250) to each of these thresholds?
-
-              if (availableEnergy >= 400) {
-                parts = [WORK, MOVE, WORK, MOVE, CARRY, MOVE];
-              }
-
-              if (availableEnergy >= 550) {
-                parts = [WORK, MOVE, WORK, MOVE, WORK, MOVE, CARRY, MOVE];
-              }
-
-              if (availableEnergy >= 700) {
-                parts = [WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, CARRY, MOVE];
-              }
-
-              if (availableEnergy >= 850) {
-                parts = [WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, CARRY, MOVE];
-              }
-
-              if (availableEnergy >= 950) {
-                parts = [WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, CARRY, MOVE, CARRY, MOVE];
-              }
-
-              if (availableEnergy >= 1050) {
-                parts = [WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE];
-              }
-
-              if (availableEnergy >= 1150) {
-                parts = [WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, WORK, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE];
-              }
-
-              // console.log("spawning worker");
-              spawn.spawnCreep(parts, undefined);
-              room.mem.spawns[spawn.id] = spawnCooldown;
-            }
-          }
-        }
-        else {
-          room.mem.spawns[spawn.id] = room.mem.spawns[spawn.id] - 1;
-        }
-      }
-
-      // TODO: dynamic dispatch, rather than role transitions hardcoded in roles
-
-      for (let creep of objects.creeps) {
-        if (config.desirePathing.enabled) {
-          // if we're not on a road, drop a construction site
-          let structures = creep.pos.lookFor(LOOK_STRUCTURES);
-          if (!structures.length || _.all(structures, (s) => (s.structureType != STRUCTURE_ROAD))) {
-            let dropSite = false;
-
-            switch (terrain.get(creep.pos.x, creep.pos.y)) {
-              case TERRAIN_MASK_SWAMP:
-                dropSite = config.desirePathing.terrain.swamp;
-                break;
-              case TERRAIN_MASK_WALL:
-                dropSite = config.desirePathing.terrain.wall;
-                break;
-              default:
-                dropSite = config.desirePathing.terrain.plain;
-              break;
-            }
-
-            if (dropSite) {
-              switch (creep.pos.createConstructionSite(STRUCTURE_ROAD)) {
-                case OK:
-                  break;
-                case ERR_INVALID_TARGET:
-                  // we get this error if there's already a site at this position?
-                  // console.log(`main.desirePathing (${room.name}:${creep.pos.x},${creep.pos.y}): invalid target`);
-                  break;
-                case ERR_FULL:
-                  console.log(`main.desirePathing (${room.name}:${creep.pos.x},${creep.pos.y}): full`);
-                  break;
-                case ERR_INVALID_ARGS:
-                  console.log(`main.desirePathing (${room.name}:${creep.pos.x},${creep.pos.y}): invalid args`);
-                  break;
-                case ERR_RCL_NOT_ENOUGH:
-                  console.log(`main.desirePathing (${room.name}:${creep.pos.x},${creep.pos.y}): rcl not enough`);
-                  break;
-              }
-            }
-          }
-        }
-
-        roleRanger.run(creep);
-      }
-    }
-    else {
-      console.log(`Room ${room.name} is visible but isn't controlled`);
+    } else {
+      console.log(`Room ${room.name} is visible but isn't controlled`)
     }
   }
 
@@ -234,7 +58,7 @@ module.exports.loop = function () {
 
   for (let name in Memory.creeps) {
     if (!Game.creeps[name]) {
-      delete Memory.creeps[name];
+      delete Memory.creeps[name]
     }
   }
 
@@ -244,28 +68,7 @@ module.exports.loop = function () {
 
   for (let name in Memory.flags) {
     if (!Game.flags[name]) {
-      delete Memory.flags[name];
-    }
-  }
-
-  //
-  // visualizer is the lowest priority function
-  //
-
-  if (config.visualizer.enabled) {
-    // try {
-    //   Memory.myRooms.forEach(visualizer.myRoomDatasDraw);
-    // } catch (e) {
-    //   console.log('Visualizer Draw Exeception', e);
-    // }
-
-    try {
-      visualizer.render();
-      // if (config.profiler.enabled) {
-      //   global.profiler.registerObject(visualizer, 'Visualizer');
-      // }
-    } catch (e) {
-      console.log('visualizer render exception', e, e.stack);
+      delete Memory.flags[name]
     }
   }
 }
