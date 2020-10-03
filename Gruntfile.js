@@ -1,7 +1,7 @@
 // borrowed heavily from https://github.com/biosoup/screeps-v2/blob/master/gruntfile.js
 
 module.exports = function (grunt) {
-  //     require('time-grunt')(grunt);
+  require('time-grunt')(grunt)
 
   // Pull defaults (including username and password) from .screeps.json
   const config = require('./.screeps.json')
@@ -9,7 +9,6 @@ module.exports = function (grunt) {
   // Allow grunt options to override default configuration
   const branch = grunt.option('branch') || config.branch
   const email = grunt.option('email') || config.email
-  // const username = grunt.option('username') || config.username;
   const password = grunt.option('password') || config.password
   const private_directory = grunt.option('private_directory') || config.private_directory
   const ptr = grunt.option('ptr') ? true : config.ptr
@@ -24,7 +23,6 @@ module.exports = function (grunt) {
   //     grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-file-append')
   grunt.loadNpmTasks('grunt-rsync')
-  //     grunt.loadNpmTasks("grunt-sync");
 
   grunt.initConfig({
     // watch: {
@@ -171,15 +169,4 @@ module.exports = function (grunt) {
 
   grunt.registerTask('test', ['jsbeautifier:verify'])
   grunt.registerTask('pretty', ['jsbeautifier:modify'])
-
-  // grunt.registerTask('default', ['private']);
-  // grunt.registerTask('s2', ['clean', 'copy:screeps', 'file_append:versioning', 'screeps:s2']);
-  // grunt.registerTask('s1', ['clean', 'copy:screeps', 'file_append:versioning', 'screeps:s1']);
-  // grunt.registerTask('prtest', ['clean', 'copy:screeps', 'file_append:versioning', 'screeps:prtest']);
-  // grunt.registerTask('test', ['clean', 'copy:screeps', 'file_append:versioning', 'screeps:test']);
-  // grunt.registerTask('all', ['clean', 'copy:screeps', 'file_append:versioning', 'screeps:mmo', 'screeps:s2', 'screeps:s1', 'sync:private']);
-  //
-  // grunt.registerTask('default', ['screeps:mmo', 'screeps:s2']);
-  // grunt.registerTask('mmo', ['screeps:mmo']);
-  // grunt.registerTask('s2', ['screeps:s2']);
 }
